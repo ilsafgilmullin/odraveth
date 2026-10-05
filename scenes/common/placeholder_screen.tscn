@@ -1,0 +1,70 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/ui/placeholder_screen.gd" id="1_screen"]
+[ext_resource type="Script" path="res://scripts/ui/safe_area_container.gd" id="2_safe"]
+
+[node name="PlaceholderScreen" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_screen")
+
+[node name="SafeArea" type="MarginContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("2_safe")
+
+[node name="Layout" type="VBoxContainer" parent="SafeArea"]
+layout_mode = 2
+theme_override_constants/separation = 24
+
+[node name="Header" type="HBoxContainer" parent="SafeArea/Layout"]
+layout_mode = 2
+theme_override_constants/separation = 32
+
+[node name="BackButton" type="Button" parent="SafeArea/Layout/Header"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(240, 112)
+layout_mode = 2
+text = "Назад"
+
+[node name="TitleLabel" type="Label" parent="SafeArea/Layout/Header"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_font_sizes/font_size = 64
+vertical_alignment = 1
+
+[node name="Body" type="CenterContainer" parent="SafeArea/Layout"]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="Content" type="VBoxContainer" parent="SafeArea/Layout/Body"]
+layout_mode = 2
+theme_override_constants/separation = 24
+
+[node name="MessageLabel" type="Label" parent="SafeArea/Layout/Body/Content"]
+unique_name_in_owner = true
+visible = false
+layout_mode = 2
+theme_override_font_sizes/font_size = 96
+horizontal_alignment = 1
+
+[node name="NoteLabel" type="Label" parent="SafeArea/Layout/Body/Content"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 32
+text = "Временный технический экран.
+Финальный интерфейс будет реализован отдельной задачей."
+horizontal_alignment = 1
+
+[node name="Actions" type="VBoxContainer" parent="SafeArea/Layout/Body/Content"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_constants/separation = 16
