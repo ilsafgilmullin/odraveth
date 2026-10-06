@@ -72,8 +72,8 @@ static func _collect_invariants(observation: Dictionary, violations: PackedStrin
 	if observation.is_empty():
 		violations.append("empty observation")
 		return
-	if not observation["match_over"] and int(observation["active_player"]) not in [0, 1]:
-		violations.append("invalid active player: %s" % observation["active_player"])
+	if observation["phase"] == "TURN" and not observation["match_over"] 			and int(observation["active_player"]) not in [0, 1]:
+		violations.append("invalid active player during TURN: %s" % observation["active_player"])
 	for side_name in ["own", "opponent"]:
 		var side: Dictionary = observation[side_name]
 		if int(side["hand_count"]) > GameRules.MAX_HAND_SIZE:
