@@ -147,7 +147,7 @@ Corrective regression Stage 2 дополнительно фиксирует че
 
 ## 9. Android
 
-Stage 6 добавляет prebuilt-template debug preset `Android QA`. Нужны Godot/export templates 4.7.2 stable, OpenJDK 17 и Android Platform/Build Tools, совместимые с targetSdk официального template. Текущая проверенная сборка использует Platform 36 + Build Tools 36.0.0; baseline официальной инструкции Godot 4.7 также установлен для совместимости. Package `com.example.odraveth.qa` временный и не является публичной identity. Keystore, пароли, local SDK paths и artifacts не коммитятся. Полная процедура: [ANDROID_QA.md](ANDROID_QA.md).
+Stage 6 добавляет prebuilt-template debug preset `Android QA`. Нужны Godot/export templates 4.7.2 stable, OpenJDK 17 и Android Platform/Build Tools, совместимые с targetSdk официального template. Текущая проверенная сборка использует Platform 36 + Build Tools 36.0.0; baseline официальной инструкции Godot 4.7 также установлен для совместимости. Package `com.example.odraveth.qa` временный и не является публичной identity. Keystore, пароли, local SDK paths и artifacts не коммитятся. QA APK собирается только через `tools/build_android_qa.sh`: временный export проходит ZIP/package/signature validation и затем атомарно заменяет итоговый файл. Полная процедура: [ANDROID_QA.md](ANDROID_QA.md).
 
 ## 10. Git
 

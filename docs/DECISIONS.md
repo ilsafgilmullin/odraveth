@@ -359,6 +359,10 @@ UserDeck хранит устойчивый локальный `id`, имя, `her
 
 Android export разрешён только после чистого import, полного regression, Stage 2/3 mutation gates, E2E setup→battle, responsive и re-audit без известных воспроизводимых BLOCKER/CRITICAL/HIGH. Аудит нашёл и исправил один HIGH (выход из активного боя одним Back) и два LOW documentation/comment contradictions; Stage 2 gameplay и Stage 3 AI не менялись.
 
-### D-051 · временно · 2026-10-06 — Android QA identity и export
+### D-051 · заменено D-052 · 2026-10-06 — Android QA identity и export
 
 Первый technical alpha — debug APK `ODRAVETH Stage 6 QA`, package `com.example.odraveth.qa`, version `0.6.0-qa`/6. Это временная непубличная identity, не store decision. Preset использует официальный prebuilt template Godot 4.7.2, четыре ABI, immersive edge-to-edge, user/sensor landscape, пустые custom permissions и исключает tests/docs/CI. ETC2/ASTC включён как обязательное Android export требование. Техническая SVG-иконка — placeholder, не final art. Q-15 остаётся открытым.
+
+### D-052 · исправление Stage 6 · 2026-10-06 — Атомарная выдача Android QA APK
+
+Первый переданный `0.6.0-qa`/6 оказался обрезан внутри `lib/x86_64/libgodot_android.so`: локальный заголовок ZIP присутствовал, но central directory и APK Signing Block отсутствовали, поэтому Android сообщал «Не удалось обработать пакет». Corrective artifact имеет version `0.6.1-qa`/7. `tools/build_android_qa.sh` экспортирует во временный APK, полностью проверяет ZIP, package/version и подпись v2/v3 и только затем атомарно заменяет итоговый файл. Невалидный временный export удаляется и не выдаётся пользователю.

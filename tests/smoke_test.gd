@@ -143,8 +143,11 @@ func _test_android_export_config() -> void:
 	_check(not preset.is_empty() and preset.contains("platform=\"Android\""),
 		"Android QA export preset exists")
 	_check(preset.contains("package/unique_name=\"com.example.odraveth.qa\"")
-		and preset.contains("version/name=\"0.6.0-qa\""),
+		and preset.contains("version/name=\"0.6.1-qa\"")
+		and preset.contains("version/code=7"),
 		"temporary QA package and version are explicit")
+	_check(preset.contains("export_path=\"build/ODRAVETH-Stage6-QA-v0.6.1.apk\""),
+		"Android QA export path identifies the corrective artifact")
 	_check(preset.contains("screen/immersive_mode=true") and preset.contains("screen/edge_to_edge=true"),
 		"Android fullscreen edge-to-edge enabled")
 	_check(preset.contains("exclude_filter=\"tests/**,docs/**,.github/**\""),
