@@ -2,7 +2,7 @@
 
 Документ описывает техническое устройство проекта. Продуктовые правила — только в [`PRODUCT_BASELINE.md`](PRODUCT_BASELINE.md); обоснования решений — в [`DECISIONS.md`](DECISIONS.md).
 
-Текущее состояние: **Stage 5** — технический фундамент (Stage 0), типизированная база 40 утверждённых карт (Stage 1), детерминированный MatchEngine (Stage 2), офлайн AI трёх уровней сложности (Stage 3), полнофункциональный боевой экран с интеграцией Player ↔ MatchEngine ↔ AI (Stage 4). Игрок выбирает героя, просматривает 40 карт, сохраняет собственную колоду и проходит Mulligan → ходы → Victory/Defeat/Draw → Result/Rematch.
+Текущее состояние: **Stage 6 technical alpha** — технический фундамент (Stage 0), типизированная база 40 утверждённых карт (Stage 1), детерминированный MatchEngine (Stage 2), офлайн AI трёх уровней сложности (Stage 3), полнофункциональный Battle UI (Stage 4), пользовательский setup и SaveManager v2 (Stage 5), pre-APK hardening и Android QA export (Stage 6).
 
 ## 1. Принципы
 
@@ -369,7 +369,7 @@ var result := engine.play_card(player, card_instance_id, target_id, {"soul_shard
 |---|---|---|
 | Колоды | `data/decks/` | Стартовые колоды и редактор; проверка — уже `DeckValidator` |
 | Финальный UI | `scenes/*`, `scripts/ui/` | По утверждённому дизайну; заменяет placeholder-сцены |
-| Android build | export preset | Отдельная задача (раздел «Android» в DEVELOPMENT.md) |
+| Android QA build | `export_presets.cfg`, `docs/ANDROID_QA.md` | Debug technical alpha; temporary ID, offline, landscape, без store signing |
 
 ## 12. Тестирование
 
@@ -465,3 +465,7 @@ ResultScreen ──► «Реванш» → SceneRouter.replace_with(BATTLE, {ne
 ## 15. Stage 5 setup и сохранения
 
 `SaveManager` v2 мигрирует v1 и сохраняет другие поля. `AppState.persist_profile` атомарно пишет нормализованный профиль и только после успешной записи заменяет in-memory копию. `UserDeck` содержит ID, имя, hero ID и card IDs; `DeckValidator` определяет статус готовности. Hero Select меняет выбранного героя и отключает несовместимую выбранную колоду, не затрагивая её запись. Collection и Deck Builder используют загруженный `CardDatabase` и общий `CardDetailOverlay`. Prebattle берёт готовую выбранную колоду, выбирает противника/сложность и передаёт `BattleLaunchConfig` в существующий `BattleSession`. Противнику временно создаётся внутренняя техническая колода. Подробности: [DECKS_AND_COLLECTION.md](DECKS_AND_COLLECTION.md).
+
+## 16. Stage 6 Android QA export
+
+`export_presets.cfg` содержит один non-Gradle debug preset `Android QA`. SDK/JDK/keystore paths остаются локальными Editor Settings. Export использует временный `com.example.odraveth.qa`, четыре ABI, immersive edge-to-edge, user/sensor landscape и исключает tests/docs/CI. Android-specific ETC2/ASTC import включён в `project.godot`; экранные safe insets применяет существующий `SafeAreaContainer`. Детали сборки и проверки: [ANDROID_QA.md](ANDROID_QA.md).

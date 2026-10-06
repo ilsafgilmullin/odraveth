@@ -81,6 +81,7 @@ func _run() -> void:
 	print("== ODRAVETH smoke test ==")
 	_test_engine_version()
 	_test_project_settings()
+	_test_android_export_config()
 	_test_autoloads()
 	_test_scripts_compile()
 	_test_scenes_instantiate()
@@ -119,6 +120,8 @@ func _test_project_settings() -> void:
 	var main_scene: String = ProjectSettings.get_setting("application/run/main_scene")
 	_check(main_scene == Routes.scene_path(Routes.BOOT), "main scene is Boot")
 	_check(ResourceLoader.exists(main_scene), "main scene file exists")
+	_check(ResourceLoader.exists(ProjectSettings.get_setting("application/config/icon")),
+		"technical QA launcher icon exists")
 	_check(ProjectSettings.get_setting("display/window/size/viewport_width") == 1920
 		and ProjectSettings.get_setting("display/window/size/viewport_height") == 1080,
 		"design resolution 1920x1080")
@@ -130,6 +133,27 @@ func _test_project_settings() -> void:
 		"Android back is handled by SceneRouter")
 	_check(PackedStringArray(ProjectSettings.get_setting("application/config/features")).has("4.7"),
 		"project features target 4.7")
+	_check(ProjectSettings.get_setting("rendering/textures/vram_compression/import_etc2_astc") == true,
+		"Android ETC2/ASTC texture import enabled")
+
+
+func _test_android_export_config() -> void:
+	_section("Android export configuration")
+	var preset := FileAccess.get_file_as_string("res://export_presets.cfg")
+	_check(not preset.is_empty() and preset.contains("platform=\"Android\""),
+		"Android QA export preset exists")
+	_check(preset.contains("package/unique_name=\"com.example.odraveth.qa\"")
+		and preset.contains("version/name=\"0.6.0-qa\""),
+		"temporary QA package and version are explicit")
+	_check(preset.contains("screen/immersive_mode=true") and preset.contains("screen/edge_to_edge=true"),
+		"Android fullscreen edge-to-edge enabled")
+	_check(preset.contains("exclude_filter=\"tests/**,docs/**,.github/**\""),
+		"tests, docs and CI files excluded from APK")
+	_check(preset.contains("permissions/custom_permissions=PackedStringArray()")
+		and not preset.to_lower().contains("permissions/internet=true"),
+		"Android preset requests no custom or Internet permission")
+	_check(not preset.contains("keystore/") and not preset.contains("/tmp/") and not preset.contains("Android/Sdk"),
+		"export preset contains no signing secret or local SDK path")
 
 
 func _test_autoloads() -> void:

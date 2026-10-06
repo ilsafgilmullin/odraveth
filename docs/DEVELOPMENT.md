@@ -147,13 +147,7 @@ Corrective regression Stage 2 дополнительно фиксирует че
 
 ## 9. Android
 
-На Stage 0 Android-экспорт **не настроен** и APK не собирается. Отдельная задача Android build должна:
-
-- установить export templates **4.7.2 stable**, JDK и Android SDK по [официальной инструкции](https://docs.godotengine.org/en/stable/tutorials/export/exporting_for_android.html);
-- создать `export_presets.cfg` (его можно коммитить: пароли и пути к keystore Godot хранит в `.godot/export_credentials.cfg`, который игнорируется);
-- исключить `tests/*` из экспорта и убедиться, что `data/**/*.json` попадает в пакет;
-- проверить на устройстве: полноэкранный/immersive режим, edge-to-edge, safe area с вырезом, переворот на 180°, системную кнопку «Назад»;
-- **никогда** не коммитить keystore, пароли и `local.properties` (закрыто `.gitignore`).
+Stage 6 добавляет prebuilt-template debug preset `Android QA`. Нужны Godot/export templates 4.7.2 stable, OpenJDK 17 и Android Platform/Build Tools, совместимые с targetSdk официального template. Текущая проверенная сборка использует Platform 36 + Build Tools 36.0.0; baseline официальной инструкции Godot 4.7 также установлен для совместимости. Package `com.example.odraveth.qa` временный и не является публичной identity. Keystore, пароли, local SDK paths и artifacts не коммитятся. Полная процедура: [ANDROID_QA.md](ANDROID_QA.md).
 
 ## 10. Git
 
@@ -188,3 +182,7 @@ CI workflow .github/workflows/stage2-corrective.yml сохраняет четы�
 ## 13. Проверки Stage 5
 
 `tests/run_tests.sh` на Godot 4.7.2 включает `tests/player_setup_tests.gd` (миграция v1→v2, профиль/колоды/валидация) и `tests/player_setup_ui_tests.gd` (настоящие экраны, фильтры, touch controls, 1920×1080 и 2400×1080). Smoke navigation запускает путь fresh save → Hero Select → 30 карт через кнопки Deck Builder → Save → Play → Prebattle → выбор ИИ → Battle MULLIGAN с точным snapshot. Технический `technical_dev_config` не используется обычным Prebattle; см. [DECKS_AND_COLLECTION.md](DECKS_AND_COLLECTION.md).
+
+## 14. Проверки Stage 6
+
+Pre-APK gate запускает полный regression, Boot → Main Menu, Stage 2/3 mutation suites, E2E setup→battle, responsive и static security audit. После Android-настроек regression запускается повторно. Smoke отдельно закрепляет ETC2/ASTC, техническую иконку, отсутствие secrets/local paths/INTERNET в preset и исключение test/docs/CI content. APK проверяется `aapt2`, `apkanalyzer`, `apksigner`, `unzip` и SHA-256; см. [ANDROID_QA.md](ANDROID_QA.md).

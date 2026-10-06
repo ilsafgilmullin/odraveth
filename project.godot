@@ -12,6 +12,7 @@ config_version=5
 
 config/name="ODRAVETH"
 config/description="Офлайн карточная стратегическая игра. Мир Нулмерис."
+config/icon="res://assets/ui/qa_icon.svg"
 run/main_scene="res://scenes/boot/boot.tscn"
 config/quit_on_go_back=false
 config/features=PackedStringArray("4.7", "GL Compatibility")
@@ -64,3 +65,4 @@ theme/custom="res://assets/ui/placeholder_theme.tres"
 
 renderer/rendering_method="gl_compatibility"
 renderer/rendering_method.mobile="gl_compatibility"
+textures/vram_compression/import_etc2_astc=true

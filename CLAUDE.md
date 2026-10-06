@@ -35,6 +35,7 @@ Source of truth по продукту: [`docs/PRODUCT_BASELINE.md`](docs/PRODUCT
 - Изменение правила матча — вместе с тестом в `tests/engine/`; каждая карта должна иметь поведенческий тест и строку в `docs/CARD_TEST_COVERAGE.md`.
 - Не ослаблять строгие предупреждения GDScript в `project.godot` — исправлять код.
 - Не коммитить `.godot/`, сборки, keystore, пароли и другие секреты. Коммитить `*.uid` вместе со скриптами.
+- Android QA export использует preset `Android QA`, временный package `com.example.odraveth.qa` и только debug signing; toolchain/inspection описаны в `docs/ANDROID_QA.md`.
 - Не работать в `main` и не делать в него merge; не делать force-push.
 - Не скачивать случайные ассеты; финальный шрифт и дизайн не выбирать самостоятельно.
 - Технические решения фиксировать в `docs/DECISIONS.md`.
@@ -51,6 +52,7 @@ Source of truth по продукту: [`docs/PRODUCT_BASELINE.md`](docs/PRODUCT
 | [docs/DECKS_AND_COLLECTION.md](docs/DECKS_AND_COLLECTION.md) | Пользовательские колоды, коллекция, сохранения и Prebattle |
 | [`docs/DEVELOPMENT.md`](docs/DEVELOPMENT.md) | Установка Godot, запуск, проверки, соглашения |
 | [`docs/DECISIONS.md`](docs/DECISIONS.md) | Журнал технических решений |
+| [`docs/ANDROID_QA.md`](docs/ANDROID_QA.md) | Android QA export, toolchain и verification |
 
 ## Проверки
 
