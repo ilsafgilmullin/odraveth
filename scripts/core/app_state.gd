@@ -33,3 +33,15 @@ func save_profile() -> Error:
 	if error != OK:
 		EventBus.save_error.emit("Failed to write the save file: %s." % error_string(error))
 	return error
+
+
+## Transactional profile update: a failed save does not replace in-memory data.
+func persist_profile(next: Dictionary) -> Error:
+	var safe := PlayerSetupData.normalized(next)
+	var error := _save_manager.write_data(safe)
+	if error == OK:
+		profile = safe
+	else:
+		EventBus.save_error.emit("Не удалось сохранить данные: %s" % error_string(error))
+		push_error("AppState: profile write failed: %s" % error_string(error))
+	return error

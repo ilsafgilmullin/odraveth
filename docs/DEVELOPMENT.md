@@ -181,6 +181,10 @@ CI workflow .github/workflows/stage2-corrective.yml сохраняет четы�
 
 ## 12. Проверки Stage 4 Battle UI
 
-`tests/run_tests.sh` на Godot 4.7.2 выполняет существующий regression (baseline 744 checks) и `tests/battle_ui_tests.gd`: реальные экземпляры BattleScene с `BattleLaunchConfig`, управление mulligan/картами/целями/способностями/модальными окнами, AI presentation, lock и layout при 1920×1080 и 2400×1080. Smoke navigation отдельно проходит Main Menu → Prebattle → реальный Battle MULLIGAN и Result/rematch. Legacy TEST_MODE проверяется только явным маршрутом без конфигурации.
+`tests/run_tests.sh` на Godot 4.7.2 выполняет существующий regression (baseline 744 checks) и `tests/battle_ui_tests.gd`: реальные экземпляры BattleScene с `BattleLaunchConfig`, управление mulligan/картами/целями/способностями/модальными окнами, AI presentation, lock и layout при 1920×1080 и 2400×1080. На Stage 4 smoke navigation проходил технический Main Menu → Prebattle → Battle MULLIGAN и Result/rematch; Stage 5 заменил player setup (см. §13). Legacy TEST_MODE проверяется только явным маршрутом без конфигурации.
 
-Техническая колода создаётся `BattleLaunchConfig.technical_dev_config(CardDatabase)` и не является пользовательским preset. Чтобы проверить другой состав, используйте `BattleLaunchConfig.create()` с валидными колодами. Не делайте игровых утверждений по временной технической конфигурации; подробности — [BATTLE_UI.md](BATTLE_UI.md).
+Для явных dev/test фикстур техническая колода создаётся `BattleLaunchConfig.technical_dev_config(CardDatabase)` и не является пользовательским preset; обычный player setup её не использует. Чтобы проверить другой состав, используйте `BattleLaunchConfig.create()` с валидными колодами. Не делайте игровых утверждений по временной технической конфигурации; подробности — [BATTLE_UI.md](BATTLE_UI.md).
+
+## 13. Проверки Stage 5
+
+`tests/run_tests.sh` на Godot 4.7.2 включает `tests/player_setup_tests.gd` (миграция v1→v2, профиль/колоды/валидация) и `tests/player_setup_ui_tests.gd` (настоящие экраны, фильтры, touch controls, 1920×1080 и 2400×1080). Smoke navigation запускает путь fresh save → Hero Select → 30 карт через кнопки Deck Builder → Save → Play → Prebattle → выбор ИИ → Battle MULLIGAN с точным snapshot. Технический `technical_dev_config` не используется обычным Prebattle; см. [DECKS_AND_COLLECTION.md](DECKS_AND_COLLECTION.md).

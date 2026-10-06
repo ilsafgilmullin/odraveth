@@ -2,7 +2,7 @@
 
 Документ описывает техническое устройство проекта. Продуктовые правила — только в [`PRODUCT_BASELINE.md`](PRODUCT_BASELINE.md); обоснования решений — в [`DECISIONS.md`](DECISIONS.md).
 
-Текущее состояние: **Stage 4** — технический фундамент (Stage 0), типизированная база 40 утверждённых карт (Stage 1), детерминированный MatchEngine (Stage 2), офлайн AI трёх уровней сложности (Stage 3), полнофункциональный боевой экран с интеграцией Player ↔ MatchEngine ↔ AI (Stage 4). Игрок может пройти полный матч: Mulligan → ходы → Victory/Defeat/Draw → Result/Rematch.
+Текущее состояние: **Stage 5** — технический фундамент (Stage 0), типизированная база 40 утверждённых карт (Stage 1), детерминированный MatchEngine (Stage 2), офлайн AI трёх уровней сложности (Stage 3), полнофункциональный боевой экран с интеграцией Player ↔ MatchEngine ↔ AI (Stage 4). Игрок выбирает героя, просматривает 40 карт, сохраняет собственную колоду и проходит Mulligan → ходы → Victory/Defeat/Draw → Result/Rematch.
 
 ## 1. Принципы
 
@@ -22,7 +22,7 @@
 | `scenes/boot/` | Boot-экран (инициализация сервисов) |
 | `scenes/menu/` | Главное меню |
 | `scenes/common/` | Общие сцены экранов (сейчас — базовый placeholder-экран) |
-| `scenes/heroes/` · `collection/` · `deck_builder/` · `prebattle/` · `battle/` · `result/` | Утверждённые экраны UI flow (пока placeholder) |
+| `scenes/heroes/` · `collection/` · `deck_builder/` · `prebattle/` · `battle/` · `result/` | Экраны пользовательской подготовки и боя |
 | `scenes/progress/` · `settings/` | Экраны пунктов меню «Прогресс» и «Настройки» (пока placeholder) |
 | `scripts/core/` | Сервисы приложения (EventBus, SceneRouter, AppState), таблица маршрутов, правила и фракции baseline, boot |
 | `scripts/cards/` | База карт: `CardDatabase` (реестр), `CardSchema` (валидация JSON), `CardDefinition` и `CardEffectSpec` (модель), `EffectVocabulary` (словарь эффектов), `CardEnums` (таксономия) |
@@ -30,7 +30,7 @@
 | `scripts/save/` | Локальные сохранения (SaveManager) |
 | `scripts/ui/` | Скрипты экранов и переиспользуемых UI-контейнеров |
 | `scripts/heroes/` | `HeroCatalog` — четыре утверждённых героя и числа их способностей |
-| `scripts/decks/` | `DeckValidator` — проверка колоды перед матчем |
+| `scripts/decks/` | `DeckValidator` — авторитет правил колоды; `UserDeck` и `PlayerSetupData` — plain-data профиль |
 | `scripts/ai/` | Офлайн AI: `AiController`, `AiEvaluator`, `AiMulliganPolicy`, `AiChoicePolicy`, `AiTurnRunner`, `AiDecision`, `AiDifficulty` (раздел 13) |
 | `scripts/ui/battle/` | Боевой экран: `BattleScene` — полный UI матча с программной компоновкой (раздел 14) |
 | `data/cards/` | 40 утверждённых карт: `ashravael.json`, `nerqathen.json`, `dumoryss.json`, `khevaruun.json`, `neutral.json` (по 8 карт) |
@@ -153,8 +153,8 @@ SceneRouter.replace_with(Routes.RESULT, {ResultScreen.PARAM_OUTCOME: MatchOutcom
 ### 5.4. Placeholder-экраны Stage 0
 
 - `scenes/common/placeholder_screen.tscn` + `PlaceholderScreen` — базовый временный экран: заголовок, «Назад», «Далее: <следующий экран потока>», «В главное меню».
-- Экраны маршрутов — **наследованные сцены** от базовой; переопределяют `route_id`, при необходимости подпись кнопки (`next_button_text`) или скрипт (`battle_placeholder.gd`, `result_screen.gd`).
-- Боевой placeholder имитирует три исхода, чтобы проверить переход к результату. Логики боя в нём нет.
+- На Stage 0 экраны маршрутов были наследованными placeholder-сценами. Hero Select, Collection, Deck Builder и Prebattle заменены самостоятельными сценами Stage 5; Progress/Settings и Result используют базовый временный экран.
+- Battle без конфигурации сохраняет только явный legacy TEST_MODE для smoke-проверок; нормальный пользовательский маршрут всегда передаёт BattleLaunchConfig.
 - При реализации финального экрана наследованная сцена заменяется самостоятельной; маршрут в `Routes` остаётся прежним.
 
 ## 6. Boot
@@ -421,7 +421,7 @@ tests/ai/ проверяет information barriers, 100-кратную повто
 
 ### 14.1. BattleLaunchConfig
 
-`BattleLaunchConfig` (`scripts/battle/battle_launch_config.gd`) — DTO для запуска матча. Передаётся параметром маршрута (`BattleLaunchConfig.PARAM_KEY`). Поля: `player_hero`, `opponent_hero`, `player_deck`, `opponent_deck`, `ai_difficulty` (`AiDifficulty.Level`), `rng_seed`. `technical_dev_config(card_source)` (и совместимый `default_config`) строит только временную техническую фикстуру, не продуктовый preset. Prebattle всегда передаёт конфигурацию.
+`BattleLaunchConfig` (`scripts/battle/battle_launch_config.gd`) — DTO для запуска матча. Передаётся параметром маршрута (`BattleLaunchConfig.PARAM_KEY`). Поля: `player_hero`, `opponent_hero`, `player_deck`, `opponent_deck`, `ai_difficulty` (`AiDifficulty.Level`), `rng_seed`. `technical_dev_config(card_source)` (и совместимый `default_config`) строит только dev/test fixture, не продуктовый preset. Начиная со Stage 5 Prebattle всегда передаёт конфигурацию с сохранённой готовой пользовательской колодой; `presentation_options` не влияют на движок.
 
 ### 14.2. BattleSession
 
@@ -439,7 +439,7 @@ UIState machine: `TEST_MODE`, `MULLIGAN`, `PLAYER_IDLE`, `CARD_SELECTED`, `ATTAC
 
 ### 14.4. ResultScreen
 
-`ResultScreen` (`scripts/ui/result_screen.gd`) показывает исход, обоих героев, AI difficulty, движковый turn count и карты; «Повторить бой» создаёт новый seed и новый MatchEngine при сохранении config. «Выбор противника» → PREBATTLE и «Сменить колоду» → DECK_BUILDER — временная техническая маршрутизация до решения Q-14.
+`ResultScreen` (`scripts/ui/result_screen.gd`) показывает исход, обоих героев, AI difficulty, движковый turn count и карты; «Повторить бой» создаёт новый seed и новый MatchEngine при сохранении config. «Выбор противника» → PREBATTLE и «Сменить колоду» → DECK_BUILDER — утверждённые Stage 5 маршруты (Q-14 закрыт).
 
 ### 14.5. Поток данных
 
@@ -461,3 +461,7 @@ SceneRouter.replace_with(RESULT, {outcome, turns, cards_player, cards_ai, launch
    ▼
 ResultScreen ──► «Реванш» → SceneRouter.replace_with(BATTLE, {new_cfg})
 ```
+
+## 15. Stage 5 setup и сохранения
+
+`SaveManager` v2 мигрирует v1 и сохраняет другие поля. `AppState.persist_profile` атомарно пишет нормализованный профиль и только после успешной записи заменяет in-memory копию. `UserDeck` содержит ID, имя, hero ID и card IDs; `DeckValidator` определяет статус готовности. Hero Select меняет выбранного героя и отключает несовместимую выбранную колоду, не затрагивая её запись. Collection и Deck Builder используют загруженный `CardDatabase` и общий `CardDetailOverlay`. Prebattle берёт готовую выбранную колоду, выбирает противника/сложность и передаёт `BattleLaunchConfig` в существующий `BattleSession`. Противнику временно создаётся внутренняя техническая колода. Подробности: [DECKS_AND_COLLECTION.md](DECKS_AND_COLLECTION.md).
