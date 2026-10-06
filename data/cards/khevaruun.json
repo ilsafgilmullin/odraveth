@@ -1,0 +1,239 @@
+{
+	"cards": [
+		{
+			"id": "khevaruun_aegis_hound",
+			"name_en": "Aegis Hound",
+			"name_ru": "Гончая Эгиды",
+			"faction": "KHEVARUUN",
+			"type": "CREATURE",
+			"rarity": "COMMON",
+			"cost": 1,
+			"deck_limit": 2,
+			"attack": 1,
+			"health": 2,
+			"armor": 1,
+			"rules_text_ru": "",
+			"effects": []
+		},
+		{
+			"id": "khevaruun_shieldroot",
+			"name_en": "Shieldroot",
+			"name_ru": "Щитокорень",
+			"faction": "KHEVARUUN",
+			"type": "CREATURE",
+			"rarity": "COMMON",
+			"cost": 2,
+			"deck_limit": 2,
+			"attack": 2,
+			"health": 3,
+			"armor": 1,
+			"rules_text_ru": "Когда его броня полностью уничтожена, получает +1 к атаке до конца хода.",
+			"effects": [
+				{
+					"effect_id": "armor_broken_attack",
+					"trigger": "SELF_ARMOR_DEPLETED",
+					"actions": [
+						{
+							"type": "MODIFY_STATS",
+							"target": "SELF",
+							"attack": 1,
+							"duration": "END_OF_TURN"
+						}
+					]
+				}
+			]
+		},
+		{
+			"id": "khevaruun_ironwarden",
+			"name_en": "Ironwarden",
+			"name_ru": "Железный хранитель",
+			"faction": "KHEVARUUN",
+			"type": "CREATURE",
+			"rarity": "RARE",
+			"cost": 3,
+			"deck_limit": 2,
+			"attack": 2,
+			"health": 4,
+			"armor": 2,
+			"rules_text_ru": "Провокация.",
+			"effects": [
+				{
+					"effect_id": "provoke",
+					"keyword": "PROVOKE",
+					"trigger": "STATIC",
+					"actions": []
+				}
+			]
+		},
+		{
+			"id": "khevaruun_platecaller",
+			"name_en": "Platecaller",
+			"name_ru": "Призыватель лат",
+			"faction": "KHEVARUUN",
+			"type": "CREATURE",
+			"rarity": "RARE",
+			"cost": 4,
+			"deck_limit": 2,
+			"attack": 4,
+			"health": 4,
+			"armor": 1,
+			"rules_text_ru": "Вход в бой: другое выбранное союзное существо получает +1 брони.",
+			"effects": [
+				{
+					"effect_id": "enter_battle_armor",
+					"trigger": "ENTER_BATTLE",
+					"actions": [
+						{
+							"type": "MODIFY_STATS",
+							"target": "CHOSEN_OTHER_ALLY_CREATURE",
+							"armor": 1,
+							"duration": "NOT_STATED"
+						}
+					]
+				}
+			]
+		},
+		{
+			"id": "khevaruun_wallforged",
+			"name_en": "Wallforged",
+			"name_ru": "Стенокованный",
+			"faction": "KHEVARUUN",
+			"type": "CREATURE",
+			"rarity": "LEGENDARY",
+			"cost": 7,
+			"deck_limit": 1,
+			"attack": 5,
+			"health": 7,
+			"armor": 3,
+			"rules_text_ru": "Провокация. Когда теряет последнюю единицу брони, восстанавливает 1 броню. Максимум 1 раз за ход.",
+			"effects": [
+				{
+					"effect_id": "provoke",
+					"keyword": "PROVOKE",
+					"trigger": "STATIC",
+					"actions": []
+				},
+				{
+					"effect_id": "armor_reforge",
+					"trigger": "SELF_ARMOR_DEPLETED",
+					"limits": {
+						"per_turn": 1
+					},
+					"actions": [
+						{
+							"type": "RESTORE_ARMOR",
+							"target": "SELF",
+							"amount": 1
+						}
+					]
+				}
+			]
+		},
+		{
+			"id": "khevaruun_temper_rite",
+			"name_en": "Temper Rite",
+			"name_ru": "Обряд закалки",
+			"faction": "KHEVARUUN",
+			"type": "SPELL",
+			"rarity": "COMMON",
+			"cost": 2,
+			"deck_limit": 2,
+			"rules_text_ru": "Выбранное союзное существо получает +2 брони. Максимум брони, получаемой от этой карты, — 4.",
+			"effects": [
+				{
+					"effect_id": "temper_rite",
+					"trigger": "ON_PLAY",
+					"actions": [
+						{
+							"type": "MODIFY_STATS",
+							"target": "CHOSEN_ALLY_CREATURE",
+							"armor": 2,
+							"duration": "NOT_STATED",
+							"armor_cap_from_this_card": 4
+						}
+					]
+				}
+			]
+		},
+		{
+			"id": "khevaruun_iron_memory",
+			"name_en": "Iron Memory",
+			"name_ru": "Железная память",
+			"faction": "KHEVARUUN",
+			"type": "SPELL",
+			"rarity": "RARE",
+			"cost": 3,
+			"deck_limit": 2,
+			"rules_text_ru": "Восстановите выбранному союзному существу всю потерянную броню. Если его броня уже полная, вместо этого оно получает +2 здоровья.",
+			"effects": [
+				{
+					"effect_id": "iron_memory",
+					"trigger": "ON_PLAY",
+					"actions": [
+						{
+							"type": "MODIFY_STATS",
+							"target": "CHOSEN_ALLY_CREATURE",
+							"health": 2,
+							"duration": "NOT_STATED",
+							"conditions": [
+								{
+									"type": "TARGET_ARMOR_FULL",
+									"target": "CHOSEN_ALLY_CREATURE"
+								}
+							]
+						},
+						{
+							"type": "RESTORE_ARMOR",
+							"target": "CHOSEN_ALLY_CREATURE",
+							"all_lost": true,
+							"conditions": [
+								{
+									"type": "TARGET_ARMOR_NOT_FULL",
+									"target": "CHOSEN_ALLY_CREATURE"
+								}
+							]
+						}
+					]
+				}
+			]
+		},
+		{
+			"id": "khevaruun_bastion_core",
+			"name_en": "Bastion Core",
+			"name_ru": "Сердце бастиона",
+			"faction": "KHEVARUUN",
+			"type": "ARTIFACT",
+			"rarity": "EPIC",
+			"cost": 4,
+			"deck_limit": 2,
+			"charges": 3,
+			"rules_text_ru": "Первое существо, которое вы разыгрываете в свой ход, получает +1 брони и расходует 1 заряд.",
+			"effects": [
+				{
+					"effect_id": "first_creature_armor",
+					"trigger": "ALLY_CREATURE_PLAYED",
+					"conditions": [
+						{
+							"type": "IS_OWN_TURN"
+						}
+					],
+					"limits": {
+						"per_turn": 1
+					},
+					"actions": [
+						{
+							"type": "MODIFY_STATS",
+							"target": "PLAYED_CREATURE",
+							"armor": 1,
+							"duration": "NOT_STATED"
+						},
+						{
+							"type": "SPEND_CHARGES",
+							"amount": 1
+						}
+					]
+				}
+			]
+		}
+	]
+}

@@ -100,7 +100,15 @@ godot --headless --path . --scene res://tests/smoke_test.tscn
 
 Изменение утверждённого UI flow — только по заданию пользователя (`PRODUCT_BASELINE.md`).
 
-## 7. Сохранения при разработке
+## 7. Данные карт
+
+- Канонический источник — `data/cards/<фракция>.json`. Формат и словарь эффектов — `ARCHITECTURE.md` §8.
+- Карты, их названия, характеристики и тексты меняются **только** по решению пользователя (`PRODUCT_BASELINE.md` §6.6).
+- Любое изменение карты делается одновременно в трёх местах: JSON, `tests/approved_cards.gd` и таблица в `PRODUCT_BASELINE.md`. Иначе тесты упадут — так и задумано.
+- После правки запустите `tests/run_tests.sh`. Если данные не проходят проверку, лог перечисляет все проблемы с путём до поля, например `CardDatabase: res://data/cards/dumoryss.json: cards[7] (dumoryss_nullglass): effects[0].actions[0]: unknown action …`.
+- Фикстуры для негативных проверок пишутся только в тестах (во временный каталог `user://`), никогда в `data/cards`.
+
+## 8. Сохранения при разработке
 
 `user://` на десктопе:
 
@@ -114,7 +122,7 @@ godot --headless --path . --scene res://tests/smoke_test.tscn
 
 При изменении формата сохранения: увеличить `SaveManager.CURRENT_SAVE_VERSION`, добавить `_migrate_from_vN`, добавить проверку миграции в smoke-тест, записать решение в `DECISIONS.md`.
 
-## 8. Android
+## 9. Android
 
 На Stage 0 Android-экспорт **не настроен** и APK не собирается. Отдельная задача Android build должна:
 
@@ -124,7 +132,7 @@ godot --headless --path . --scene res://tests/smoke_test.tscn
 - проверить на устройстве: полноэкранный/immersive режим, edge-to-edge, safe area с вырезом, переворот на 180°, системную кнопку «Назад»;
 - **никогда** не коммитить keystore, пароли и `local.properties` (закрыто `.gitignore`).
 
-## 9. Git
+## 10. Git
 
 - Не работать напрямую в `main`, не делать merge в `main` без решения владельца репозитория.
 - Каждая задача — отдельная ветка и PR.

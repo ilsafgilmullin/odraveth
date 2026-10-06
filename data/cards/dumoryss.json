@@ -1,0 +1,245 @@
+{
+	"cards": [
+		{
+			"id": "dumoryss_veilbreaker",
+			"name_en": "Veilbreaker",
+			"name_ru": "Разрушитель Завесы",
+			"faction": "DUMORYSS",
+			"type": "CREATURE",
+			"rarity": "COMMON",
+			"cost": 1,
+			"deck_limit": 2,
+			"attack": 1,
+			"health": 3,
+			"armor": 0,
+			"rules_text_ru": "Когда противник разыгрывает карту, стоимость которой была увеличена вами, получает +1 к атаке до конца вашего следующего хода.",
+			"effects": [
+				{
+					"effect_id": "taxed_card_attack",
+					"trigger": "OPPONENT_PLAYS_CARD",
+					"conditions": [
+						{
+							"type": "PLAYED_CARD_COST_INCREASED_BY_YOU"
+						}
+					],
+					"actions": [
+						{
+							"type": "MODIFY_STATS",
+							"target": "SELF",
+							"attack": 1,
+							"duration": "END_OF_YOUR_NEXT_TURN"
+						}
+					]
+				}
+			]
+		},
+		{
+			"id": "dumoryss_thoughtscar",
+			"name_en": "Thoughtscar",
+			"name_ru": "Шрам разума",
+			"faction": "DUMORYSS",
+			"type": "CREATURE",
+			"rarity": "COMMON",
+			"cost": 2,
+			"deck_limit": 2,
+			"attack": 2,
+			"health": 2,
+			"armor": 0,
+			"rules_text_ru": "Вход в бой: следующая карта противника стоимостью 3 или меньше стоит на 1 больше.",
+			"effects": [
+				{
+					"effect_id": "enter_battle_cost_increase",
+					"trigger": "ENTER_BATTLE",
+					"actions": [
+						{
+							"type": "INCREASE_NEXT_OPPONENT_CARD_COST",
+							"amount": 1,
+							"only_cost_at_most": 3
+						}
+					]
+				}
+			]
+		},
+		{
+			"id": "dumoryss_null_seer",
+			"name_en": "Null Seer",
+			"name_ru": "Провидец Пустоты",
+			"faction": "DUMORYSS",
+			"type": "CREATURE",
+			"rarity": "RARE",
+			"cost": 3,
+			"deck_limit": 2,
+			"attack": 2,
+			"health": 4,
+			"armor": 0,
+			"rules_text_ru": "Каждый раз, когда противник платит увеличенную вами стоимость карты, получает постоянный +1 к атаке. Максимум 1 раз за ход.",
+			"effects": [
+				{
+					"effect_id": "increased_cost_paid",
+					"trigger": "OPPONENT_PAYS_INCREASED_COST",
+					"limits": {
+						"per_turn": 1
+					},
+					"actions": [
+						{
+							"type": "MODIFY_STATS",
+							"target": "SELF",
+							"attack": 1,
+							"duration": "PERMANENT"
+						}
+					]
+				}
+			]
+		},
+		{
+			"id": "dumoryss_rift_scribe",
+			"name_en": "Rift Scribe",
+			"name_ru": "Писец Разлома",
+			"faction": "DUMORYSS",
+			"type": "CREATURE",
+			"rarity": "RARE",
+			"cost": 4,
+			"deck_limit": 2,
+			"attack": 3,
+			"health": 5,
+			"armor": 0,
+			"rules_text_ru": "Вход в бой: выбранное вражеское существо получает Отложение. Оно не может атаковать во время следующего хода своего владельца.",
+			"effects": [
+				{
+					"effect_id": "enter_battle_deferral",
+					"trigger": "ENTER_BATTLE",
+					"actions": [
+						{
+							"type": "GRANT_KEYWORD",
+							"target": "CHOSEN_ENEMY_CREATURE",
+							"keyword": "DEFERRAL",
+							"duration": "OWNER_NEXT_TURN"
+						}
+					]
+				}
+			]
+		},
+		{
+			"id": "dumoryss_echo_leech",
+			"name_en": "Echo Leech",
+			"name_ru": "Пиявка эха",
+			"faction": "DUMORYSS",
+			"type": "CREATURE",
+			"rarity": "LEGENDARY",
+			"cost": 6,
+			"deck_limit": 1,
+			"attack": 4,
+			"health": 6,
+			"armor": 1,
+			"rules_text_ru": "После того как противник разыгрывает заклинание, первая такая карта за ход создаёт в вашей руке Эхо — копию этого заклинания. Стоимость Эхо не может быть меньше 1. Эхо исчезает из руки в конце вашего следующего хода.",
+			"effects": [
+				{
+					"effect_id": "echo",
+					"trigger": "OPPONENT_PLAYS_CARD",
+					"conditions": [
+						{
+							"type": "PLAYED_CARD_TYPE",
+							"card_type": "SPELL"
+						}
+					],
+					"limits": {
+						"per_turn": 1
+					},
+					"actions": [
+						{
+							"type": "CREATE_ECHO_IN_HAND",
+							"min_cost": 1,
+							"expires": "END_OF_YOUR_NEXT_TURN"
+						}
+					]
+				}
+			]
+		},
+		{
+			"id": "dumoryss_fractured_moment",
+			"name_en": "Fractured Moment",
+			"name_ru": "Расколотый миг",
+			"faction": "DUMORYSS",
+			"type": "SPELL",
+			"rarity": "COMMON",
+			"cost": 2,
+			"deck_limit": 2,
+			"rules_text_ru": "Наложите Отложение на выбранное вражеское существо. Оно не может атаковать во время следующего хода своего владельца.",
+			"effects": [
+				{
+					"effect_id": "fractured_moment",
+					"trigger": "ON_PLAY",
+					"actions": [
+						{
+							"type": "GRANT_KEYWORD",
+							"target": "CHOSEN_ENEMY_CREATURE",
+							"keyword": "DEFERRAL",
+							"duration": "OWNER_NEXT_TURN"
+						}
+					]
+				}
+			]
+		},
+		{
+			"id": "dumoryss_veil_tax",
+			"name_en": "Veil Tax",
+			"name_ru": "Дань Завесе",
+			"faction": "DUMORYSS",
+			"type": "SPELL",
+			"rarity": "RARE",
+			"cost": 3,
+			"deck_limit": 2,
+			"rules_text_ru": "Следующая карта противника стоит на 2 больше. Максимальная стоимость карты — 10.",
+			"effects": [
+				{
+					"effect_id": "veil_tax",
+					"trigger": "ON_PLAY",
+					"actions": [
+						{
+							"type": "INCREASE_NEXT_OPPONENT_CARD_COST",
+							"amount": 2,
+							"cost_cap": 10
+						}
+					]
+				}
+			]
+		},
+		{
+			"id": "dumoryss_nullglass",
+			"name_en": "Nullglass",
+			"name_ru": "Пустостекло",
+			"faction": "DUMORYSS",
+			"type": "ARTIFACT",
+			"rarity": "EPIC",
+			"cost": 4,
+			"deck_limit": 2,
+			"charges": 3,
+			"rules_text_ru": "Первую карту противника стоимостью 4 или больше за ход: её стоимость увеличивается на 1, затем расходуется 1 заряд.",
+			"effects": [
+				{
+					"effect_id": "nullglass",
+					"trigger": "OPPONENT_PLAYS_CARD",
+					"conditions": [
+						{
+							"type": "PLAYED_CARD_COST_AT_LEAST",
+							"value": 4
+						}
+					],
+					"limits": {
+						"per_turn": 1
+					},
+					"actions": [
+						{
+							"type": "INCREASE_PLAYED_CARD_COST",
+							"amount": 1
+						},
+						{
+							"type": "SPEND_CHARGES",
+							"amount": 1
+						}
+					]
+				}
+			]
+		}
+	]
+}
