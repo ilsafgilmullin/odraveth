@@ -152,6 +152,16 @@ func _test_static_anti_cheat_guard() -> void:
 			if source.contains(token):
 				offenders.append("%s: %s" % [file_name, token])
 	_ok(offenders.is_empty(), "anti-cheat source audit: scripts/ai uses no private state/snapshot/RNG %s" % [offenders])
+	var card_id_offenders := PackedStringArray()
+	for file_name in DirAccess.get_files_at("res://scripts/ai"):
+		if file_name.get_extension() != "gd":
+			continue
+		var source := FileAccess.get_file_as_string("res://scripts/ai".path_join(file_name))
+		for card_id: StringName in _cards.get_card_ids():
+			if source.contains(String(card_id)):
+				card_id_offenders.append("%s: %s" % [file_name, card_id])
+	_ok(card_id_offenders.is_empty(),
+		"AI architecture: scripts/ai contains no hardcoded approved card_id branches %s" % [card_id_offenders])
 
 
 func _test_decision_determinism() -> void:
