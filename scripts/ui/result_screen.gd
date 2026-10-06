@@ -47,5 +47,5 @@ func _rematch() -> void:
 	var new_cfg := BattleLaunchConfig.create(
 		prev.player_hero, prev.player_deck,
 		prev.opponent_hero, prev.opponent_deck,
-		prev.ai_difficulty)
+		prev.ai_difficulty, 0, prev.presentation_options)
 	SceneRouter.replace_with(Routes.BATTLE, {BattleLaunchConfig.PARAM_KEY: new_cfg})

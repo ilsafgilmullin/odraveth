@@ -3,6 +3,7 @@ extends RefCounted
 ## Match launch parameters passed to BattleScene via route params.
 
 const PARAM_KEY := "launch_config"
+static var _last_generated_seed: int = 0
 
 var player_hero: StringName = &""
 var player_deck: Array = []
@@ -11,10 +12,12 @@ var opponent_deck: Array = []
 @warning_ignore("enum_variable_without_default")
 var ai_difficulty: AiDifficulty.Level
 var rng_seed: int = 0
+var presentation_options: Dictionary = {}
 
 
 static func create(p_hero: StringName, p_deck: Array, o_hero: StringName, o_deck: Array,
-		difficulty: AiDifficulty.Level, seed_value: int = 0) -> BattleLaunchConfig:
+		difficulty: AiDifficulty.Level, seed_value: int = 0,
+		presentation: Dictionary = {}) -> BattleLaunchConfig:
 	var cfg := BattleLaunchConfig.new()
 	cfg.player_hero = p_hero
 	cfg.player_deck = p_deck.duplicate()
@@ -22,7 +25,13 @@ static func create(p_hero: StringName, p_deck: Array, o_hero: StringName, o_deck
 	cfg.opponent_deck = o_deck.duplicate()
 	cfg.ai_difficulty = difficulty
 	cfg.rng_seed = seed_value if seed_value != 0 else _generate_seed()
+	cfg.presentation_options = presentation.duplicate(true)
 	return cfg
+
+
+## Temporary internal AI deck source, never shown as an approved preset.
+static func technical_opponent_deck(hero_id: StringName, card_source: Object) -> Array:
+	return _build_deck(hero_id, card_source)
 
 
 ## Temporary technical launch fixture until player decks and prebattle choices
@@ -63,4 +72,8 @@ static func _build_deck(hero_id: StringName, card_source: Object) -> Array:
 
 
 static func _generate_seed() -> int:
-	return int(Time.get_unix_time_from_system() * 1000.0) ^ Time.get_ticks_msec()
+	var candidate := int(Time.get_unix_time_from_system() * 1000000.0) ^ Time.get_ticks_usec()
+	if candidate <= _last_generated_seed:
+		candidate = _last_generated_seed + 1
+	_last_generated_seed = candidate
+	return candidate

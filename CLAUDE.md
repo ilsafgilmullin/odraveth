@@ -27,7 +27,8 @@ Source of truth по продукту: [`docs/PRODUCT_BASELINE.md`](docs/PRODUCT
 - Эффекты карт — декларативные данные из закрытого словаря `EffectVocabulary`; их исполняет MatchEngine по правилам PRODUCT_BASELINE §5–6. Не дублировать карты в коде движка и не придумывать правила, которых нет в baseline.
 - `MatchEngine` — не autoload: один экземпляр — один матч. Правила матча — только в `scripts/battle/`; UI и ИИ получают проверку и допустимые команды от движка и не дублируют её.
 - Production AI в scripts/ai/ получает состояние только через MatchEngine.get_observation(); прямые .state, .snapshot(), ._rng, ._resolver запрещены.
-- Боевой UI получает публичные наблюдения, цели и доступность команд через `BattleSession`; `BattleLaunchConfig.technical_dev_config()` существует только для технического Stage 4 запуска и не означает утверждённую колоду.
+- Боевой UI получает публичные наблюдения, цели и доступность команд через `BattleSession`; `BattleLaunchConfig.technical_dev_config()` существует только для dev/test; обычный Prebattle запускает сохранённый UserDeck игрока. Временная генерация применяется только к внутренней колоде ИИ.
+- Готовность пользовательской колоды определяет только `DeckValidator`, а сохранения v2 содержат только plain data; Q-02/Q-14/Q-16 закрыты, Q-15 открыт.
 - AI выбирает только из get_legal_commands() и выполняет команды только через MatchEngine. Нельзя использовать global RNG, hidden opponent hand, identity/order колод или future draw/random results.
 - Различие NOVICE / TACTICIAN / STRATEGIST — только scoring quality; tie-break всегда canonical deterministic.
 - Вся случайность матча — через инжектируемый `MatchRng`; глобальные `randi`/`randf`/`randomize`/`Array.shuffle` в коде матча запрещены. Отвергнутая команда не должна менять состояние.
@@ -46,7 +47,8 @@ Source of truth по продукту: [`docs/PRODUCT_BASELINE.md`](docs/PRODUCT
 | [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) | Устройство проекта, autoload, навигация, сохранения, данные, MatchEngine |
 | [`docs/CARD_TEST_COVERAGE.md`](docs/CARD_TEST_COVERAGE.md) | Поведенческие тесты каждой из 40 карт |
 | [docs/AI_DESIGN.md](docs/AI_DESIGN.md) | Stage 3 AI boundary, scoring, deterministic loop и QA |
-| [docs/BATTLE_UI.md](docs/BATTLE_UI.md) | Stage 4 Battle flow, состояния UI, презентация AI и Result |
+| [docs/BATTLE_UI.md](docs/BATTLE_UI.md) | Battle flow, состояния UI, презентация AI и Result |
+| [docs/DECKS_AND_COLLECTION.md](docs/DECKS_AND_COLLECTION.md) | Пользовательские колоды, коллекция, сохранения и Prebattle |
 | [`docs/DEVELOPMENT.md`](docs/DEVELOPMENT.md) | Установка Godot, запуск, проверки, соглашения |
 | [`docs/DECISIONS.md`](docs/DECISIONS.md) | Журнал технических решений |
 

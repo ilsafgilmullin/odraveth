@@ -23,7 +23,7 @@ enum LoadStatus {
 	UNSUPPORTED_VERSION, ## Save is from a newer game version; defaults returned, writing blocked.
 }
 
-const CURRENT_SAVE_VERSION := 1
+const CURRENT_SAVE_VERSION := 2
 const VERSION_KEY := "save_version"
 const DEFAULT_SAVE_PATH := "user://odraveth_save.json"
 const TEMP_SUFFIX := ".tmp"
@@ -40,7 +40,7 @@ func _init(path: String = DEFAULT_SAVE_PATH) -> void:
 
 
 static func create_default_data() -> Dictionary:
-	return {VERSION_KEY: CURRENT_SAVE_VERSION}
+	return PlayerSetupData.normalized({VERSION_KEY: CURRENT_SAVE_VERSION})
 
 
 ## Reads the save. Always returns usable data: the stored profile (migrated to
@@ -81,7 +81,7 @@ func load_data() -> Dictionary:
 		last_load_status = LoadStatus.CORRUPTED
 		return create_default_data()
 	last_load_status = LoadStatus.OK
-	return data
+	return PlayerSetupData.normalized(data)
 
 
 ## Writes [param data] atomically, stamped with [constant CURRENT_SAVE_VERSION].
@@ -111,7 +111,7 @@ func write_data(data: Dictionary) -> Error:
 ## Upgrades [param data] from [param from_version] to [param to_version] one step
 ## at a time. The step from version N to N+1 is a method
 ## [code]_migrate_from_vN(data: Dictionary) -> Dictionary[/code].
-## There are no steps yet: save_version 1 is the first format.
+## Version 1 was the foundation-only profile.
 ## Returns an empty Dictionary if a step is missing.
 func migrate(data: Dictionary, from_version: int, to_version: int = CURRENT_SAVE_VERSION) -> Dictionary:
 	var result := data.duplicate(true)
@@ -125,6 +125,10 @@ func migrate(data: Dictionary, from_version: int, to_version: int = CURRENT_SAVE
 		version += 1
 	result[VERSION_KEY] = version
 	return result
+
+
+func _migrate_from_v1(data: Dictionary) -> Dictionary:
+	return PlayerSetupData.normalized(data)
 
 
 func _read_version(parsed: Variant) -> int:

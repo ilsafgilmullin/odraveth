@@ -14,6 +14,8 @@ extends Node
 const CardDatabaseTests := preload("res://tests/card_database_tests.gd")
 const CardDatabaseScript := preload("res://scripts/cards/card_database.gd")
 const BattleUiTests := preload("res://tests/battle_ui_tests.gd")
+const PlayerSetupTests := preload("res://tests/player_setup_tests.gd")
+const PlayerSetupUiTests := preload("res://tests/player_setup_ui_tests.gd")
 const ENGINE_TEST_MODULES := [
 	["MatchEngine core rules", preload("res://tests/engine/engine_core_tests.gd")],
 	["Hero abilities", preload("res://tests/engine/hero_power_tests.gd")],
@@ -26,7 +28,7 @@ const ENGINE_TEST_MODULES := [
 ]
 const EXPECTED_AUTOLOADS: Array[String] = ["EventBus", "SceneRouter", "AppState", "CardDatabase"]
 const MAIN_MENU_BUTTONS := [
-	["PlayButton", "Играть", Routes.PREBATTLE],
+	["PlayButton", "Играть", Routes.DECK_BUILDER],
 	["CollectionButton", "Коллекция", Routes.COLLECTION],
 	["DecksButton", "Колоды", Routes.DECK_BUILDER],
 	["HeroesButton", "Герои", Routes.HERO_SELECT],
@@ -87,12 +89,16 @@ func _run() -> void:
 	_test_cyrillic_font()
 	_test_save_manager()
 	_test_card_database()
+	_section("Player setup data and persistence")
+	PlayerSetupTests.new(_check, CardDatabaseScript.new()).run()
 	_test_match_engine()
 	_section("BattleScene interactive integration")
 	var ui_cards: Node = CardDatabaseScript.new()
 	ui_cards.load_directory()
 	await BattleUiTests.new(_check, _expect_errors, ui_cards, get_tree()).run()
 	ui_cards.free()
+	_section("Stage 5 interactive setup screens and responsive layout")
+	await PlayerSetupUiTests.new(_check, get_tree()).run()
 	await _test_navigation()
 	_remove_temp_dir()
 	_test_no_unexpected_engine_errors()
@@ -251,7 +257,7 @@ func _test_save_manager() -> void:
 	var migrated := MigratingSaveManager.new(path).migrate({SaveManager.VERSION_KEY: 1}, 1, 2)
 	_check(migrated.get("migrated_field") == true and migrated[SaveManager.VERSION_KEY] == 2,
 		"migration steps run in order")
-	_check(SaveManager.new(path).migrate({SaveManager.VERSION_KEY: 1}, 1, 2).is_empty(),
+	_check(SaveManager.new(path).migrate({SaveManager.VERSION_KEY: 2}, 2, 3).is_empty(),
 		"missing migration step fails safely")
 	_expect_errors(false)
 
@@ -273,6 +279,8 @@ func _test_match_engine() -> void:
 func _test_navigation() -> void:
 	_section("navigation")
 	EventBus.route_changed.connect(_on_route_changed)
+	AppState._save_manager = SaveManager.new(TEMP_DIR.path_join("setup_profile.json"))
+	AppState.is_initialized = false
 
 	SceneRouter.reset_to(Routes.BOOT)
 	_check(await _wait_for_route(Routes.MAIN_MENU), "Boot opens the main menu")
@@ -299,24 +307,54 @@ func _test_navigation() -> void:
 		SceneRouter.go_back()
 		_check(await _wait_for_route(Routes.MAIN_MENU), "back returns to the main menu")
 
-	# Walk the approved flow with the placeholder "next" buttons.
+	# Fresh save: choose hero, build and persist an exact 30-card deck, then launch.
 	SceneRouter.go_to(Routes.HERO_SELECT)
-	await _wait_for_route(Routes.HERO_SELECT)
-	for expected in [Routes.COLLECTION, Routes.DECK_BUILDER, Routes.PREBATTLE, Routes.BATTLE]:
-		var next_button := _find_button("NextButton")
-		if expected == Routes.BATTLE:
-			_check(next_button != null and next_button.text == "Начать бой", "prebattle offers 'Начать бой'")
-		if next_button == null:
-			_check(false, "NextButton exists on %s" % SceneRouter.current_route)
-			break
-		next_button.pressed.emit()
-		_check(await _wait_for_route(expected), "flow reaches %s" % Routes.title(expected))
+	_check(await _wait_for_route(Routes.HERO_SELECT), "flow reaches Hero Select")
+	var hero_screen := get_tree().current_scene as HeroSelectScreen
+	_check(hero_screen.hero_buttons.size() == 4, "Hero Select presents four approved heroes")
+	hero_screen.hero_buttons[HeroCatalog.KEZHARYN].pressed.emit()
+	_find_button("ConfirmHeroButton").pressed.emit()
+	_check(await _wait_for_route(Routes.MAIN_MENU), "hero confirmation returns to menu")
+	_check(AppState.profile["selected_hero_id"] == String(HeroCatalog.KEZHARYN), "hero selection persisted")
+	_find_button("PlayButton").pressed.emit()
+	_check(await _wait_for_route(Routes.DECK_BUILDER), "Play without ready deck opens Deck Builder")
+	var editor := get_tree().current_scene as DeckBuilderScreen
+	var exact_cards := BattleLaunchConfig.technical_opponent_deck(HeroCatalog.KEZHARYN, CardDatabase)
+	_check(exact_cards.size() == GameRules.DECK_SIZE, "test builds a validator-legal 30-card set")
+	for id: StringName in exact_cards:
+		var add := editor.find_child("Add_%s" % id, true, false) as Button
+		if add != null:
+			add.pressed.emit()
+	_check(editor.draft.is_ready(CardDatabase) and editor.draft.card_ids.size() == 30,
+		"UI add actions produce validator-ready 30/30 deck")
+	var selected_id: String = editor.draft.id
+	_find_button("SaveDeckButton").pressed.emit()
+	_check(AppState.profile["selected_deck_id"] == selected_id, "first ready deck auto selected")
+	SceneRouter.reset_to(Routes.MAIN_MENU)
+	await _wait_for_route(Routes.MAIN_MENU)
+	_find_button("PlayButton").pressed.emit()
+	_check(await _wait_for_route(Routes.PREBATTLE), "Play with selected ready deck opens Prebattle")
+	var prebattle := get_tree().current_scene as PrebattleScreen
+	_check(not prebattle.start_button.disabled and prebattle.deck_summary.text.contains("30/30"),
+		"Prebattle shows selected ready deck")
+	prebattle.opponent_buttons[HeroCatalog.TAZHYRION].pressed.emit()
+	prebattle.difficulty.select(2)
+	prebattle.difficulty.item_selected.emit(2)
+	_check(prebattle.start_button.text == "НАЧАТЬ БОЙ", "prebattle offers 'Начать бой'")
+	prebattle.start_button.pressed.emit()
+	_check(await _wait_for_route(Routes.BATTLE), "flow reaches Battle with saved deck")
 	if SceneRouter.current_route == Routes.BATTLE:
 		var launched := get_tree().current_scene
 		_check(launched.route_params.get(BattleLaunchConfig.PARAM_KEY) is BattleLaunchConfig,
 			"normal Prebattle passes a real BattleLaunchConfig")
 		_check(launched._ui_state == launched.UIState.MULLIGAN,
 			"normal Battle route opens MULLIGAN rather than TEST_MODE")
+		_check(launched._session.config.player_deck.map(func(id: Variant) -> String: return String(id)) == exact_cards.map(func(id: Variant) -> String: return String(id))
+			and launched._session.config.player_hero == HeroCatalog.KEZHARYN,
+			"E2E: exact saved player deck and selected hero reach BattleSession")
+		_check(launched._session.config.opponent_hero == HeroCatalog.TAZHYRION
+			and launched._session.config.ai_difficulty == AiDifficulty.Level.STRATEGIST,
+			"E2E: chosen opponent and AI difficulty reach BattleSession")
 		var old_seed: int = launched._session.config.rng_seed
 		var player_name: String = HeroCatalog.HEROES[launched._session.config.player_hero]["name_ru"]
 		var opponent_name: String = HeroCatalog.HEROES[launched._session.config.opponent_hero]["name_ru"]
@@ -330,7 +368,7 @@ func _test_navigation() -> void:
 		var result_scene := get_tree().current_scene
 		var stats := result_scene.find_child("ResultStats", true, false) as Label
 		_check(stats != null and stats.text.contains("Ходов: 3") and stats.text.contains("2 (вы) / 1 (ИИ)")
-			and stats.text.contains("Новичок")
+			and stats.text.contains("Стратег")
 			and stats.text.contains(player_name) and stats.text.contains(opponent_name),
 			"Result displays both heroes, authoritative turns and difficulty (%s)" % (stats.text if stats != null else "missing"))
 		_check(_find_button("OpponentButton") != null and _find_button("DeckButton") != null
@@ -349,11 +387,11 @@ func _test_navigation() -> void:
 		SceneRouter.replace_with(Routes.RESULT, return_params)
 		await _wait_for_route(Routes.RESULT)
 		_find_button("OpponentButton").pressed.emit()
-		_check(await _wait_for_route(Routes.PREBATTLE), "Result opponent action uses technical Prebattle route")
+		_check(await _wait_for_route(Routes.PREBATTLE), "Result opponent action uses persisted Prebattle")
 		SceneRouter.replace_with(Routes.RESULT, return_params)
 		await _wait_for_route(Routes.RESULT)
 		_find_button("DeckButton").pressed.emit()
-		_check(await _wait_for_route(Routes.DECK_BUILDER), "Result deck action uses technical Deck Builder route")
+		_check(await _wait_for_route(Routes.DECK_BUILDER), "Result deck action uses real Deck Builder")
 
 	# Legacy route-without-config smoke coverage is explicit, not the user flow.
 	for outcome: MatchOutcome.Result in MatchOutcome.Result.values():

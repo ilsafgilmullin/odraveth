@@ -34,6 +34,7 @@ var _ai_steps: Array[Dictionary] = []
 var _ai_step_index: int = 0
 var _ai_step_events: Array[Dictionary] = []
 var _presentation_observation: Dictionary = {}
+var _presentation_options: Dictionary = {}
 var _valid_targets: Array[int] = []
 var _mulligan_picks: Array[int] = []
 
@@ -82,6 +83,7 @@ func apply_route_params(params: Dictionary) -> void:
 func _ready() -> void:
 	var cfg: Variant = route_params.get(BattleLaunchConfig.PARAM_KEY)
 	if cfg is BattleLaunchConfig:
+		_presentation_options = (cfg as BattleLaunchConfig).presentation_options.duplicate(true)
 		_build_battle_ui()
 		_start_match(cfg as BattleLaunchConfig)
 	else:
@@ -399,53 +401,16 @@ func _build_shard_overlay() -> void:
 
 
 func _build_detail_overlay() -> void:
-	_detail_overlay = ColorRect.new()
-	_detail_overlay.name = "CardDetailOverlay"
-	_detail_overlay.color = Color(0, 0, 0, 0.88)
-	_detail_overlay.set_anchors_and_offsets_preset(PRESET_FULL_RECT)
-	_detail_overlay.visible = false
+	_detail_overlay = CardDetailOverlay.new()
 	add_child(_detail_overlay)
-	var panel := VBoxContainer.new()
-	panel.name = "CardDetailPanel"
-	panel.set_anchors_and_offsets_preset(PRESET_FULL_RECT)
-	panel.offset_left = 96
-	panel.offset_top = 72
-	panel.offset_right = -96
-	panel.offset_bottom = -72
-	_detail_overlay.add_child(panel)
-	_detail_text = RichTextLabel.new()
-	_detail_text.name = "CardDetailText"
-	_detail_text.bbcode_enabled = false
-	_detail_text.size_flags_vertical = SIZE_EXPAND_FILL
-	_detail_text.add_theme_font_size_override("normal_font_size", 34)
-	panel.add_child(_detail_text)
-	var close_btn := Button.new()
-	close_btn.name = "CardDetailCloseButton"
-	close_btn.text = "Закрыть"
-	close_btn.custom_minimum_size.y = 72
-	close_btn.pressed.connect(func() -> void: _detail_overlay.visible = false)
-	panel.add_child(close_btn)
+	_detail_text = (_detail_overlay as CardDetailOverlay).detail_text
 
 
 func _show_card_detail(card_data: Dictionary) -> void:
 	var definition := CardDatabase.get_card(StringName(str(card_data.get("card_id", ""))))
 	if definition == null:
 		return
-	var keywords: PackedStringArray = []
-	for effect: CardEffectSpec in definition.effects:
-		if not String(effect.keyword).is_empty() and String(effect.keyword) not in keywords:
-			keywords.append(KEYWORD_RU.get(String(effect.keyword), String(effect.keyword)))
-	var stats := ""
-	if definition.card_type == CardEnums.Type.CREATURE:
-		stats = "Атака: %d  Здоровье: %d  Броня: %d\n" % [definition.attack, definition.health, definition.armor]
-	elif definition.card_type == CardEnums.Type.ARTIFACT:
-		stats = "Заряды: %d\n" % definition.charges
-	_detail_text.text = "%s\nСтоимость: %d\nФракция: %s\nРедкость: %s\nТип: %s\n%s%s\nКлючевые слова: %s" % [
-		definition.name_ru, int(card_data.get("current_cost", definition.cost)),
-		Faction.Id.find_key(definition.faction), CardEnums.Rarity.find_key(definition.rarity),
-		CardEnums.Type.find_key(definition.card_type), stats, definition.rules_text_ru,
-		", ".join(keywords)]
-	_detail_overlay.visible = true
+	(_detail_overlay as CardDetailOverlay).show_card(definition, int(card_data.get("current_cost", definition.cost)))
 
 
 func _card_with_info(card_data: Dictionary, card_btn: Button) -> HBoxContainer:
@@ -963,7 +928,8 @@ func _start_ai_turn() -> void:
 
 func _tick_events(delta: float) -> void:
 	_event_timer += delta
-	var delay: float = AI_DELAY if _ui_state == UIState.AI_TURN else EVENT_TIME
+	var delay: float = (AI_DELAY if _ui_state == UIState.AI_TURN else EVENT_TIME) \
+		if _presentation_options.get(PlayerSetupData.ANIMATIONS, true) else 0.001
 	if _event_timer < delay:
 		return
 	_event_timer = 0.0
