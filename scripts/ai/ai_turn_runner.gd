@@ -14,7 +14,8 @@ func _init(ai_controller: AiController, command_limit: int = MAX_AI_COMMANDS_PER
 	max_commands_per_turn = maxi(1, command_limit)
 
 
-func run(engine: MatchEngine, player: int, include_ranked_trace: bool = false) -> Dictionary:
+func run(engine: MatchEngine, player: int, include_ranked_trace: bool = false,
+		after_command: Callable = Callable()) -> Dictionary:
 	var trace := {
 		"player": player,
 		"difficulty": AiDifficulty.code(controller.difficulty),
@@ -57,6 +58,8 @@ func run(engine: MatchEngine, player: int, include_ranked_trace: bool = false) -
 			break
 		(trace["decisions"] as Array).append(decision.to_dictionary(include_ranked_trace))
 		trace["commands_executed"] = int(trace["commands_executed"]) + 1
+		if after_command.is_valid():
+			after_command.call(engine.get_observation(player))
 		if selected_kind == MatchCommand.Kind.MULLIGAN or selected_kind == MatchCommand.Kind.END_TURN:
 			break
 
@@ -74,6 +77,8 @@ func run(engine: MatchEngine, player: int, include_ranked_trace: bool = false) -
 						"guard": true,
 						"selected_command": end_turn.to_dictionary(),
 					})
+					if after_command.is_valid():
+						after_command.call(engine.get_observation(player))
 				else:
 					trace["error"] = "safety END_TURN failed: %s" % result.error
 	return trace
