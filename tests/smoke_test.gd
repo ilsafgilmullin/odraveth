@@ -21,6 +21,7 @@ const ENGINE_TEST_MODULES := [
 	["Determinism, replay and fuzz matches", preload("res://tests/engine/determinism_tests.gd")],
 	["AI observation, policies and deterministic turns", preload("res://tests/ai/ai_tests.gd")],
 	["AI vs AI and stress matches", preload("res://tests/ai/ai_stress_tests.gd")],
+	["Battle session and UI integration", preload("res://tests/battle_session_tests.gd")],
 ]
 const EXPECTED_AUTOLOADS: Array[String] = ["EventBus", "SceneRouter", "AppState", "CardDatabase"]
 const MAIN_MENU_BUTTONS := [

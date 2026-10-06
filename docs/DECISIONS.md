@@ -300,3 +300,17 @@ Placeholder-экраны дополнительно позволяют прой�
 ### D-038 · принято · 2026-10-06 — AI QA harness, stress и mutation testing
 
 Решение: tests/ai/ содержит unit/information-barrier/determinism тесты и QA-only AI-vs-AI harness. Harness не является продуктовым режимом. CI сохраняет Stage 2 mutations и дополнительно временно мутирует no-cheat boundary, deck privacy, tie-break, legal-command guard и turn safety guard; mutation copies восстанавливаются и не коммитятся. Timing benchmark существует только как ручной dev-инструмент и не является CI threshold.
+
+### D-039 · принято · 2026-10-06 — Stage 4: BattleSession, BattleScene и архитектурный барьер
+
+**Контекст:** Stage 4 — полнофункциональный боевой экран с интеграцией Player ↔ MatchEngine ↔ AI. Нужен слой оркестрации, чтобы UI не обращался к внутренним модулям движка напрямую.
+
+**Решение:**
+- `BattleLaunchConfig` — DTO для запуска матча (герои, колоды, сложность, seed). Передаётся параметром маршрута. Статический `default_config()` строит конфигурацию по умолчанию.
+- `BattleSession` — оркестрация одного матча: владеет `MatchEngine`, `AiController`, `AiTurnRunner`. Единственный интерфейс UI к движку; прокси-методы для всех команд и запросов. Счётчики `turn_count`, `cards_played_player`, `cards_played_ai` для статистики.
+- `BattleScene` — программный UI (не `.tscn`-компоновка) с UIState machine: TEST_MODE / MULLIGAN / PLAYER_IDLE / CARD_SELECTED / ATTACKER_SELECTED / HERO_POWER_TARGET / SOUL_SHARD_CHOICE / CHOICE_MODAL / RESOLVING / AI_TURN / MATCH_ENDED. Получает `BattleLaunchConfig` через `apply_route_params`; без него — TEST_MODE (обратная совместимость со smoke-тестом).
+- `ResultScreen` расширен: статистика (ходы, карты), кнопка «Реванш» (создаёт новый матч с новым seed).
+- Архитектурный барьер: `battle_scene.gd` не ссылается на `MatchState`, `MatchResolver`, `PlayerState`, `EffectExecutor`, `CommandValidator`, `AiEvaluator`, `AiMulliganPolicy`, `engine.state`, `_resolver`. Проверяется source-audit интеграционным тестом.
+
+**Почему:** UI, дублирующий правила, — источник рассинхронизаций; единая точка доступа через BattleSession позволяет менять движок и AI без изменения UI. Программная компоновка — потому что финальный дизайн не утверждён (PRODUCT_BASELINE §9).
+**Последствия:** ARCHITECTURE §14. Новый autoload не добавлялся.
