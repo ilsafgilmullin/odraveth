@@ -1,0 +1,71 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/ui/main_menu.gd" id="1_menu"]
+[ext_resource type="Script" path="res://scripts/ui/safe_area_container.gd" id="2_safe"]
+
+[node name="MainMenu" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_menu")
+
+[node name="SafeArea" type="MarginContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("2_safe")
+
+[node name="Center" type="CenterContainer" parent="SafeArea"]
+layout_mode = 2
+
+[node name="Menu" type="VBoxContainer" parent="SafeArea/Center"]
+layout_mode = 2
+theme_override_constants/separation = 16
+
+[node name="Title" type="Label" parent="SafeArea/Center/Menu"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 96
+text = "ODRAVETH"
+horizontal_alignment = 1
+
+[node name="PlayButton" type="Button" parent="SafeArea/Center/Menu"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(640, 112)
+layout_mode = 2
+text = "Играть"
+
+[node name="CollectionButton" type="Button" parent="SafeArea/Center/Menu"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(640, 112)
+layout_mode = 2
+text = "Коллекция"
+
+[node name="DecksButton" type="Button" parent="SafeArea/Center/Menu"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(640, 112)
+layout_mode = 2
+text = "Колоды"
+
+[node name="HeroesButton" type="Button" parent="SafeArea/Center/Menu"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(640, 112)
+layout_mode = 2
+text = "Герои"
+
+[node name="ProgressButton" type="Button" parent="SafeArea/Center/Menu"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(640, 112)
+layout_mode = 2
+text = "Прогресс"
+
+[node name="SettingsButton" type="Button" parent="SafeArea/Center/Menu"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(640, 112)
+layout_mode = 2
+text = "Настройки"
