@@ -32,6 +32,7 @@
 				{
 					"effect_id": "armor_broken_attack",
 					"trigger": "SELF_ARMOR_DEPLETED",
+					"timing": "WHEN",
 					"actions": [
 						{
 							"type": "MODIFY_STATS",
@@ -116,6 +117,7 @@
 				{
 					"effect_id": "armor_reforge",
 					"trigger": "SELF_ARMOR_DEPLETED",
+					"timing": "WHEN",
 					"limits": {
 						"per_turn": 1
 					},
@@ -212,6 +214,7 @@
 				{
 					"effect_id": "first_creature_armor",
 					"trigger": "ALLY_CREATURE_PLAYED",
+					"timing": "WHEN",
 					"conditions": [
 						{
 							"type": "IS_OWN_TURN"

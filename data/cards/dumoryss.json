@@ -17,6 +17,7 @@
 				{
 					"effect_id": "taxed_card_attack",
 					"trigger": "OPPONENT_PLAYS_CARD",
+					"timing": "WHEN",
 					"conditions": [
 						{
 							"type": "PLAYED_CARD_COST_INCREASED_BY_YOU"
@@ -77,6 +78,7 @@
 				{
 					"effect_id": "increased_cost_paid",
 					"trigger": "OPPONENT_PAYS_INCREASED_COST",
+					"timing": "WHEN",
 					"limits": {
 						"per_turn": 1
 					},
@@ -136,6 +138,7 @@
 				{
 					"effect_id": "echo",
 					"trigger": "OPPONENT_PLAYS_CARD",
+					"timing": "AFTER",
 					"conditions": [
 						{
 							"type": "PLAYED_CARD_TYPE",
@@ -219,6 +222,7 @@
 				{
 					"effect_id": "nullglass",
 					"trigger": "OPPONENT_PLAYS_CARD",
+					"timing": "WHEN",
 					"conditions": [
 						{
 							"type": "PLAYED_CARD_COST_AT_LEAST",

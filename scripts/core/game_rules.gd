@@ -2,7 +2,7 @@ class_name GameRules
 extends RefCounted
 ## Approved numeric match and deck rules, docs/PRODUCT_BASELINE.md sections 4-6.
 ##
-## Code-side mirror of the product baseline for the future MatchEngine and deck
+## Code-side mirror of the product baseline for MatchEngine and deck
 ## validation. A value may change only together with PRODUCT_BASELINE.md after an
 ## explicit user decision; tests/smoke_test.gd guards the values.
 ##
