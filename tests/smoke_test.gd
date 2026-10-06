@@ -155,6 +155,7 @@ func _test_game_rules() -> void:
 	_check(GameRules.HERO_ABILITY_COST == 2, "hero ability cost 2")
 	_check(GameRules.DECK_SIZE == 30, "deck size 30")
 	_check(GameRules.MAX_HAND_SIZE == 10, "hand limit 10")
+	_check(GameRules.MAX_CREATURES_PER_SIDE == 7, "board limit 7 creatures per side")
 	_check(GameRules.FIRST_PLAYER_STARTING_HAND == 3 and GameRules.SECOND_PLAYER_STARTING_HAND == 4,
 		"starting hands 3 / 4")
 	_check(GameRules.STARTING_HAND_REPLACEMENTS == 1, "one starting hand replacement")

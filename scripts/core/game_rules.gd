@@ -6,10 +6,7 @@ extends RefCounted
 ## validation. A value may change only together with PRODUCT_BASELINE.md after an
 ## explicit user decision; tests/smoke_test.gd guards the values.
 ##
-## Intentionally absent:
-## - maximum number of creatures per board side: the approved spec does not give
-##   a number (open question Q-01 in PRODUCT_BASELINE.md);
-## - turn timer: there is none in the offline mode.
+## Intentionally absent: turn timer — there is none in the offline mode.
 
 const HERO_STARTING_HEALTH := 30
 const HERO_ABILITY_COST := 2
@@ -39,6 +36,9 @@ const MAX_COPIES_PER_CARD := 2
 ## Copies of one legendary card allowed in a deck.
 const MAX_COPIES_LEGENDARY := 1
 const MAX_ACTIVE_ARTIFACTS := 1
+
+## Creatures one player may have on their side of the board.
+const MAX_CREATURES_PER_SIDE := 7
 
 
 static func max_copies_in_deck(rarity: CardEnums.Rarity) -> int:
