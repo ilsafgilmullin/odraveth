@@ -2,6 +2,7 @@ class_name AiController
 extends RefCounted
 ## Pure decision maker: observation + legal commands -> deterministic decision.
 
+@warning_ignore("enum_variable_without_default")
 var difficulty: AiDifficulty.Level
 
 
