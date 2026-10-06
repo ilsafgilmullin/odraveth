@@ -118,6 +118,16 @@ func get_valid_attack_targets(player: int, attacker_id: int) -> Array[int]:
 	return targets
 
 
+## Legal hero-power targets (0 means no target), derived from the same command
+## enumeration used to validate execution. Empty when the power is unavailable.
+func get_valid_hero_power_targets(player: int) -> Array[int]:
+	var targets: Array[int] = []
+	for command in get_legal_commands(player):
+		if command.kind == MatchCommand.Kind.USE_HERO_POWER and command.target_id not in targets:
+			targets.append(command.target_id)
+	return targets
+
+
 ## Current cost of hand card [param card_id] for its owner, or -1.
 func get_card_cost(player: int, card_id: int) -> int:
 	if state.players.size() != 2:

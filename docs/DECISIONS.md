@@ -300,3 +300,29 @@ Placeholder-экраны дополнительно позволяют прой�
 ### D-038 · принято · 2026-10-06 — AI QA harness, stress и mutation testing
 
 Решение: tests/ai/ содержит unit/information-barrier/determinism тесты и QA-only AI-vs-AI harness. Harness не является продуктовым режимом. CI сохраняет Stage 2 mutations и дополнительно временно мутирует no-cheat boundary, deck privacy, tie-break, legal-command guard и turn safety guard; mutation copies восстанавливаются и не коммитятся. Timing benchmark существует только как ручной dev-инструмент и не является CI threshold.
+
+### D-039 · принято · 2026-10-06 — Stage 4: BattleSession, BattleScene и архитектурный барьер
+
+**Контекст:** Stage 4 — полнофункциональный боевой экран с интеграцией Player ↔ MatchEngine ↔ AI. Нужен слой оркестрации, чтобы UI не обращался к внутренним модулям движка напрямую.
+
+**Решение:**
+- `BattleLaunchConfig` — DTO для запуска матча (герои, колоды, сложность, seed). Передаётся параметром маршрута. Статический `default_config()` строит конфигурацию по умолчанию.
+- `BattleSession` — оркестрация одного матча: владеет `MatchEngine`, `AiController`, `AiTurnRunner`. Единственный интерфейс UI к движку; прокси-методы для всех команд и запросов. Счётчики `turn_count`, `cards_played_player`, `cards_played_ai` для статистики.
+- `BattleScene` — программный UI (не `.tscn`-компоновка) с UIState machine: TEST_MODE / MULLIGAN / PLAYER_IDLE / CARD_SELECTED / ATTACKER_SELECTED / HERO_POWER_TARGET / SOUL_SHARD_CHOICE / CHOICE_MODAL / RESOLVING / AI_TURN / MATCH_ENDED. Получает `BattleLaunchConfig` через `apply_route_params`; без него — TEST_MODE (обратная совместимость со smoke-тестом).
+- `ResultScreen` расширен: статистика (ходы, карты), кнопка «Реванш» (создаёт новый матч с новым seed).
+- Архитектурный барьер: `battle_scene.gd` не ссылается на `MatchState`, `MatchResolver`, `PlayerState`, `EffectExecutor`, `CommandValidator`, `AiEvaluator`, `AiMulliganPolicy`, `engine.state`, `_resolver`. Проверяется source-audit интеграционным тестом.
+
+**Почему:** UI, дублирующий правила, — источник рассинхронизаций; единая точка доступа через BattleSession позволяет менять движок и AI без изменения UI. Программная компоновка — потому что финальный дизайн не утверждён (PRODUCT_BASELINE §9).
+**Последствия:** ARCHITECTURE §14. Новый autoload не добавлялся.
+
+### D-040 · Stage 4 corrective · 2026-10-06 — Технический запуск реального боя
+
+Предыдущая формулировка D-039 о `default_config()` и TEST_MODE не описывала реальный пользовательский маршрут. Prebattle теперь создаёт `BattleLaunchConfig.technical_dev_config(CardDatabase)` и передаёт его в Battle; совместимый `default_config()` остаётся технической фикстурой, а TEST_MODE — только явная legacy проверка без config. Это не утверждает финальный preset, героя, колоду или UX и не закрывает Q-14/Q-16.
+
+### D-041 · Stage 4 corrective · 2026-10-06 — Legal authority и последовательность AI UI
+
+Hero Power availability и список целей выводятся из `MatchEngine.get_legal_commands()` через `get_valid_hero_power_targets()` и BattleSession. Доступность карт руки также задаётся legal `PLAY_CARD`; detail доступен отдельно. `AiTurnRunner.after_command` даёт BattleSession собрать ordered steps с отдельными событиями и sanitized observation **со стороны игрока** после каждой команды; UI держит предыдущее наблюдение до первого шага и блокирует ввод до конца presentation. Само решение AI и ход движка не меняются.
+
+### D-042 · Stage 4 corrective · 2026-10-06 — Result и маршруты
+
+Turn count читается из authoritative `MatchEngine` observation, а не из числа нажатий игроком End Turn. Result показывает исход, героев, сложность и сыгранные карты. Rematch сохраняет config и создаёт fresh seed/session. Выбор противника → PREBATTLE, смена колоды → DECK_BUILDER — только техническая Stage 4 маршрутизация, финальное решение Q-14 остаётся открытым.

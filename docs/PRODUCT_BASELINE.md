@@ -501,6 +501,8 @@ Stage 2 — детерминированный MatchEngine: подготовка
 
 Stage 3 — детерминированный честный офлайн-ИИ: sanitized observation boundary, NOVICE / TACTICIAN / STRATEGIST, deterministic command scoring, mulligan, play/targets, Soulmonger choice, hero powers, Impulse Shard, attacks, CHOOSE, full-turn runner, explainable trace и AI-vs-AI QA. В его рамках не делаются: финальный Battle UI, Android export/APK, сеть/backend/Firebase/multiplayer, аналитика, магазин, прогресс/награды, новые карты/ребаланс и Stage 4.
 
+Stage 4 — технически играбельный Battle flow: Main Menu → Prebattle → реальный `BattleLaunchConfig` → `BattleSession` → mulligan → Player/AI; цели и legal actions запрашиваются у MatchEngine, AI показывается по последовательным публичным наблюдениям. Result показывает исход, героев, сложность, число ходов движка и сыгранные карты; повтор создаёт свежий матч. До реализации выбора пользовательских колод конфигурация Prebattle и маршруты Result → Prebattle/Deck Builder являются **техническими**, не финальными продуктовыми preset/UX. Дизайн/арт, APK, сеть, Stage 5 и решения по Q-02/Q-14/Q-15/Q-16 сюда не входят. Подробности реализации: [BATTLE_UI.md](BATTLE_UI.md).
+
 ## 11. Открытые вопросы
 
 Открытые вопросы — места, где утверждённое ТЗ не даёт однозначного ответа. Они **не решены** и требуют решения пользователя до реализации соответствующей логики. Предположения в коде по этим пунктам не делаются.

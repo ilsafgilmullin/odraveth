@@ -1,0 +1,15 @@
+# Battle UI — Stage 4 technical integration
+
+`Main Menu → Prebattle → Start Battle` создаёт `BattleLaunchConfig` и передаёт его через `SceneRouter` в `BattleScene`. Prebattle пока собирает `technical_dev_config` (Kezharyn против Vhorazel, валидные 30-карточные технические колоды, Novice, новый seed). Это dev launch fallback, **не утверждённый deck preset или окончательный Prebattle UX**. `default_config()` оставлен совместимым alias. Q-02, Q-14, Q-15 и Q-16 остаются открытыми.
+
+`BattleScene` создаёт `BattleSession(config)`; сессия владеет fresh `MatchEngine`, AI controller/runner, выполняет setup, AI mulligan и команды игрока. UI читает только sanitized `get_observation()` и публичные запросы. Движок остаётся authority: `get_legal_commands()` управляет playable state руки; `get_valid_play_targets` и `get_valid_attack_targets` управляют выделением карт/атак; `get_valid_hero_power_targets` перечисляет legal power commands (пустой список означает unavailable, `0` — targetless). HeroCatalog в UI служит только для названия. Карты без допустимого play затемнены/disabled, но отдельная кнопка информации доступна.
+
+UIState: MULLIGAN → PLAYER_IDLE ↔ CARD_SELECTED / ATTACKER_SELECTED / HERO_POWER_TARGET → RESOLVING → PLAYER_IDLE или AI_TURN; SOUL_SHARD_CHOICE обрабатывает опциональный платёж Soulmonger, CHOICE_MODAL — выбор Cartographer; MATCH_ENDED завершает маршрут. Любые повторные команды во время RESOLVING/AI_TURN/модального окна игнорируются. TEST_MODE возможен только при явном открытии Battle без config в legacy smoke-тесте.
+
+`AiTurnRunner.after_command` вызывает BattleSession после каждой принятой команды; сессия возвращает ordered `[{command, events, observation_after_command}]`. Observation — независимый публичный словарь **с точки зрения игрока**: нет opponent hand, порядков колод, RNG, MatchState. Весь ход AI вычисляется синхронно, но UI сохраняет observation до него и показывает каждый шаг/событие перед следующим. Время анимации не влияет на RNG или правила.
+
+Card Detail — read-only overlay по отдельной `i` рядом с картой в руке и mulligan. Показаны русское имя, текущая стоимость, фракция, редкость, тип, stats, rules text и keywords; нажатие карты по-прежнему играет/выбирает её. Декоративный арт не используется.
+
+Result получает outcome, героев, AI difficulty, карты обеих сторон и `turn_number` движка. «Повторить бой» создаёт новый seed и сессию при тех же героях/колодах/сложности. «Выбор противника» временно ведёт в PREBATTLE, «Сменить колоду» — DECK_BUILDER, «Главное меню» очищает history; это технические Stage 4 маршруты до решения финального UX.
+
+Программный layout использует `SafeAreaContainer`, две полосы существ (до 7), прокручиваемую горизонтально руку (до 10), модальные полноэкранные overlay и responsive canvas. Тесты проверяют 1920×1080 и 2400×1080 геометрически/структурно, без пиксельных снимков. `tests/battle_ui_tests.gd` инстанцирует реальный BattleScene и вызывает действия UI с фикстурным MatchEngine; smoke navigation проверяет реальный маршрут через Prebattle. Авторитетный regression/CI запускается на Godot 4.7.2.

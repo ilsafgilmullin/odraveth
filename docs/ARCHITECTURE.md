@@ -2,7 +2,7 @@
 
 Документ описывает техническое устройство проекта. Продуктовые правила — только в [`PRODUCT_BASELINE.md`](PRODUCT_BASELINE.md); обоснования решений — в [`DECISIONS.md`](DECISIONS.md).
 
-Текущее состояние: **Stage 2** — технический фундамент (Stage 0), типизированная база 40 утверждённых карт (Stage 1) и детерминированный MatchEngine, исполняющий все правила матча, 40 карт и 4 способности героев (раздел 9). ИИ и финального UI (в том числе боевого экрана) ещё нет.
+Текущее состояние: **Stage 4** — технический фундамент (Stage 0), типизированная база 40 утверждённых карт (Stage 1), детерминированный MatchEngine (Stage 2), офлайн AI трёх уровней сложности (Stage 3), полнофункциональный боевой экран с интеграцией Player ↔ MatchEngine ↔ AI (Stage 4). Игрок может пройти полный матч: Mulligan → ходы → Victory/Defeat/Draw → Result/Rematch.
 
 ## 1. Принципы
 
@@ -26,12 +26,13 @@
 | `scenes/progress/` · `settings/` | Экраны пунктов меню «Прогресс» и «Настройки» (пока placeholder) |
 | `scripts/core/` | Сервисы приложения (EventBus, SceneRouter, AppState), таблица маршрутов, правила и фракции baseline, boot |
 | `scripts/cards/` | База карт: `CardDatabase` (реестр), `CardSchema` (валидация JSON), `CardDefinition` и `CardEffectSpec` (модель), `EffectVocabulary` (словарь эффектов), `CardEnums` (таксономия) |
-| `scripts/battle/` | Боевой домен: MatchEngine — состояние матча, команды, правила, исполнение эффектов (раздел 9); состояния результата экрана |
+| `scripts/battle/` | Боевой домен: MatchEngine — состояние матча, команды, правила, исполнение эффектов (раздел 9); `BattleSession` — оркестрация матча (раздел 14); `BattleLaunchConfig` — конфигурация запуска |
 | `scripts/save/` | Локальные сохранения (SaveManager) |
 | `scripts/ui/` | Скрипты экранов и переиспользуемых UI-контейнеров |
 | `scripts/heroes/` | `HeroCatalog` — четыре утверждённых героя и числа их способностей |
 | `scripts/decks/` | `DeckValidator` — проверка колоды перед матчем |
-| `scripts/ai/` | Зарезервировано: ИИ (следующий этап) |
+| `scripts/ai/` | Офлайн AI: `AiController`, `AiEvaluator`, `AiMulliganPolicy`, `AiChoicePolicy`, `AiTurnRunner`, `AiDecision`, `AiDifficulty` (раздел 13) |
+| `scripts/ui/battle/` | Боевой экран: `BattleScene` — полный UI матча с программной компоновкой (раздел 14) |
 | `data/cards/` | 40 утверждённых карт: `ashravael.json`, `nerqathen.json`, `dumoryss.json`, `khevaruun.json`, `neutral.json` (по 8 карт) |
 | `data/heroes/` · `decks/` · `balance/` | Данные героев, стартовых колод, баланса — следующие этапы |
 | `assets/ui/` | UI-ресурсы; сейчас только временная тема `placeholder_theme.tres` |
@@ -64,6 +65,8 @@
 | `Faction`, `CardEnums`, `MatchOutcome` | `scripts/core/`, `scripts/cards/`, `scripts/battle/` | Перечисления baseline |
 | `MatchEngine` и модули правил | `scripts/battle/` | Один экземпляр — один матч; состояние матча не глобальное (раздел 9) |
 | `HeroCatalog`, `DeckValidator` | `scripts/heroes/`, `scripts/decks/` | Справочные данные героев и проверка колоды; без состояния |
+| `BattleSession` | `scripts/battle/battle_session.gd` | Оркестрация матча: владеет MatchEngine, AiController, AiTurnRunner; единственный интерфейс UI к движку (раздел 14) |
+| `BattleLaunchConfig` | `scripts/battle/battle_launch_config.gd` | Конфигурация запуска матча (герои, колоды, сложность, seed); передаётся параметром маршрута |
 | `SafeAreaContainer`, `PlaceholderScreen`, `ResultScreen` | `scripts/ui/` | UI-компоненты сцен |
 
 Правила для autoload:
@@ -364,9 +367,7 @@ var result := engine.play_card(player, card_instance_id, target_id, {"soul_shard
 
 | Модуль | Где | Ключевые требования |
 |---|---|---|
-| ИИ | `scripts/ai/` | Получает только публичное представление состояния (без руки и порядка колоды игрока, без будущих случайных результатов); команды выбирает из `MatchEngine.get_legal_commands()`. Уровни NOVICE / TACTICIAN / STRATEGIST |
 | Колоды | `data/decks/` | Стартовые колоды и редактор; проверка — уже `DeckValidator` |
-| Боевой экран | `scenes/battle/`, `scripts/ui/` | Владеет экземпляром `MatchEngine`; показывает журнал событий; правила не дублирует |
 | Финальный UI | `scenes/*`, `scripts/ui/` | По утверждённому дизайну; заменяет placeholder-сцены |
 | Android build | export preset | Отдельная задача (раздел «Android» в DEVELOPMENT.md) |
 
@@ -375,6 +376,7 @@ var result := engine.play_card(player, card_instance_id, target_id, {"soul_shard
 - `tests/smoke_test.tscn` — headless smoke-тест: версия движка, настройки проекта, autoload, компиляция всех скриптов, загрузка всех сцен, таблица маршрутов, константы baseline, кириллица в шрифте, SaveManager, база карт, полная навигация (Boot → меню → все пункты меню → весь поток → три исхода → «Назад» Android).
 - `tests/card_database_tests.gd` — тесты базы карт (запускаются smoke-тестом): точные значения всех 40 карт против независимой таблицы `tests/approved_cards.gd`, распределение по фракциям, типам и редкостям, целостность, данные эффектов и их тайминг, неизменяемость, детерминизм, 53 отвергаемые некорректные фикстуры, отсутствие частичной загрузки. Фикстуры — вымышленные карты `test_*`, только во временном каталоге `user://`.
 - `tests/engine/*.gd` — тесты MatchEngine (запускаются smoke-тестом с отдельным экземпляром `CardDatabase`): ядро правил (подготовка, замена, энергия, рука, «Разлом», поле, бой, броня, гибель, исход, артефакты, неизменность отвергнутых команд, предохранитель, изоляция RNG), способности героев, ключевые слова и тайминг, поведение каждой из 40 карт (таблица — [`CARD_TEST_COVERAGE.md`](CARD_TEST_COVERAGE.md)), replay и fuzz-матчи с проверкой инвариантов после каждой команды. Подробности — в [`DEVELOPMENT.md`](DEVELOPMENT.md).
+- `tests/battle_session_tests.gd` — интеграционные тесты Stage 4: BattleLaunchConfig, жизненный цикл BattleSession, mulligan и ход, AI-ход, 5 полных матчей разными seed, параметры результата, architecture guard (battle_scene.gd не ссылается на внутренние модули движка).
 - Тест перехватывает все ошибки и предупреждения движка (`Logger`): вне блоков ожидаемых ошибок любая ошибка проваливает тест.
 - `tests/run_tests.sh` — импорт, smoke-тест, запуск main scene. Подробности — в [`DEVELOPMENT.md`](DEVELOPMENT.md).
 - Предупреждения GDScript, указывающие на вероятные дефекты (неиспользуемые переменные, затенение, недостижимый код, вызов static через экземпляр и др.), переведены в ошибки в `project.godot`, поэтому headless-проверка их видит.
@@ -413,3 +415,49 @@ AI не строит game tree и не клонирует MatchEngine. Для к
 ### 13.4. QA и производительность
 
 tests/ai/ проверяет information barriers, 100-кратную повторяемость решения, immediate lethal, self-lethal avoidance, различия сложностей, mulligan, Cartographer, Soulmonger, все hero powers, Impulse Shard, targets, full turns, guard, trace privacy, AI-vs-AI и fixed-seed stress. benchmark_ai.gd — ручной bounded benchmark без CI-порога по миллисекундам.
+
+
+## 14. Боевой экран и BattleSession (Stage 4)
+
+### 14.1. BattleLaunchConfig
+
+`BattleLaunchConfig` (`scripts/battle/battle_launch_config.gd`) — DTO для запуска матча. Передаётся параметром маршрута (`BattleLaunchConfig.PARAM_KEY`). Поля: `player_hero`, `opponent_hero`, `player_deck`, `opponent_deck`, `ai_difficulty` (`AiDifficulty.Level`), `rng_seed`. `technical_dev_config(card_source)` (и совместимый `default_config`) строит только временную техническую фикстуру, не продуктовый preset. Prebattle всегда передаёт конфигурацию.
+
+### 14.2. BattleSession
+
+`BattleSession` (`scripts/battle/battle_session.gd`) — оркестрация одного матча. Владеет `MatchEngine`, `AiController` и `AiTurnRunner`. Единственный интерфейс боевого UI к движку: UI не обращается к `MatchState`, `MatchResolver`, `CommandValidator`, `EffectExecutor`, `AiEvaluator`, `AiMulliganPolicy` напрямую.
+
+API: `start()`, `get_observation()`, `get_legal_commands()`, `get_valid_play_targets()`, `get_valid_attack_targets()`, `get_valid_hero_power_targets()`, `get_card_cost()`, команды и `run_ai_mulligan()`, `run_ai_turn()` (старый flat events API), `run_ai_turn_steps()` (команда, events, sanitized player observation после каждой команды). Запросы: `is_over()`, `is_player_turn()`, `is_mulligan_phase()`, `is_choice_pending()`, `get_outcome()`, `hero_power_name()`. `turn_count` читает `MatchEngine` observation `turn_number`; карты считаются по успешным командам/событиям.
+
+### 14.3. BattleScene
+
+`BattleScene` (`scripts/ui/battle/battle_scene.gd`) — боевой экран с программной компоновкой. Получает `BattleLaunchConfig` через `apply_route_params`; отсутствие config включает только явный legacy TEST_MODE. Обычный маршрут Prebattle всегда запускает реальный матч.
+
+UIState machine: `TEST_MODE`, `MULLIGAN`, `PLAYER_IDLE`, `CARD_SELECTED`, `ATTACKER_SELECTED`, `HERO_POWER_TARGET`, `SOUL_SHARD_CHOICE`, `CHOICE_MODAL`, `RESOLVING`, `AI_TURN`, `MATCH_ENDED`.
+
+Архитектурные инварианты (проверяются тестом): UI не ссылается на `MatchState`, `MatchResolver`, `PlayerState`, `EffectExecutor`, `CommandValidator`, `AiEvaluator`, `AiMulliganPolicy`, `engine.state`, `_resolver`. Все правила, цели, стоимости и допустимые команды получаются через `BattleSession`.
+
+### 14.4. ResultScreen
+
+`ResultScreen` (`scripts/ui/result_screen.gd`) показывает исход, обоих героев, AI difficulty, движковый turn count и карты; «Повторить бой» создаёт новый seed и новый MatchEngine при сохранении config. «Выбор противника» → PREBATTLE и «Сменить колоду» → DECK_BUILDER — временная техническая маршрутизация до решения Q-14.
+
+### 14.5. Поток данных
+
+```
+Prebattle / MainMenu
+   │  SceneRouter.go_to(BATTLE, {BattleLaunchConfig.PARAM_KEY: cfg})
+   ▼
+BattleScene.apply_route_params(params)
+   │  создаёт BattleSession(cfg)
+   ▼
+BattleSession ──► MatchEngine ──► MatchState
+   │                                  ▲
+   ├──► AiController ──► AiEvaluator  │ (только через BattleSession API)
+   └──► AiTurnRunner ─────────────────┘
+   │
+   ▼  session.get_outcome()
+SceneRouter.replace_with(RESULT, {outcome, turns, cards_player, cards_ai, launch_config})
+   │
+   ▼
+ResultScreen ──► «Реванш» → SceneRouter.replace_with(BATTLE, {new_cfg})
+```
