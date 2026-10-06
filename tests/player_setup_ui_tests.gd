@@ -165,10 +165,10 @@ func _test_builder() -> void:
 	scene.name_edit.text = "Новая третья"
 	scene.name_edit.text_changed.emit(scene.name_edit.text)
 	scene.draft.card_ids.append("neutral_vantrel_duskling")
-	var saved_a_before := PlayerSetupData.decks_for(AppState.profile, HeroCatalog.KEZHARYN).filter(
-		func(deck: UserDeck) -> bool: return deck.id == deck_a_id)[0]
-	var saved_b_before := PlayerSetupData.decks_for(AppState.profile, HeroCatalog.KEZHARYN).filter(
-		func(deck: UserDeck) -> bool: return deck.id == deck_b_id)[0]
+	var saved_a_before: UserDeck = PlayerSetupData.decks_for(AppState.profile, HeroCatalog.KEZHARYN).filter(
+		func(deck: UserDeck) -> bool: return deck.id == deck_a_id)[0] as UserDeck
+	var saved_b_before: UserDeck = PlayerSetupData.decks_for(AppState.profile, HeroCatalog.KEZHARYN).filter(
+		func(deck: UserDeck) -> bool: return deck.id == deck_b_id)[0] as UserDeck
 	_ok(saved_a_before.name == "Колода A" and saved_a_before.card_ids == deck_a_cards
 		and saved_b_before.name == "Колода B" and saved_b_before.card_ids.is_empty(),
 		"editing selector-created draft does not mutate saved A/B")
@@ -181,7 +181,7 @@ func _test_builder() -> void:
 	scene.name_edit.text = "Колода A обновлена"
 	scene.name_edit.text_changed.emit(scene.name_edit.text)
 	(scene.find_child("SaveDeckButton", true, false) as Button).pressed.emit()
-	var a_records := AppState.profile["user_decks"].filter(
+	var a_records: Array = AppState.profile["user_decks"].filter(
 		func(record: Dictionary) -> bool: return record["id"] == deck_a_id)
 	_ok(AppState.profile["user_decks"].size() == 3 and a_records.size() == 1
 		and a_records[0]["name"] == "Колода A обновлена",
