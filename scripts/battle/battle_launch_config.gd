@@ -25,11 +25,18 @@ static func create(p_hero: StringName, p_deck: Array, o_hero: StringName, o_deck
 	return cfg
 
 
-static func default_config(card_source: Object) -> BattleLaunchConfig:
+## Temporary technical launch fixture until player decks and prebattle choices
+## are implemented. This is not an approved product preset deck.
+static func technical_dev_config(card_source: Object) -> BattleLaunchConfig:
 	var p_hero := HeroCatalog.KEZHARYN
 	var o_hero := HeroCatalog.VHORAZEL
 	return create(p_hero, _build_deck(p_hero, card_source),
 		o_hero, _build_deck(o_hero, card_source), AiDifficulty.Level.NOVICE)
+
+
+## Kept for existing integration callers; always a technical fixture.
+static func default_config(card_source: Object) -> BattleLaunchConfig:
+	return technical_dev_config(card_source)
 
 
 static func _build_deck(hero_id: StringName, card_source: Object) -> Array:

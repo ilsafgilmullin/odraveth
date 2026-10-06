@@ -178,3 +178,9 @@ tests/ai/ai_match_harness.gd — только тестовый harness; он н�
 Ручной benchmark без pass/fail threshold находится в tests/ai/benchmark_ai.gd. Stage 3 намеренно не использует minimax/game tree/deep clones.
 
 CI workflow .github/workflows/stage2-corrective.yml сохраняет четыре Stage 2 mutations и добавляет Stage 3 mutations: попытка читать opponent hand через .state, утечка deck order в observation, random tie-break, отключение legal-set guard и отключение per-turn guard. Все изменения выполняются только в checkout runner и затем восстанавливаются.
+
+## 12. Проверки Stage 4 Battle UI
+
+`tests/run_tests.sh` на Godot 4.7.2 выполняет существующий regression (baseline 744 checks) и `tests/battle_ui_tests.gd`: реальные экземпляры BattleScene с `BattleLaunchConfig`, управление mulligan/картами/целями/способностями/модальными окнами, AI presentation, lock и layout при 1920×1080 и 2400×1080. Smoke navigation отдельно проходит Main Menu → Prebattle → реальный Battle MULLIGAN и Result/rematch. Legacy TEST_MODE проверяется только явным маршрутом без конфигурации.
+
+Техническая колода создаётся `BattleLaunchConfig.technical_dev_config(CardDatabase)` и не является пользовательским preset. Чтобы проверить другой состав, используйте `BattleLaunchConfig.create()` с валидными колодами. Не делайте игровых утверждений по временной технической конфигурации; подробности — [BATTLE_UI.md](BATTLE_UI.md).

@@ -30,6 +30,10 @@ var _shard_max: int = 0
 var _shard_value: int = 0
 var _event_queue: Array[Dictionary] = []
 var _event_timer: float = 0.0
+var _ai_steps: Array[Dictionary] = []
+var _ai_step_index: int = 0
+var _ai_step_events: Array[Dictionary] = []
+var _presentation_observation: Dictionary = {}
 var _valid_targets: Array[int] = []
 var _mulligan_picks: Array[int] = []
 
@@ -67,6 +71,8 @@ var _choice_overlay: Control
 var _choice_box: HBoxContainer
 var _shard_overlay: Control
 var _shard_lbl: Label
+var _detail_overlay: Control
+var _detail_text: RichTextLabel
 
 
 func apply_route_params(params: Dictionary) -> void:
@@ -155,6 +161,7 @@ func _build_battle_ui() -> void:
 	_build_mulligan_overlay()
 	_build_choice_overlay()
 	_build_shard_overlay()
+	_build_detail_overlay()
 
 
 func _build_top_bar(parent: Control) -> void:
@@ -238,6 +245,7 @@ func _build_hand(parent: Control) -> void:
 	var scroll := ScrollContainer.new()
 	scroll.name = "HandScroll"
 	scroll.custom_minimum_size.y = CARD_MIN.y + 16
+	scroll.size_flags_horizontal = SIZE_EXPAND_FILL
 	scroll.size_flags_vertical = SIZE_EXPAND_FILL
 	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_AUTO
 	scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
@@ -390,6 +398,69 @@ func _build_shard_overlay() -> void:
 	col.add_child(skip_btn)
 
 
+func _build_detail_overlay() -> void:
+	_detail_overlay = ColorRect.new()
+	_detail_overlay.name = "CardDetailOverlay"
+	_detail_overlay.color = Color(0, 0, 0, 0.88)
+	_detail_overlay.set_anchors_and_offsets_preset(PRESET_FULL_RECT)
+	_detail_overlay.visible = false
+	add_child(_detail_overlay)
+	var panel := VBoxContainer.new()
+	panel.name = "CardDetailPanel"
+	panel.set_anchors_and_offsets_preset(PRESET_FULL_RECT)
+	panel.offset_left = 96
+	panel.offset_top = 72
+	panel.offset_right = -96
+	panel.offset_bottom = -72
+	_detail_overlay.add_child(panel)
+	_detail_text = RichTextLabel.new()
+	_detail_text.name = "CardDetailText"
+	_detail_text.bbcode_enabled = false
+	_detail_text.size_flags_vertical = SIZE_EXPAND_FILL
+	_detail_text.add_theme_font_size_override("normal_font_size", 34)
+	panel.add_child(_detail_text)
+	var close_btn := Button.new()
+	close_btn.name = "CardDetailCloseButton"
+	close_btn.text = "Закрыть"
+	close_btn.custom_minimum_size.y = 72
+	close_btn.pressed.connect(func() -> void: _detail_overlay.visible = false)
+	panel.add_child(close_btn)
+
+
+func _show_card_detail(card_data: Dictionary) -> void:
+	var definition := CardDatabase.get_card(StringName(str(card_data.get("card_id", ""))))
+	if definition == null:
+		return
+	var keywords: PackedStringArray = []
+	for effect: CardEffectSpec in definition.effects:
+		if not String(effect.keyword).is_empty() and String(effect.keyword) not in keywords:
+			keywords.append(KEYWORD_RU.get(String(effect.keyword), String(effect.keyword)))
+	var stats := ""
+	if definition.card_type == CardEnums.Type.CREATURE:
+		stats = "Атака: %d  Здоровье: %d  Броня: %d\n" % [definition.attack, definition.health, definition.armor]
+	elif definition.card_type == CardEnums.Type.ARTIFACT:
+		stats = "Заряды: %d\n" % definition.charges
+	_detail_text.text = "%s\nСтоимость: %d\nФракция: %s\nРедкость: %s\nТип: %s\n%s%s\nКлючевые слова: %s" % [
+		definition.name_ru, int(card_data.get("current_cost", definition.cost)),
+		Faction.Id.find_key(definition.faction), CardEnums.Rarity.find_key(definition.rarity),
+		CardEnums.Type.find_key(definition.card_type), stats, definition.rules_text_ru,
+		", ".join(keywords)]
+	_detail_overlay.visible = true
+
+
+func _card_with_info(card_data: Dictionary, card_btn: Button) -> HBoxContainer:
+	var wrap := HBoxContainer.new()
+	wrap.add_theme_constant_override("separation", 2)
+	wrap.add_child(card_btn)
+	var info := Button.new()
+	info.name = "InfoButton"
+	info.text = "i"
+	info.custom_minimum_size = Vector2(40, 64)
+	info.pressed.connect(_show_card_detail.bind(card_data.duplicate(true)))
+	wrap.add_child(info)
+	return wrap
+
+
 # ==============================================================================
 #  MATCH LIFECYCLE
 # ==============================================================================
@@ -423,7 +494,7 @@ func _rebuild_mulligan_cards() -> void:
 		if iid in _mulligan_picks:
 			btn.modulate = Color(1.0, 0.4, 0.4)
 		btn.pressed.connect(_toggle_mulligan.bind(iid))
-		_mulligan_box.add_child(btn)
+		_mulligan_box.add_child(_card_with_info(card_data, btn))
 
 
 func _toggle_mulligan(iid: int) -> void:
@@ -475,7 +546,7 @@ func _check_turn() -> void:
 func _refresh_ui() -> void:
 	if _session == null:
 		return
-	var obs := _session.get_observation()
+	var obs := _presentation_observation if _ui_state == UIState.AI_TURN and not _presentation_observation.is_empty() else _session.get_observation()
 	if obs.is_empty():
 		return
 	var own: Dictionary = obs.get("own", {})
@@ -541,13 +612,20 @@ func _refresh_board(container: HBoxContainer, board: Array, is_player: bool) -> 
 
 func _refresh_hand_cards(hand: Array) -> void:
 	_clear(_hand_box)
+	var legal_cards: Array[int] = []
+	if _ui_state == UIState.PLAYER_IDLE or _ui_state == UIState.CARD_SELECTED \
+			or _ui_state == UIState.ATTACKER_SELECTED or _ui_state == UIState.HERO_POWER_TARGET:
+		for command: MatchCommand in _session.get_legal_commands():
+			if command.kind == MatchCommand.Kind.PLAY_CARD and command.source_id not in legal_cards:
+				legal_cards.append(command.source_id)
 	for card_data: Dictionary in hand:
 		var iid: int = int(card_data.get("instance_id", 0))
 		var btn := _make_card_btn(card_data)
+		btn.disabled = iid not in legal_cards
 		btn.pressed.connect(_on_hand_card_tapped.bind(iid))
 		if iid == _selected_card_id:
 			btn.modulate = Color(0.5, 0.85, 1.0)
-		_hand_box.add_child(btn)
+		_hand_box.add_child(_card_with_info(card_data, btn))
 
 
 func _refresh_controls(obs: Dictionary) -> void:
@@ -555,9 +633,8 @@ func _refresh_controls(obs: Dictionary) -> void:
 		or _ui_state == UIState.ATTACKER_SELECTED or _ui_state == UIState.HERO_POWER_TARGET
 	var own: Dictionary = obs.get("own", {})
 	_end_turn_btn.disabled = not can_act or not _session.is_player_turn()
-	var hp_used: bool = own.get("hero_power_used_this_turn", true)
 	var hp_cost: int = GameRules.HERO_ABILITY_COST
-	var hp_can: bool = can_act and _session.is_player_turn() and not hp_used and int(own.get("energy_current", 0)) >= hp_cost
+	var hp_can: bool = can_act and _session.is_player_turn() and not _session.get_valid_hero_power_targets().is_empty()
 	_hero_power_btn.disabled = not hp_can
 	_hero_power_btn.text = "%s (%d)" % [_session.hero_power_name(), hp_cost] if _session != null else "Сила героя"
 	var imp_avail: bool = own.get("impulse_shard_available", false)
@@ -779,21 +856,25 @@ func _on_hero_power_pressed() -> void:
 	if _ui_state != UIState.PLAYER_IDLE and _ui_state != UIState.CARD_SELECTED \
 			and _ui_state != UIState.ATTACKER_SELECTED:
 		return
-	if _session.needs_hero_power_target():
+	var targets := _session.get_valid_hero_power_targets()
+	if targets.is_empty():
+		return
+	if 0 not in targets:
 		_set_state(UIState.HERO_POWER_TARGET)
 		_selected_card_id = 0
 		_selected_attacker_id = 0
-		var obs := _session.get_observation()
-		var board: Array = obs.get("own", {}).get("board", [])
-		_valid_targets.clear()
-		for creature: Dictionary in board:
-			_valid_targets.append(int(creature.get("instance_id", 0)))
+		_valid_targets.assign(targets)
 		_refresh_ui()
 	else:
 		_use_hero_power_on(0)
 
 
 func _use_hero_power_on(target_id: int) -> void:
+	if _ui_state != UIState.HERO_POWER_TARGET and _ui_state != UIState.PLAYER_IDLE \
+			and _ui_state != UIState.CARD_SELECTED and _ui_state != UIState.ATTACKER_SELECTED:
+		return
+	if target_id not in _session.get_valid_hero_power_targets():
+		return
 	var result := _session.use_hero_power(target_id)
 	_set_state(UIState.PLAYER_IDLE)
 	if result.ok:
@@ -822,8 +903,12 @@ func _on_impulse_pressed() -> void:
 
 
 func _on_end_turn_pressed() -> void:
+	if _ui_state != UIState.PLAYER_IDLE and _ui_state != UIState.CARD_SELECTED \
+			and _ui_state != UIState.ATTACKER_SELECTED and _ui_state != UIState.HERO_POWER_TARGET:
+		return
 	if not _session.is_player_turn():
 		return
+	_set_state(UIState.RESOLVING)
 	var result := _session.end_turn()
 	if result.ok:
 		_log("Ход завершён")
@@ -868,9 +953,11 @@ func _choose_option(option_id: int) -> void:
 
 func _start_ai_turn() -> void:
 	_set_state(UIState.AI_TURN)
+	_presentation_observation = _session.get_observation()
 	_refresh_ui()
-	var ai_events := _session.run_ai_turn()
-	_event_queue.append_array(ai_events)
+	_ai_steps = _session.run_ai_turn_steps()
+	_ai_step_index = 0
+	_ai_step_events.clear()
 	_event_timer = 0.0
 
 
@@ -880,6 +967,9 @@ func _tick_events(delta: float) -> void:
 	if _event_timer < delay:
 		return
 	_event_timer = 0.0
+	if _ui_state == UIState.AI_TURN:
+		_tick_ai_presentation()
+		return
 	while not _event_queue.is_empty():
 		var evt: Dictionary = _event_queue.pop_front()
 		var txt := _event_text(evt)
@@ -890,6 +980,25 @@ func _tick_events(delta: float) -> void:
 		_refresh_ui()
 	_event_banner.visible = false
 	_check_turn()
+
+
+func _tick_ai_presentation() -> void:
+	if _ai_step_events.is_empty():
+		if _ai_step_index >= _ai_steps.size():
+			_presentation_observation.clear()
+			_event_banner.visible = false
+			_check_turn()
+			return
+		var step: Dictionary = _ai_steps[_ai_step_index]
+		_ai_step_index += 1
+		_presentation_observation = step["observation_after_command"]
+		_ai_step_events.assign(step["events"])
+		_refresh_ui()
+	while not _ai_step_events.is_empty():
+		var text_line := _event_text(_ai_step_events.pop_front())
+		if not text_line.is_empty():
+			_show_banner(text_line)
+			return
 
 
 func _show_banner(txt: String) -> void:
@@ -935,6 +1044,9 @@ func _end_match() -> void:
 		"cards_player": _session.cards_played_player,
 		"cards_ai": _session.cards_played_ai,
 		BattleLaunchConfig.PARAM_KEY: _session.config,
+		"player_hero": _session.config.player_hero,
+		"opponent_hero": _session.config.opponent_hero,
+		"ai_difficulty": _session.config.ai_difficulty,
 	}
 	SceneRouter.replace_with(Routes.RESULT, params)
 
@@ -946,7 +1058,7 @@ func _end_match() -> void:
 func _make_card_btn(card_data: Dictionary) -> Button:
 	var btn := Button.new()
 	btn.custom_minimum_size = CARD_MIN
-	btn.clip_text = false
+	btn.clip_text = true
 	var card_id := StringName(str(card_data.get("card_id", "")))
 	var definition := CardDatabase.get_card(card_id)
 	var name_ru: String = definition.name_ru if definition != null else String(card_id)
@@ -974,6 +1086,7 @@ func _make_card_btn(card_data: Dictionary) -> Button:
 func _make_creature_btn(creature: Dictionary) -> Button:
 	var btn := Button.new()
 	btn.custom_minimum_size = CREATURE_MIN
+	btn.clip_text = true
 	var card_id := StringName(str(creature.get("card_id", "")))
 	var definition := CardDatabase.get_card(card_id)
 	var name_ru: String = definition.name_ru if definition != null else String(card_id)
@@ -1011,6 +1124,7 @@ func _v_spacer(parent: Control, height: float) -> void:
 
 func _clear(container: Control) -> void:
 	for child: Node in container.get_children():
+		container.remove_child(child)
 		child.queue_free()
 
 

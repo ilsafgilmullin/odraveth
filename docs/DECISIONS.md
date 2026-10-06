@@ -314,3 +314,15 @@ Placeholder-экраны дополнительно позволяют прой�
 
 **Почему:** UI, дублирующий правила, — источник рассинхронизаций; единая точка доступа через BattleSession позволяет менять движок и AI без изменения UI. Программная компоновка — потому что финальный дизайн не утверждён (PRODUCT_BASELINE §9).
 **Последствия:** ARCHITECTURE §14. Новый autoload не добавлялся.
+
+### D-040 · Stage 4 corrective · 2026-10-06 — Технический запуск реального боя
+
+Предыдущая формулировка D-039 о `default_config()` и TEST_MODE не описывала реальный пользовательский маршрут. Prebattle теперь создаёт `BattleLaunchConfig.technical_dev_config(CardDatabase)` и передаёт его в Battle; совместимый `default_config()` остаётся технической фикстурой, а TEST_MODE — только явная legacy проверка без config. Это не утверждает финальный preset, героя, колоду или UX и не закрывает Q-14/Q-16.
+
+### D-041 · Stage 4 corrective · 2026-10-06 — Legal authority и последовательность AI UI
+
+Hero Power availability и список целей выводятся из `MatchEngine.get_legal_commands()` через `get_valid_hero_power_targets()` и BattleSession. Доступность карт руки также задаётся legal `PLAY_CARD`; detail доступен отдельно. `AiTurnRunner.after_command` даёт BattleSession собрать ordered steps с отдельными событиями и sanitized observation **со стороны игрока** после каждой команды; UI держит предыдущее наблюдение до первого шага и блокирует ввод до конца presentation. Само решение AI и ход движка не меняются.
+
+### D-042 · Stage 4 corrective · 2026-10-06 — Result и маршруты
+
+Turn count читается из authoritative `MatchEngine` observation, а не из числа нажатий игроком End Turn. Result показывает исход, героев, сложность и сыгранные карты. Rematch сохраняет config и создаёт fresh seed/session. Выбор противника → PREBATTLE, смена колоды → DECK_BUILDER — только техническая Stage 4 маршрутизация, финальное решение Q-14 остаётся открытым.

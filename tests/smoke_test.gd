@@ -13,6 +13,7 @@ extends Node
 
 const CardDatabaseTests := preload("res://tests/card_database_tests.gd")
 const CardDatabaseScript := preload("res://scripts/cards/card_database.gd")
+const BattleUiTests := preload("res://tests/battle_ui_tests.gd")
 const ENGINE_TEST_MODULES := [
 	["MatchEngine core rules", preload("res://tests/engine/engine_core_tests.gd")],
 	["Hero abilities", preload("res://tests/engine/hero_power_tests.gd")],
@@ -87,6 +88,11 @@ func _run() -> void:
 	_test_save_manager()
 	_test_card_database()
 	_test_match_engine()
+	_section("BattleScene interactive integration")
+	var ui_cards: Node = CardDatabaseScript.new()
+	ui_cards.load_directory()
+	await BattleUiTests.new(_check, _expect_errors, ui_cards, get_tree()).run()
+	ui_cards.free()
 	await _test_navigation()
 	_remove_temp_dir()
 	_test_no_unexpected_engine_errors()
@@ -305,13 +311,54 @@ func _test_navigation() -> void:
 			break
 		next_button.pressed.emit()
 		_check(await _wait_for_route(expected), "flow reaches %s" % Routes.title(expected))
+	if SceneRouter.current_route == Routes.BATTLE:
+		var launched := get_tree().current_scene
+		_check(launched.route_params.get(BattleLaunchConfig.PARAM_KEY) is BattleLaunchConfig,
+			"normal Prebattle passes a real BattleLaunchConfig")
+		_check(launched._ui_state == launched.UIState.MULLIGAN,
+			"normal Battle route opens MULLIGAN rather than TEST_MODE")
+		var old_seed: int = launched._session.config.rng_seed
+		var player_name: String = HeroCatalog.HEROES[launched._session.config.player_hero]["name_ru"]
+		var opponent_name: String = HeroCatalog.HEROES[launched._session.config.opponent_hero]["name_ru"]
+		launched._session.engine.state.phase = MatchState.Phase.ENDED
+		launched._session.engine.state.winner = 0
+		launched._session.engine.state.turn_number = 3
+		launched._session.cards_played_player = 2
+		launched._session.cards_played_ai = 1
+		launched._end_match()
+		_check(await _wait_for_route(Routes.RESULT), "real Battle result route opens")
+		var result_scene := get_tree().current_scene
+		var stats := result_scene.find_child("ResultStats", true, false) as Label
+		_check(stats != null and stats.text.contains("Ходов: 3") and stats.text.contains("2 (вы) / 1 (ИИ)")
+			and stats.text.contains("Новичок")
+			and stats.text.contains(player_name) and stats.text.contains(opponent_name),
+			"Result displays both heroes, authoritative turns and difficulty (%s)" % (stats.text if stats != null else "missing"))
+		_check(_find_button("OpponentButton") != null and _find_button("DeckButton") != null
+			and _find_button("RematchButton") != null and _find_button("MainMenuButton") != null,
+			"Result exposes all four Stage 4 actions")
+		_find_button("RematchButton").pressed.emit()
+		_check(await _wait_for_route(Routes.BATTLE), "Rematch opens a fresh Battle route")
+		var rematch := get_tree().current_scene
+		_check(rematch._ui_state == rematch.UIState.MULLIGAN
+			and rematch._session.config.rng_seed != old_seed and rematch._session.turn_count == 0,
+			"Rematch creates a fresh match and seed with the same config")
+		var return_params := {
+			ResultScreen.PARAM_OUTCOME: MatchOutcome.Result.VICTORY,
+			BattleLaunchConfig.PARAM_KEY: rematch._session.config,
+		}
+		SceneRouter.replace_with(Routes.RESULT, return_params)
+		await _wait_for_route(Routes.RESULT)
+		_find_button("OpponentButton").pressed.emit()
+		_check(await _wait_for_route(Routes.PREBATTLE), "Result opponent action uses technical Prebattle route")
+		SceneRouter.replace_with(Routes.RESULT, return_params)
+		await _wait_for_route(Routes.RESULT)
+		_find_button("DeckButton").pressed.emit()
+		_check(await _wait_for_route(Routes.DECK_BUILDER), "Result deck action uses technical Deck Builder route")
 
+	# Legacy route-without-config smoke coverage is explicit, not the user flow.
 	for outcome: MatchOutcome.Result in MatchOutcome.Result.values():
-		if SceneRouter.current_route != Routes.BATTLE:
-			SceneRouter.go_back()
-			await _wait_for_route(Routes.PREBATTLE)
-			_find_button("NextButton").pressed.emit()
-			await _wait_for_route(Routes.BATTLE)
+		SceneRouter.replace_with(Routes.BATTLE)
+		await _wait_for_route(Routes.BATTLE)
 		var key: String = MatchOutcome.Result.find_key(outcome)
 		var finish := _find_button("Finish%sButton" % key.capitalize())
 		if finish == null:

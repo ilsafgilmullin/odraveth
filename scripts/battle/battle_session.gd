@@ -10,7 +10,9 @@ var engine: MatchEngine
 var config: BattleLaunchConfig
 var player_index: int = 0
 var ai_index: int = 1
-var turn_count: int = 0
+var turn_count: int:
+	get:
+		return int(get_observation().get("turn_number", 0))
 var cards_played_player: int = 0
 var cards_played_ai: int = 0
 
@@ -52,6 +54,10 @@ func get_valid_play_targets(card_id: int) -> Array[int]:
 
 func get_valid_attack_targets(attacker_id: int) -> Array[int]:
 	return engine.get_valid_attack_targets(player_index, attacker_id)
+
+
+func get_valid_hero_power_targets() -> Array[int]:
+	return engine.get_valid_hero_power_targets(player_index)
 
 
 func get_card_cost(card_id: int) -> int:
@@ -97,7 +103,6 @@ func use_impulse_shard() -> ActionResult:
 func end_turn() -> ActionResult:
 	var result := engine.end_turn(player_index)
 	if result.ok:
-		turn_count += 1
 		_advance_seq()
 	return result
 
@@ -115,16 +120,32 @@ func run_ai_mulligan() -> void:
 
 
 func run_ai_turn() -> Array[Dictionary]:
-	var seq_before: int = _last_event_seq
-	var _trace := _ai_runner.run(engine, ai_index, false)
-	var all_events := engine.get_events(seq_before)
-	_last_event_seq += all_events.size()
-	for evt: Dictionary in all_events:
-		if evt.get("type") == MatchEvent.CARD_PLAYED:
-			cards_played_ai += 1
+	var all_events: Array[Dictionary] = []
+	for step: Dictionary in run_ai_turn_steps():
+		all_events.append_array(step["events"])
+	return all_events
+
+
+## One sanitized player-view observation after each accepted AI command.
+## The runner still decides synchronously; the UI controls presentation time.
+func run_ai_turn_steps() -> Array[Dictionary]:
+	var steps: Array[Dictionary] = []
+	var commands: Array[Dictionary] = []
+	var callback := func(_ai_observation: Dictionary) -> void:
+		var events := engine.get_events(_last_event_seq)
+		_last_event_seq += events.size()
+		for evt: Dictionary in events:
+			if evt.get("type") == MatchEvent.CARD_PLAYED:
+				cards_played_ai += 1
+		steps.append({"events": events, "observation_after_command": get_observation()})
+	var trace := _ai_runner.run(engine, ai_index, false, callback)
+	for decision: Dictionary in trace.get("decisions", []):
+		commands.append(decision.get("selected_command", {}).duplicate(true))
+	for i in steps.size():
+		steps[i]["command"] = commands[i] if i < commands.size() else {}
 	if engine.is_over():
 		match_ended.emit(get_outcome())
-	return all_events
+	return steps
 
 
 func is_over() -> bool:
@@ -161,10 +182,6 @@ func get_outcome() -> MatchOutcome.Result:
 	if engine.get_winner() == player_index:
 		return MatchOutcome.Result.VICTORY
 	return MatchOutcome.Result.DEFEAT
-
-
-func needs_hero_power_target() -> bool:
-	return HeroCatalog.needs_friendly_target(config.player_hero)
 
 
 func hero_power_name() -> String:

@@ -421,17 +421,17 @@ tests/ai/ проверяет information barriers, 100-кратную повто
 
 ### 14.1. BattleLaunchConfig
 
-`BattleLaunchConfig` (`scripts/battle/battle_launch_config.gd`) — DTO для запуска матча. Передаётся параметром маршрута (`BattleLaunchConfig.PARAM_KEY`). Поля: `player_hero`, `opponent_hero`, `player_deck`, `opponent_deck`, `ai_difficulty` (`AiDifficulty.Level`), `rng_seed`. Статические конструкторы: `create()` и `default_config(card_source)`.
+`BattleLaunchConfig` (`scripts/battle/battle_launch_config.gd`) — DTO для запуска матча. Передаётся параметром маршрута (`BattleLaunchConfig.PARAM_KEY`). Поля: `player_hero`, `opponent_hero`, `player_deck`, `opponent_deck`, `ai_difficulty` (`AiDifficulty.Level`), `rng_seed`. `technical_dev_config(card_source)` (и совместимый `default_config`) строит только временную техническую фикстуру, не продуктовый preset. Prebattle всегда передаёт конфигурацию.
 
 ### 14.2. BattleSession
 
 `BattleSession` (`scripts/battle/battle_session.gd`) — оркестрация одного матча. Владеет `MatchEngine`, `AiController` и `AiTurnRunner`. Единственный интерфейс боевого UI к движку: UI не обращается к `MatchState`, `MatchResolver`, `CommandValidator`, `EffectExecutor`, `AiEvaluator`, `AiMulliganPolicy` напрямую.
 
-API: `start()`, `get_observation()`, `get_legal_commands()`, `get_valid_play_targets()`, `get_valid_attack_targets()`, `get_card_cost()`, `submit_mulligan()`, `play_card()`, `attack()`, `use_hero_power()`, `use_impulse_shard()`, `end_turn()`, `choose()`, `run_ai_mulligan()`, `run_ai_turn()`. Запросы: `is_over()`, `is_player_turn()`, `is_mulligan_phase()`, `is_choice_pending()`, `get_outcome()`, `needs_hero_power_target()`, `hero_power_name()`. Счётчики: `turn_count`, `cards_played_player`, `cards_played_ai`.
+API: `start()`, `get_observation()`, `get_legal_commands()`, `get_valid_play_targets()`, `get_valid_attack_targets()`, `get_valid_hero_power_targets()`, `get_card_cost()`, команды и `run_ai_mulligan()`, `run_ai_turn()` (старый flat events API), `run_ai_turn_steps()` (команда, events, sanitized player observation после каждой команды). Запросы: `is_over()`, `is_player_turn()`, `is_mulligan_phase()`, `is_choice_pending()`, `get_outcome()`, `hero_power_name()`. `turn_count` читает `MatchEngine` observation `turn_number`; карты считаются по успешным командам/событиям.
 
 ### 14.3. BattleScene
 
-`BattleScene` (`scripts/ui/battle/battle_scene.gd`) — полнофункциональный боевой экран с программной компоновкой. Получает `BattleLaunchConfig` через `apply_route_params`; при его отсутствии переходит в TEST_MODE (обратная совместимость со smoke-тестом Stage 0).
+`BattleScene` (`scripts/ui/battle/battle_scene.gd`) — боевой экран с программной компоновкой. Получает `BattleLaunchConfig` через `apply_route_params`; отсутствие config включает только явный legacy TEST_MODE. Обычный маршрут Prebattle всегда запускает реальный матч.
 
 UIState machine: `TEST_MODE`, `MULLIGAN`, `PLAYER_IDLE`, `CARD_SELECTED`, `ATTACKER_SELECTED`, `HERO_POWER_TARGET`, `SOUL_SHARD_CHOICE`, `CHOICE_MODAL`, `RESOLVING`, `AI_TURN`, `MATCH_ENDED`.
 
@@ -439,7 +439,7 @@ UIState machine: `TEST_MODE`, `MULLIGAN`, `PLAYER_IDLE`, `CARD_SELECTED`, `ATTAC
 
 ### 14.4. ResultScreen
 
-`ResultScreen` (`scripts/ui/result_screen.gd`) — экран результата: показывает исход матча (`MatchOutcome.title`), статистику (ходы, карты), кнопку «Реванш» (при наличии `BattleLaunchConfig` — создаёт новый матч с новым seed) и «В главное меню».
+`ResultScreen` (`scripts/ui/result_screen.gd`) показывает исход, обоих героев, AI difficulty, движковый turn count и карты; «Повторить бой» создаёт новый seed и новый MatchEngine при сохранении config. «Выбор противника» → PREBATTLE и «Сменить колоду» → DECK_BUILDER — временная техническая маршрутизация до решения Q-14.
 
 ### 14.5. Поток данных
 
