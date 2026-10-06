@@ -161,3 +161,20 @@ Corrective regression Stage 2 дополнительно фиксирует че
 - Каждая задача — отдельная ветка и PR.
 - Не делать force-push в общие ветки.
 - Коммитить `*.uid` вместе с соответствующими скриптами; не коммитить `.godot/`.
+
+
+## 11. Разработка и проверка AI
+
+Stage 3 находится в scripts/ai/; безопасное представление MatchEngine — scripts/battle/ai_observation_builder.gd.
+
+Основной regression по-прежнему запускается одной командой tests/run_tests.sh с GODOT_BIN, указывающим на Godot 4.7.2 stable.
+
+Smoke runner включает два AI-модуля:
+- tests/ai/ai_tests.gd — observation boundary, information barriers, source anti-cheat, 100× determinism, difficulty scenarios, mulligan/choice/resources/targets/full turn/guard;
+- tests/ai/ai_stress_tests.gd — QA-only AI-vs-AI matrix и fixed-seed stress matches.
+
+tests/ai/ai_match_harness.gd — только тестовый harness; он не является игровым режимом и не переносится в product flow.
+
+Ручной benchmark без pass/fail threshold находится в tests/ai/benchmark_ai.gd. Stage 3 намеренно не использует minimax/game tree/deep clones.
+
+CI workflow .github/workflows/stage2-corrective.yml сохраняет четыре Stage 2 mutations и добавляет Stage 3 mutations: попытка читать opponent hand через .state, утечка deck order в observation, random tie-break, отключение legal-set guard и отключение per-turn guard. Все изменения выполняются только в checkout runner и затем восстанавливаются.
