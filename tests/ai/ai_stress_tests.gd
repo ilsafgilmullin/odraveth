@@ -61,6 +61,8 @@ func _test_ai_vs_ai_matrix() -> void:
 		"AI-vs-AI: no illegal command or invariant violation %s %s" % [errors, violations])
 	_ok(seen_first.has(0) and seen_first.has(1), "AI-vs-AI: both first-player positions were exercised")
 	_ok(guard_count == 0, "AI-vs-AI: normal matches never needed the per-turn safety guard")
+	print("AI_QA_MATRIX matches=%d ended=%d commands=%d guards=%d first_players=%s" % [
+		matches, ended, commands, guard_count, seen_first.keys()])
 
 
 func _test_stress_matches() -> void:
@@ -68,6 +70,7 @@ func _test_stress_matches() -> void:
 	var matches := 0
 	var ended := 0
 	var commands := 0
+	var guard_count := 0
 	var errors := PackedStringArray()
 	var violations := PackedStringArray()
 	for index in 30:
@@ -80,6 +83,7 @@ func _test_stress_matches() -> void:
 		matches += 1
 		ended += 1 if result["ended"] else 0
 		commands += int(result["commands"])
+		guard_count += int(result["guard_count"])
 		for error: String in result["errors"]:
 			if errors.size() < 10:
 				errors.append("seed %d: %s" % [8000 + index, error])
@@ -89,3 +93,6 @@ func _test_stress_matches() -> void:
 	_ok(ended == matches, "AI stress: every fixed-seed match ended (%d/%d, %d commands)" % [ended, matches, commands])
 	_ok(errors.is_empty(), "AI stress: no MatchEngine command rejection or loop failure %s" % [errors])
 	_ok(violations.is_empty(), "AI stress: public engine invariants hold after every AI command %s" % [violations])
+	_ok(guard_count == 0, "AI stress: fixed-seed matches never exceeded MAX_AI_COMMANDS_PER_TURN")
+	print("AI_QA_STRESS matches=%d ended=%d commands=%d guards=%d" % [
+		matches, ended, commands, guard_count])
