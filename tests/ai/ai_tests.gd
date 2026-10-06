@@ -117,8 +117,8 @@ func _test_information_barriers() -> void:
 	first = f.scenario(K, T)
 	f.hand(0, &"neutral_vantrel_duskling")
 	var rng_key := _selected_key(first, 0, AiDifficulty.Level.STRATEGIST)
-	var state_before := first.snapshot()["rng_state"]
-	first._rng.set_state(987654321)
+	var state_before: Dictionary = first.snapshot()["rng_state"]
+	first._rng.set_state({"values": [1, 1, 1], "calls": int(state_before["calls"]) + 17})
 	_ok(_selected_key(first, 0, AiDifficulty.Level.STRATEGIST) == rng_key
 		and first.snapshot()["rng_state"] != state_before,
 		"information barrier D: different hidden RNG state cannot change the decision")
