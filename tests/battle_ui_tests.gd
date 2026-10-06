@@ -25,6 +25,7 @@ func run() -> void:
 	_test_card_play_and_detail()
 	_test_attack_and_targeted_play()
 	_test_hero_powers()
+	_test_impulse()
 	_test_shard_and_choice()
 	_test_ai_steps_and_lock()
 	await _test_responsive_structure()
@@ -189,6 +190,24 @@ func _test_shard_and_choice() -> void:
 		_ok(not scene._choice_overlay.visible, "Cartographer choice submits through modal")
 	else:
 		_ok(false, "Cartographer choice submits through modal")
+	scene.free()
+
+
+func _test_impulse() -> void:
+	var case := _scenario()
+	var scene: Control = case.scene
+	var f: RefCounted = case.fixture
+	f.player(0).impulse_shard_available = true
+	scene._refresh_ui()
+	_ok(not scene._impulse_btn.disabled and scene._impulse_btn.visible,
+		"Impulse Shard is offered when legal")
+	var before: int = f.player(0).energy_current
+	scene._impulse_btn.pressed.emit()
+	_ok(f.player(0).energy_current == before + 1 and not f.player(0).impulse_shard_available,
+		"Impulse Shard UI action executes once through BattleSession")
+	scene._impulse_btn.pressed.emit()
+	_ok(f.player(0).energy_current == before + 1,
+		"locked Impulse Shard button cannot execute twice")
 	scene.free()
 
 
