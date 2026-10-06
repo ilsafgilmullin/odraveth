@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - claude/odraveth-stage2-match-engine
+      - claude/odraveth-stage3-ai
   pull_request:
     branches:
       - main
