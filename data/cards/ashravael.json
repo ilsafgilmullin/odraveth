@@ -51,6 +51,7 @@
 					"effect_id": "frenzy",
 					"keyword": "FRENZY",
 					"trigger": "SELF_DAMAGED",
+					"timing": "AFTER",
 					"limits": {
 						"per_turn": 1
 					},
@@ -82,6 +83,7 @@
 				{
 					"effect_id": "hero_damaged_attack_bonus",
 					"trigger": "OWN_HERO_DAMAGED",
+					"timing": "AFTER",
 					"conditions": [
 						{
 							"type": "IS_OWN_TURN"
@@ -168,6 +170,7 @@
 				{
 					"effect_id": "second_attack",
 					"trigger": "AFTER_SELF_ATTACK",
+					"timing": "AFTER",
 					"conditions": [
 						{
 							"type": "FIRST_ATTACK_THIS_TURN"
@@ -267,6 +270,7 @@
 				{
 					"effect_id": "furnace",
 					"trigger": "OWN_HERO_DAMAGED",
+					"timing": "WHEN",
 					"limits": {
 						"per_turn": 1
 					},

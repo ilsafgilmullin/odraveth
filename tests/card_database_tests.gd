@@ -13,6 +13,25 @@ const PROVOKE_CARD_IDS: Array[String] = ["khevaruun_ironwarden", "khevaruun_wall
 const SOUL_SHARD_IDENTIFIERS: Array[String] = [
 	"GAIN_SOUL_SHARDS", "SPEND_SOUL_SHARDS", "OWN_SOUL_SHARDS_AT_LEAST", "SOUL_SHARDS_SPENT_EQUALS",
 ]
+## Timing of every event-triggered ability, transcribed from the approved texts:
+## «после» / «после того как» -> AFTER; «когда» or no wording (cost and play
+## moments) -> WHEN (docs/PRODUCT_BASELINE.md section 6.7).
+const EXPECTED_TIMINGS := {
+	"ashravael_cinderclaw/frenzy": "AFTER",
+	"ashravael_emberbound/hero_damaged_attack_bonus": "AFTER",
+	"ashravael_warfiend/second_attack": "AFTER",
+	"ashravael_furnace_sigil/furnace": "WHEN",
+	"nerqathen_bone_cantor/ally_death_attack": "AFTER",
+	"nerqathen_ossuary_bell/toll": "WHEN",
+	"dumoryss_veilbreaker/taxed_card_attack": "WHEN",
+	"dumoryss_null_seer/increased_cost_paid": "WHEN",
+	"dumoryss_echo_leech/echo": "AFTER",
+	"dumoryss_nullglass/nullglass": "WHEN",
+	"khevaruun_shieldroot/armor_broken_attack": "WHEN",
+	"khevaruun_wallforged/armor_reforge": "WHEN",
+	"khevaruun_bastion_core/first_creature_armor": "WHEN",
+	"neutral_sablequill_nomad/survivor_health": "AFTER",
+}
 
 var _check: Callable
 var _expect_errors: Callable
@@ -214,6 +233,13 @@ func _test_effect_data() -> void:
 				func(effect: CardEffectSpec) -> bool: return effect.keyword == &"PROVOKE")),
 		"Provocation cards carry the PROVOKE keyword")
 
+	var timings := {}
+	for card: CardDefinition in _database.get_all_cards():
+		for effect in card.effects:
+			if not effect.timing.is_empty():
+				timings["%s/%s" % [card.id, effect.effect_id]] = String(effect.timing)
+	_ok(timings == EXPECTED_TIMINGS, "event abilities have the timing of their text («когда» / «после») %s" % [timings])
+
 	var floats := PackedStringArray()
 	for card: CardDefinition in _database.get_all_cards():
 		for effect in card.effects:
@@ -228,6 +254,7 @@ func _test_vocabulary_is_used() -> void:
 		for effect in card.effects:
 			used[String(effect.trigger)] = true
 			used[String(effect.keyword)] = true
+			used[String(effect.timing)] = true
 			for key: String in effect.limits:
 				used[key] = true
 			_collect_identifiers(effect.conditions, used)
@@ -238,7 +265,7 @@ func _test_vocabulary_is_used() -> void:
 	vocabulary.append_array(EffectVocabulary.ACTIONS.keys())
 	vocabulary.append_array(EffectVocabulary.LIMITS.keys())
 	for list: Array in [EffectVocabulary.TARGETS, EffectVocabulary.DURATIONS, EffectVocabulary.KEYWORDS,
-			EffectVocabulary.DELAYS, EffectVocabulary.MULTIPLIERS]:
+			EffectVocabulary.DELAYS, EffectVocabulary.MULTIPLIERS, EffectVocabulary.TIMINGS]:
 		vocabulary.append_array(list)
 	var unused := vocabulary.filter(func(identifier: String) -> bool: return not used.has(identifier))
 	_ok(unused.is_empty(), "every effect vocabulary identifier is used by an approved card %s" % [unused])
@@ -324,7 +351,13 @@ func _test_invalid_fixtures() -> void:
 		["artifact with fractional charges", [_with(_artifact(), {"charges": 1.5})], "'charges' must be"],
 		["charges on a creature", [_with(_creature(), {"charges": 1})], "only ARTIFACT"],
 		["charges that no effect spends", [_with(_artifact(), {"effects": [{"effect_id": "hit", "trigger": "OWN_HERO_DAMAGED",
-			"actions": [{"type": "DRAW_CARDS", "amount": 1}]}]})], "no effect spends charges"],
+			"timing": "WHEN", "actions": [{"type": "DRAW_CARDS", "amount": 1}]}]})], "no effect spends charges"],
+		["event trigger without timing", [_with(_artifact(), {"effects": [{"effect_id": "charge",
+			"trigger": "OWN_HERO_DAMAGED", "actions": [{"type": "SPEND_CHARGES", "amount": 1}]}]})], "needs 'timing'"],
+		["unknown timing", [_with(_artifact(), {"effects": [{"effect_id": "charge", "trigger": "OWN_HERO_DAMAGED",
+			"timing": "LATER", "actions": [{"type": "SPEND_CHARGES", "amount": 1}]}]})], "timing: must be one of"],
+		["timing on an untimed trigger", [spell_with_effect.call({"effect_id": "x", "trigger": "ON_PLAY", "timing": "WHEN",
+			"actions": [{"type": "DRAW_CARDS", "amount": 1}]})], "takes no 'timing'"],
 		["unknown trigger", [spell_with_effect.call({"effect_id": "x", "trigger": "ON_SUMMON",
 			"actions": [{"type": "DRAW_CARDS", "amount": 1}]})], "unknown trigger"],
 		["unknown action id", [spell_with_effect.call({"effect_id": "x", "trigger": "ON_PLAY",
@@ -417,7 +450,8 @@ func _spell() -> Dictionary:
 func _artifact() -> Dictionary:
 	return {"id": "test_artifact", "name_en": "Test Artifact", "name_ru": "Тестовый артефакт", "faction": "NEUTRAL",
 		"type": "ARTIFACT", "rarity": "EPIC", "cost": 1, "deck_limit": 2, "charges": 2, "rules_text_ru": "Тестовый текст.",
-		"effects": [{"effect_id": "charge", "trigger": "OWN_HERO_DAMAGED", "actions": [{"type": "SPEND_CHARGES", "amount": 1}]}]}
+		"effects": [{"effect_id": "charge", "trigger": "OWN_HERO_DAMAGED", "timing": "WHEN",
+			"actions": [{"type": "SPEND_CHARGES", "amount": 1}]}]}
 
 
 func _curse() -> Dictionary:

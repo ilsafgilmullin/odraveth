@@ -1,5 +1,6 @@
 extends PlaceholderScreen
-## Battle screen placeholder. MatchEngine is not implemented yet (separate task);
+## Battle screen placeholder. The battle UI is a separate task (MatchEngine exists,
+## but no screen uses it yet);
 ## the buttons only simulate the three approved outcomes to check routing to the
 ## result screen.
 

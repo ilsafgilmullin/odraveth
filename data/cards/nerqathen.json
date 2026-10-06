@@ -77,6 +77,7 @@
 				{
 					"effect_id": "ally_death_attack",
 					"trigger": "ALLY_CREATURE_DIED",
+					"timing": "AFTER",
 					"limits": {
 						"per_turn": 1
 					},
@@ -240,6 +241,7 @@
 				{
 					"effect_id": "toll",
 					"trigger": "ALLY_CREATURE_DIED",
+					"timing": "WHEN",
 					"limits": {
 						"per_turn": 1
 					},

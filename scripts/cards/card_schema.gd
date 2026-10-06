@@ -12,7 +12,7 @@ const REQUIRED_FIELDS: Array[String] = [
 const CREATURE_STAT_FIELDS: Array[String] = ["attack", "health", "armor"]
 const CHARGES_FIELD := "charges"
 const EFFECT_REQUIRED_FIELDS: Array[String] = ["effect_id", "trigger", "actions"]
-const EFFECT_OPTIONAL_FIELDS: Array[String] = ["keyword", "conditions", "limits"]
+const EFFECT_OPTIONAL_FIELDS: Array[String] = ["keyword", "timing", "conditions", "limits"]
 const KEYWORD_ONLY_TRIGGER := "STATIC"
 
 static var _identifier_regex := RegEx.create_from_string("^[a-z][a-z0-9]*(_[a-z0-9]+)*$")
@@ -78,6 +78,7 @@ static func build(data: Dictionary) -> CardDefinition:
 		var effect := CardEffectSpec.new()
 		effect.effect_id = StringName(effect_data["effect_id"])
 		effect.keyword = StringName(effect_data.get("keyword", ""))
+		effect.timing = StringName(effect_data.get("timing", ""))
 		effect.trigger = StringName(effect_data["trigger"])
 		effect.conditions.assign(_with_int_numbers(effect_data.get("conditions", [])))
 		effect.actions.assign(_with_int_numbers(effect_data["actions"]))
@@ -163,6 +164,16 @@ static func _check_effect(effect: Dictionary, card_type: String, path: String, p
 		problems.append("%s: unknown trigger '%s'" % [path, trigger])
 	elif card_type not in EffectVocabulary.TRIGGERS[trigger]:
 		problems.append("%s: trigger %s is not allowed for %s cards" % [path, trigger, card_type])
+	if typeof(trigger) == TYPE_STRING and EffectVocabulary.TRIGGERS.has(trigger):
+		if trigger in EffectVocabulary.UNTIMED_TRIGGERS:
+			if effect.has("timing"):
+				problems.append("%s: trigger %s takes no 'timing'" % [path, trigger])
+		elif not effect.has("timing"):
+			problems.append("%s: event trigger %s needs 'timing'" % [path, trigger])
+		else:
+			var timing_problem := _one_of(effect["timing"], EffectVocabulary.TIMINGS)
+			if not timing_problem.is_empty():
+				problems.append("%s.timing: %s" % [path, timing_problem])
 	if effect.has("keyword"):
 		var problem := _kind_problem("keyword", effect["keyword"])
 		if not problem.is_empty():

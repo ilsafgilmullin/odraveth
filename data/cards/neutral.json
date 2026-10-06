@@ -125,6 +125,7 @@
 				{
 					"effect_id": "survivor_health",
 					"trigger": "SELF_SURVIVED_CREATURE_ATTACK",
+					"timing": "AFTER",
 					"limits": {
 						"per_turn": 1
 					},

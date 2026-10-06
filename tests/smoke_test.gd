@@ -12,6 +12,14 @@ extends Node
 ## and are printed but allowed; any other one fails the run.
 
 const CardDatabaseTests := preload("res://tests/card_database_tests.gd")
+const CardDatabaseScript := preload("res://scripts/cards/card_database.gd")
+const ENGINE_TEST_MODULES := [
+	["MatchEngine core rules", preload("res://tests/engine/engine_core_tests.gd")],
+	["Hero abilities", preload("res://tests/engine/hero_power_tests.gd")],
+	["Keywords, durations, static abilities, timing", preload("res://tests/engine/keyword_tests.gd")],
+	["Behaviour of the 40 approved cards", preload("res://tests/engine/card_behavior_tests.gd")],
+	["Determinism, replay and fuzz matches", preload("res://tests/engine/determinism_tests.gd")],
+]
 const EXPECTED_AUTOLOADS: Array[String] = ["EventBus", "SceneRouter", "AppState", "CardDatabase"]
 const MAIN_MENU_BUTTONS := [
 	["PlayButton", "Играть", Routes.PREBATTLE],
@@ -75,6 +83,7 @@ func _run() -> void:
 	_test_cyrillic_font()
 	_test_save_manager()
 	_test_card_database()
+	_test_match_engine()
 	await _test_navigation()
 	_remove_temp_dir()
 	_test_no_unexpected_engine_errors()
@@ -241,6 +250,15 @@ func _test_save_manager() -> void:
 func _test_card_database() -> void:
 	_section("CardDatabase and the approved cards")
 	CardDatabaseTests.new(_check, _expect_errors, TEMP_DIR.path_join("cards")).run()
+
+
+func _test_match_engine() -> void:
+	var cards: Node = CardDatabaseScript.new()
+	cards.load_directory()
+	for module: Array in ENGINE_TEST_MODULES:
+		_section(module[0])
+		module[1].new(_check, _expect_errors, cards).run()
+	cards.free()
 
 
 func _test_navigation() -> void:

@@ -2,7 +2,7 @@ extends Node
 ## Application-level state that must survive screen changes (autoload "AppState").
 ##
 ## Holds the locally persisted profile and the boot status. It deliberately does
-## NOT hold match runtime state: a match belongs to the battle screen (future
+## NOT hold match runtime state: a match belongs to the battle screen (a
 ## MatchEngine instance) and is handed between screens through SceneRouter params.
 
 var is_initialized := false

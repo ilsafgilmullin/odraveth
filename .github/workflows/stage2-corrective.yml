@@ -1,0 +1,136 @@
+name: Stage 2 corrective audit
+
+on:
+  push:
+    branches:
+      - claude/odraveth-stage2-match-engine
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  match-engine:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Clean checkout
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - name: Install Godot 4.7.2 stable
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p .tools
+          base="https://github.com/godotengine/godot-builds/releases/download/4.7.2-stable"
+          curl -fsSL "$base/Godot_v4.7.2-stable_linux.x86_64.zip" -o .tools/godot.zip
+          curl -fsSL "$base/SHA512-SUMS.txt" -o .tools/SHA512-SUMS.txt
+          (
+            cd .tools
+            grep "Godot_v4.7.2-stable_linux.x86_64.zip" SHA512-SUMS.txt | sed 's#Godot_v4.7.2-stable_linux.x86_64.zip#godot.zip#' | sha512sum -c -
+            unzip -q godot.zip
+            chmod +x Godot_v4.7.2-stable_linux.x86_64
+          )
+          .tools/Godot_v4.7.2-stable_linux.x86_64 --version
+
+      - name: Full regression
+        shell: bash
+        run: |
+          set -euo pipefail
+          GODOT_BIN="$PWD/.tools/Godot_v4.7.2-stable_linux.x86_64" tests/run_tests.sh | tee stage2-baseline.log
+
+      - name: Targeted mutation tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          GODOT="$PWD/.tools/Godot_v4.7.2-stable_linux.x86_64"
+
+          expect_failure() {
+            local name="$1"
+            local log=".tools/mutation-${name}.log"
+            set +e
+            GODOT_BIN="$GODOT" tests/run_tests.sh >"$log" 2>&1
+            local code=$?
+            set -e
+            if [ "$code" -eq 0 ]; then
+              echo "MUTATION SURVIVED: $name"
+              cat "$log"
+              exit 1
+            fi
+            echo "MUTATION CAUGHT: $name (exit $code)"
+            grep -E "FAILED|failed|ERROR|SCRIPT ERROR|Parse Error|SMOKE TEST" "$log" | tail -40 || true
+          }
+
+          python3 - <<'PY'
+          from pathlib import Path
+          p = Path("scripts/battle/command_validator.gd")
+          s = p.read_text()
+          old = """\tvar targets := TargetRules.chosen_targets(state, command.player, kind)
+          \tif targets.is_empty():
+          \t\treturn _error(ActionResult.TARGET_REQUIRED if command.target_id == 0 else ActionResult.INVALID_TARGET,
+          \t\t\t\"no valid target for %s\" % kind)"""
+          new = """\tvar targets := TargetRules.chosen_targets(state, command.player, kind)
+          \tif targets.is_empty():
+          \t\tif definition.card_type == CardEnums.Type.CREATURE and command.target_id == 0:
+          \t\t\treturn {}
+          \t\treturn _error(ActionResult.TARGET_REQUIRED if command.target_id == 0 else ActionResult.INVALID_TARGET,
+          \t\t\t\"no valid target for %s\" % kind)"""
+          assert old in s
+          p.write_text(s.replace(old, new, 1))
+          PY
+          expect_failure creature-target-bypass
+          git checkout -- scripts/battle/command_validator.gd
+
+          python3 - <<'PY'
+          from pathlib import Path
+          p = Path("scripts/battle/cost_calculator.gd")
+          s = p.read_text()
+          old = "\tfor modifier in state.players[player_index].incoming_cost_modifiers:"
+          new = """\tvar pending_modifiers := state.players[player_index].incoming_cost_modifiers.duplicate()
+          \tpending_modifiers.reverse()
+          \tfor modifier in pending_modifiers:"""
+          assert old in s
+          p.write_text(s.replace(old, new, 1))
+          PY
+          expect_failure reverse-cost-fifo
+          git checkout -- scripts/battle/cost_calculator.gd
+
+          python3 - <<'PY'
+          from pathlib import Path
+          p = Path("scripts/battle/cost_calculator.gd")
+          s = p.read_text()
+          old = """\t\tif modifier[\"source\"] == DISTORTION:
+          \t\t\tif distortion_applied:
+          \t\t\t\tcontinue
+          \t\t\tdistortion_applied = true"""
+          new = """\t\tif modifier[\"source\"] == DISTORTION:
+          \t\t\tif distortion_applied and modifier.has(\"__never__\"):
+          \t\t\t\tcontinue
+          \t\t\tdistortion_applied = true"""
+          assert old in s
+          p.write_text(s.replace(old, new, 1))
+          PY
+          expect_failure multiple-distortion
+          git checkout -- scripts/battle/cost_calculator.gd
+
+          python3 - <<'PY'
+          from pathlib import Path
+          p = Path("scripts/battle/cost_calculator.gd")
+          s = p.read_text()
+          old = """\t\tif only_at_most >= 0 and cost > only_at_most:
+          \t\t\tcontinue"""
+          new = """\t\tif only_at_most >= 0 and cost > only_at_most:
+          \t\t\tconsumed.append(int(modifier[\"seq\"]))
+          \t\t\tcontinue"""
+          assert old in s
+          p.write_text(s.replace(old, new, 1))
+          PY
+          expect_failure consume-skipped-thoughtscar
+          git checkout -- scripts/battle/cost_calculator.gd
+
+          git diff --exit-code

@@ -24,7 +24,10 @@ Source of truth по продукту: [`docs/PRODUCT_BASELINE.md`](docs/PRODUCT
 - Новый autoload — только с обоснованием в `docs/DECISIONS.md`.
 - Числовые правила матча — из `GameRules`, таксономия — из `CardEnums` / `Faction`; при изменении baseline обновлять их вместе с документом и smoke-тестом.
 - Карты — только 40 утверждённых (`data/cards/*.json` — канонический источник). Изменение карты — только по решению пользователя и одновременно в JSON, `tests/approved_cards.gd` и `PRODUCT_BASELINE.md` §6.6.
-- Эффекты карт — декларативные данные из закрытого словаря `EffectVocabulary`. Не придумывать семантику ключевых слов и срок там, где его нет в тексте (Q-17, Q-18).
+- Эффекты карт — декларативные данные из закрытого словаря `EffectVocabulary`; их исполняет MatchEngine по правилам PRODUCT_BASELINE §5–6. Не дублировать карты в коде движка и не придумывать правила, которых нет в baseline.
+- `MatchEngine` — не autoload: один экземпляр — один матч. Правила матча — только в `scripts/battle/`; UI и ИИ получают проверку и допустимые команды от движка и не дублируют её.
+- Вся случайность матча — через инжектируемый `MatchRng`; глобальные `randi`/`randf`/`randomize`/`Array.shuffle` в коде матча запрещены. Отвергнутая команда не должна менять состояние.
+- Изменение правила матча — вместе с тестом в `tests/engine/`; каждая карта должна иметь поведенческий тест и строку в `docs/CARD_TEST_COVERAGE.md`.
 - Не ослаблять строгие предупреждения GDScript в `project.godot` — исправлять код.
 - Не коммитить `.godot/`, сборки, keystore, пароли и другие секреты. Коммитить `*.uid` вместе со скриптами.
 - Не работать в `main` и не делать в него merge; не делать force-push.
@@ -36,7 +39,8 @@ Source of truth по продукту: [`docs/PRODUCT_BASELINE.md`](docs/PRODUCT
 | Документ | Содержание |
 |---|---|
 | [`docs/PRODUCT_BASELINE.md`](docs/PRODUCT_BASELINE.md) | Утверждённые продуктовые решения и открытые вопросы |
-| [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) | Устройство проекта, autoload, навигация, сохранения, данные |
+| [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) | Устройство проекта, autoload, навигация, сохранения, данные, MatchEngine |
+| [`docs/CARD_TEST_COVERAGE.md`](docs/CARD_TEST_COVERAGE.md) | Поведенческие тесты каждой из 40 карт |
 | [`docs/DEVELOPMENT.md`](docs/DEVELOPMENT.md) | Установка Godot, запуск, проверки, соглашения |
 | [`docs/DECISIONS.md`](docs/DECISIONS.md) | Журнал технических решений |
 

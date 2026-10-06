@@ -2,10 +2,10 @@ class_name EffectVocabulary
 extends RefCounted
 ## Closed vocabulary of declarative card effect data (docs/ARCHITECTURE.md section 8).
 ##
-## Identifiers only: nothing here executes an effect. Exact timing and the rules
-## of keywords whose meaning the baseline does not define belong to the
-## MatchEngine stage. Every identifier is used by at least one approved card
-## (checked by the tests); a new one is added only for an approved card.
+## Identifiers only; MatchEngine (scripts/battle/, EffectExecutor) executes them
+## with the rules of docs/PRODUCT_BASELINE.md sections 5 and 6.7. Every identifier
+## is used by at least one approved card (checked by the tests); a new one is
+## added only for an approved card.
 ##
 ## Parameter kinds: "int+" integer >= 1, "int0" integer >= 0, "bool", "true"
 ## (must be true), "target", "duration", "keyword", "delay", "multiplier",
@@ -27,6 +27,14 @@ const TRIGGERS := {
 	"ALLY_CREATURE_PLAYED": ["CREATURE", "ARTIFACT"],
 	"OPPONENT_PLAYS_CARD": ["CREATURE", "ARTIFACT"],
 }
+
+## Moment an event-triggered ability resolves (docs/PRODUCT_BASELINE.md section 6.7):
+## WHEN («когда») - right after the state change that caused it; AFTER
+## («после того как», «после») - after the causing action and its immediate
+## consequences. Every trigger except UNTIMED_TRIGGERS needs one.
+const TIMINGS: Array[String] = ["WHEN", "AFTER"]
+## Triggers whose moment is fixed by the rules themselves.
+const UNTIMED_TRIGGERS: Array[String] = ["ON_PLAY", "ENTER_BATTLE", "LAST_BREATH", "STATIC"]
 
 ## Condition -> parameters.
 const CONDITIONS := {
@@ -96,7 +104,8 @@ const TARGETS: Array[String] = [
 	"LAST_DIED_ALLY_CREATURE",
 ]
 
-## NOT_STATED: the approved card text gives no duration (open question Q-17).
+## NOT_STATED: the approved card text gives no duration; such a change lasts
+## while the creature stays on the board (docs/PRODUCT_BASELINE.md section 5.14).
 const DURATIONS: Array[String] = [
 	"END_OF_TURN",
 	"END_OF_YOUR_NEXT_TURN",

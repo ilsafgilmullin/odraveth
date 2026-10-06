@@ -4,7 +4,7 @@ extends Node
 ## Rules (see docs/ARCHITECTURE.md):
 ## - signals only: no state, no logic, no references to other autoloads;
 ## - fire-and-forget notifications, never request/response calls;
-## - match runtime events belong to the future MatchEngine instance, not to this bus.
+## - match runtime events belong to the MatchEngine instance (its event log), not to this bus.
 
 ## Emitted by SceneRouter after the screen of [param route_id] became the current scene.
 @warning_ignore("unused_signal")
