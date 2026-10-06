@@ -4,9 +4,9 @@ extends RefCounted
 ##
 ## A card has at most one chosen target, used by every CHOSEN_* reference of its
 ## play effects (ON_PLAY for spells, ENTER_BATTLE for creatures).
-## Spells and hero abilities with a chosen target need a valid one to be used.
-## A creature whose Enter Battle needs a target must get one when any exists;
-## with no valid target it is played and that part of the ability does nothing.
+## Any play effect with a CHOSEN_* reference has a mandatory chosen target.
+## This rule is independent of card type: spells and creatures are rejected
+## before mutation when no valid chosen target exists.
 
 const CHOSEN_KINDS: Array[String] = ["CHOSEN_ALLY_CREATURE", "CHOSEN_OTHER_ALLY_CREATURE", "CHOSEN_ENEMY_CREATURE"]
 

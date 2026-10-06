@@ -153,8 +153,6 @@ static func _validate_play(state: MatchState, command: MatchCommand) -> Dictiona
 		return {}
 	var targets := TargetRules.chosen_targets(state, command.player, kind)
 	if targets.is_empty():
-		if definition.card_type == CardEnums.Type.CREATURE and command.target_id == 0:
-			return {}
 		return _error(ActionResult.TARGET_REQUIRED if command.target_id == 0 else ActionResult.INVALID_TARGET,
 			"no valid target for %s" % kind)
 	if command.target_id == 0:

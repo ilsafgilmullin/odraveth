@@ -34,6 +34,8 @@ func run() -> void:
 	_test_deaths()
 	_test_outcome()
 	_test_artifacts()
+	_test_mandatory_play_targets()
+	_test_cost_modifier_ordering()
 	_test_snapshot_is_a_copy()
 	_test_rejected_commands_do_not_mutate()
 	_test_engine_safety()
@@ -338,6 +340,152 @@ func _test_artifacts() -> void:
 		and p0.graveyard[0].instance_id == sigil, "artifacts: the old one leaves with its remaining charges lost")
 	_ok(f.events_of(MatchEvent.CREATURE_DIED).is_empty() and f.events_of(MatchEvent.TRIGGER_RESOLVED).is_empty()
 		and f.creature(bearer).get_attack() == 4, "artifacts: a replacement is not a death and triggers nothing")
+
+
+func _test_mandatory_play_targets() -> void:
+	var engine := f.scenario(K, T)
+	var enemy := f.board(1, &"neutral_vantrel_duskling")
+	var gorebrand := f.hand(0, &"ashravael_gorebrand")
+	_ok(engine.get_valid_play_targets(0, gorebrand) == [enemy],
+		"targets: Gorebrand exposes its enemy creature as the mandatory target")
+	_ok(engine.play_card(0, gorebrand, enemy).ok and f.player(0).hero_health == 29
+		and f.creature(enemy).health == 1, "targets: Gorebrand plays normally with a valid enemy creature")
+
+	engine = f.scenario(K, T)
+	gorebrand = f.hand(0, &"ashravael_gorebrand")
+	var before := JSON.stringify(engine.snapshot())
+	var events_before := JSON.stringify(engine.get_events())
+	var energy_before := f.player(0).energy_current
+	var result := engine.play_card(0, gorebrand)
+	_ok(not result.ok and result.error == ActionResult.TARGET_REQUIRED,
+		"targets: Gorebrand is rejected when no enemy creature exists")
+	_ok(JSON.stringify(engine.snapshot()) == before and JSON.stringify(engine.get_events()) == events_before,
+		"targets: rejected Gorebrand preserves state, RNG and event log")
+	_ok(f.player(0).find_in_hand(gorebrand) != null and f.player(0).energy_current == energy_before
+		and f.player(0).hero_health == 30 and f.player(0).board.is_empty(),
+		"targets: rejected Gorebrand stays in hand and changes no resources or board")
+	_ok(engine.get_valid_play_targets(0, gorebrand).is_empty(),
+		"targets: Gorebrand has no valid play targets when the enemy board is empty")
+	var gorebrand_is_legal := engine.get_legal_commands(0).any(func(command: MatchCommand) -> bool:
+		return command.kind == MatchCommand.Kind.PLAY_CARD and command.source_id == gorebrand)
+	_ok(not gorebrand_is_legal, "targets: impossible Gorebrand PLAY_CARD is absent from legal commands")
+
+	engine = f.scenario(T, K)
+	var ally := f.board(0, &"neutral_vantrel_duskling")
+	var platecaller := f.hand(0, &"khevaruun_platecaller")
+	_ok(engine.get_valid_play_targets(0, platecaller) == [ally],
+		"targets: Platecaller exposes only another allied creature")
+	_ok(engine.play_card(0, platecaller).error == ActionResult.TARGET_REQUIRED,
+		"targets: Platecaller requires the other ally to be selected")
+	_ok(engine.play_card(0, platecaller, platecaller).error == ActionResult.INVALID_TARGET,
+		"targets: Platecaller cannot target its own hand instance")
+	_ok(engine.play_card(0, platecaller, ally).ok and f.creature(ally).armor == 1
+		and f.creature(platecaller) != null, "targets: Platecaller plays with a valid other ally")
+
+	engine = f.scenario(T, K)
+	platecaller = f.hand(0, &"khevaruun_platecaller")
+	before = JSON.stringify(engine.snapshot())
+	events_before = JSON.stringify(engine.get_events())
+	energy_before = f.player(0).energy_current
+	result = engine.play_card(0, platecaller)
+	_ok(not result.ok and result.error == ActionResult.TARGET_REQUIRED,
+		"targets: Platecaller is rejected when no other ally exists")
+	_ok(JSON.stringify(engine.snapshot()) == before and JSON.stringify(engine.get_events()) == events_before
+		and f.player(0).find_in_hand(platecaller) != null and f.player(0).energy_current == energy_before
+		and f.player(0).board.is_empty(), "targets: rejected Platecaller preserves state, RNG, hand and board")
+	_ok(engine.get_valid_play_targets(0, platecaller).is_empty(),
+		"targets: Platecaller has no valid targets without another ally")
+	var platecaller_is_legal := engine.get_legal_commands(0).any(func(command: MatchCommand) -> bool:
+		return command.kind == MatchCommand.Kind.PLAY_CARD and command.source_id == platecaller)
+	_ok(not platecaller_is_legal, "targets: impossible Platecaller PLAY_CARD is absent from legal commands")
+
+	for targeted_creature: StringName in [&"ashravael_gorebrand", &"dumoryss_rift_scribe", &"khevaruun_platecaller"]:
+		engine = f.scenario(K, T)
+		var card_id := f.hand(0, targeted_creature)
+		var rejected := engine.play_card(0, card_id)
+		_ok(not rejected.ok and rejected.error == ActionResult.TARGET_REQUIRED
+			and f.player(0).find_in_hand(card_id) != null and f.player(0).board.is_empty(),
+			"targets: mandatory CHOSEN_* creature bypass absent for %s" % targeted_creature)
+
+
+func _append_cost_modifier(source: String, amount: int, only_cost_at_most: int = -1, cost_cap: int = -1) -> int:
+	var modifier := {"seq": f.engine.state.take_sequence(), "source": source, "source_owner": 1, "amount": amount}
+	if only_cost_at_most >= 0:
+		modifier["only_cost_at_most"] = only_cost_at_most
+	if cost_cap >= 0:
+		modifier["cost_cap"] = cost_cap
+	f.player(0).incoming_cost_modifiers.append(modifier)
+	return int(modifier["seq"])
+
+
+func _test_cost_modifier_ordering() -> void:
+	var engine := f.scenario(K, T)
+	_append_cost_modifier("dumoryss_thoughtscar", 1, 3)
+	_append_cost_modifier("dumoryss_thoughtscar", 1, 3)
+	var card := f.hand(0, &"neutral_vantrel_duskling")
+	_ok(engine.get_card_cost(0, card) == 4, "cost: two Thoughtscar modifiers stack on cost 2 (2 -> 3 -> 4)")
+	_ok(engine.play_card(0, card).ok and f.player(0).incoming_cost_modifiers.is_empty(),
+		"cost: both Thoughtscar modifiers are consumed when both conditions pass")
+
+	engine = f.scenario(K, T)
+	_append_cost_modifier("dumoryss_thoughtscar", 1, 3)
+	var second_thoughtscar := _append_cost_modifier("dumoryss_thoughtscar", 1, 3)
+	card = f.hand(0, &"neutral_threnic_cartographer")
+	_ok(engine.get_card_cost(0, card) == 4, "cost: Thoughtscar uses the running cost (3 -> 4, then second skips)")
+	_ok(engine.play_card(0, card).ok and f.player(0).incoming_cost_modifiers.size() == 1
+		and int(f.player(0).incoming_cost_modifiers[0]["seq"]) == second_thoughtscar,
+		"cost: skipped second Thoughtscar remains pending")
+
+	engine = f.scenario(K, T)
+	_append_cost_modifier(CostCalculator.DISTORTION, 1, 3)
+	var second_distortion := _append_cost_modifier(CostCalculator.DISTORTION, 1, 3)
+	card = f.hand(0, &"neutral_vantrel_duskling")
+	_ok(engine.get_card_cost(0, card) == 3, "cost: at most one Distortion applies to a played card")
+	_ok(engine.play_card(0, card).ok and f.player(0).incoming_cost_modifiers.size() == 1
+		and int(f.player(0).incoming_cost_modifiers[0]["seq"]) == second_distortion,
+		"cost: additional Distortion remains pending for a later card")
+
+	engine = f.scenario(K, T)
+	_append_cost_modifier("dumoryss_thoughtscar", 1, 3)
+	_append_cost_modifier(CostCalculator.DISTORTION, 1, 3)
+	card = f.hand(0, &"neutral_threnic_cartographer")
+	_ok(engine.get_card_cost(0, card) == 4, "cost: Thoughtscar created before Distortion is evaluated first")
+	_ok(engine.play_card(0, card).ok and f.player(0).incoming_cost_modifiers.size() == 1
+		and f.player(0).incoming_cost_modifiers[0]["source"] == CostCalculator.DISTORTION,
+		"cost: FIFO leaves the newer Distortion pending after Thoughtscar raises 3 to 4")
+
+	engine = f.scenario(K, T)
+	_append_cost_modifier(CostCalculator.DISTORTION, 1, 3)
+	_append_cost_modifier("dumoryss_thoughtscar", 1, 3)
+	card = f.hand(0, &"neutral_threnic_cartographer")
+	_ok(engine.get_card_cost(0, card) == 4, "cost: Distortion created before Thoughtscar is evaluated first")
+	_ok(engine.play_card(0, card).ok and f.player(0).incoming_cost_modifiers.size() == 1
+		and f.player(0).incoming_cost_modifiers[0]["source"] == "dumoryss_thoughtscar",
+		"cost: FIFO leaves the newer Thoughtscar pending after Distortion raises 3 to 4")
+
+	engine = f.scenario(K, T)
+	var skipped_seq := _append_cost_modifier("dumoryss_thoughtscar", 1, 3)
+	card = f.hand(0, &"neutral_sablequill_nomad")
+	_ok(engine.get_card_cost(0, card) == 4, "cost: an ineligible expensive card is not modified")
+	_ok(engine.play_card(0, card).ok and f.player(0).incoming_cost_modifiers.size() == 1
+		and int(f.player(0).incoming_cost_modifiers[0]["seq"]) == skipped_seq,
+		"cost: an ineligible card does not consume the pending modifier")
+
+	engine = f.scenario(K, T)
+	_append_cost_modifier("dumoryss_thoughtscar", 1, 3)
+	_append_cost_modifier("dumoryss_veil_tax", 2, -1, 10)
+	card = f.hand(0, &"neutral_threnic_cartographer")
+	_ok(engine.get_card_cost(0, card) == 6, "cost: Thoughtscar then Veil Tax apply sequentially in FIFO order")
+	_ok(engine.play_card(0, card).ok and f.player(0).incoming_cost_modifiers.is_empty(),
+		"cost: compatible FIFO modifiers are consumed after the card is actually played")
+
+	engine = f.scenario(K, T)
+	_append_cost_modifier("dumoryss_veil_tax", 2, -1, 10)
+	_append_cost_modifier("dumoryss_veil_tax", 2, -1, 10)
+	card = f.hand(0, &"ashravael_warfiend")
+	_ok(engine.get_card_cost(0, card) == 10, "cost: Veil Tax keeps its own cap 10 across FIFO modifiers")
+	_ok(engine.play_card(0, card).ok and f.player(0).incoming_cost_modifiers.is_empty(),
+		"cost: Veil Tax cap does not create a separate global consumption rule")
 
 
 func _test_snapshot_is_a_copy() -> void:

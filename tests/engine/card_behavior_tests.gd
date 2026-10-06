@@ -137,7 +137,10 @@ func test_gorebrand() -> void:
 
 	engine = f.scenario(K, T)
 	card = f.hand(0, &"ashravael_gorebrand")
-	_ok(engine.play_card(0, card).ok and f.player(0).hero_health == 29, "without enemy creatures it is still played")
+	var before := JSON.stringify(engine.snapshot())
+	var result := engine.play_card(0, card)
+	_ok(not result.ok and result.error == ActionResult.TARGET_REQUIRED and JSON.stringify(engine.snapshot()) == before,
+		"without an enemy creature the mandatory chosen target rejects the play transactionally")
 
 
 func test_warfiend() -> void:
@@ -388,7 +391,7 @@ func test_veilbreaker() -> void:
 	var breaker := f.board(0, &"dumoryss_veilbreaker")
 	engine.use_hero_power(0)
 	engine.end_turn(0)
-	engine.play_card(1, f.hand(1, &"khevaruun_platecaller"))
+	engine.play_card(1, f.hand(1, &"neutral_sablequill_nomad"))
 	_ok(f.creature(breaker).get_attack() == 1, "opponent card whose cost was not increased: nothing")
 	engine.play_card(1, f.hand(1, &"neutral_vantrel_duskling"))
 	_ok(f.creature(breaker).get_attack() == 2, "opponent plays a card made more expensive by you: +1 attack")
@@ -403,7 +406,7 @@ func test_thoughtscar() -> void:
 	var engine := f.scenario(S, T)
 	engine.play_card(0, f.hand(0, &"dumoryss_thoughtscar"))
 	engine.end_turn(0)
-	var big := f.hand(1, &"khevaruun_platecaller")
+	var big := f.hand(1, &"neutral_sablequill_nomad")
 	var small := f.hand(1, &"khevaruun_aegis_hound")
 	_ok(engine.get_card_cost(1, big) == 4 and engine.get_card_cost(1, small) == 2,
 		"the next opponent card costing 3 or less costs +1; more expensive cards are not affected")
@@ -550,7 +553,10 @@ func test_platecaller() -> void:
 
 	engine = f.scenario(T, K)
 	card = f.hand(0, &"khevaruun_platecaller")
-	_ok(engine.play_card(0, card).ok, "with no other friendly creature it is played without a target")
+	var before := JSON.stringify(engine.snapshot())
+	var result := engine.play_card(0, card)
+	_ok(not result.ok and result.error == ActionResult.TARGET_REQUIRED and JSON.stringify(engine.snapshot()) == before,
+		"without another friendly creature the mandatory chosen target rejects the play transactionally")
 
 
 func test_wallforged() -> void:
