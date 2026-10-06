@@ -355,6 +355,14 @@ func _test_navigation() -> void:
 		_check(launched._session.config.opponent_hero == HeroCatalog.TAZHYRION
 			and launched._session.config.ai_difficulty == AiDifficulty.Level.STRATEGIST,
 			"E2E: chosen opponent and AI difficulty reach BattleSession")
+		var battle_snapshot: Dictionary = launched._session.engine.snapshot()
+		get_tree().root.propagate_notification(NOTIFICATION_WM_GO_BACK_REQUEST)
+		await get_tree().process_frame
+		await get_tree().process_frame
+		_check(SceneRouter.current_route == Routes.BATTLE and launched._exit_dialog.visible
+			and launched._session.engine.snapshot() == battle_snapshot,
+			"Android Back keeps the live match and requests confirmation")
+		launched.handle_back_request()
 		var old_seed: int = launched._session.config.rng_seed
 		var player_name: String = HeroCatalog.HEROES[launched._session.config.player_hero]["name_ru"]
 		var opponent_name: String = HeroCatalog.HEROES[launched._session.config.opponent_hero]["name_ru"]

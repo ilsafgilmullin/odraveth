@@ -1,6 +1,6 @@
 class_name ResultScreen
 extends PlaceholderScreen
-## Battle result and technical Stage 4 return routes.
+## Battle result and the approved Stage 5 setup return routes.
 
 const PARAM_OUTCOME := "outcome"
 

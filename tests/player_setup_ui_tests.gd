@@ -92,6 +92,9 @@ func _test_collection() -> void:
 		and scene.detail.detail_text.text.contains(card.rules_text_ru), "read-only detail shows English name and approved rules")
 	(scene.detail.find_child("CardDetailCloseButton", true, false) as Button).pressed.emit()
 	_ok(not scene.detail.visible, "card detail closes")
+	scene.detail.show_card(card)
+	_ok(scene.handle_back_request() and not scene.detail.visible,
+		"setup Back closes card detail before navigation")
 	scene.free()
 
 
@@ -190,6 +193,9 @@ func _test_builder() -> void:
 	_select_deck_metadata(scene, "")
 	(scene.find_child("ClearDeckButton", true, false) as Button).pressed.emit()
 	_ok(scene.clear_dialog.visible, "clear requires confirmation")
+	_ok(scene.handle_back_request() and not scene.clear_dialog.visible,
+		"setup Back dismisses confirmation before navigation")
+	(scene.find_child("ClearDeckButton", true, false) as Button).pressed.emit()
 	scene.clear_dialog.confirmed.emit()
 	_ok(scene.draft.card_ids.is_empty(), "confirmed clear keeps editable draft")
 	scene.free()

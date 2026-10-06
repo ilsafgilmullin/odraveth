@@ -28,6 +28,7 @@ func run() -> void:
 	_test_impulse()
 	_test_shard_and_choice()
 	_test_ai_steps_and_lock()
+	_test_safe_battle_exit()
 	await _test_responsive_structure()
 
 
@@ -249,6 +250,25 @@ func _test_ai_steps_and_lock() -> void:
 		"UI presents every AI command before releasing final state")
 	_ok(scene._session.turn_count == int(scene._session.get_observation()["turn_number"])
 		and scene._session.turn_count > 1, "turn count is authoritative across player and AI turns")
+	scene.free()
+
+
+func _test_safe_battle_exit() -> void:
+	var case := _scenario()
+	var scene: Control = case.scene
+	var snapshot: Dictionary = scene._session.engine.snapshot()
+	_ok(scene.handle_back_request() and scene._exit_dialog.visible,
+		"Android Back opens exit confirmation during a live match")
+	_ok(scene._session.engine.snapshot() == snapshot,
+		"exit request does not mutate or destroy the live match")
+	_ok(scene.handle_back_request() and not scene._exit_dialog.visible,
+		"second Back dismisses exit confirmation without leaving")
+	(scene._detail_overlay as CardDetailOverlay).show_card(_cards.get_card(&"neutral_vantrel_duskling"))
+	_ok(scene.handle_back_request() and not scene._detail_overlay.visible and not scene._exit_dialog.visible,
+		"Back closes card detail before offering battle exit")
+	(scene.find_child("MainMenuButton", true, false) as Button).pressed.emit()
+	_ok(scene._exit_dialog.visible and scene._session.engine.snapshot() == snapshot,
+		"battle Menu button uses the same safe confirmation")
 	scene.free()
 
 
