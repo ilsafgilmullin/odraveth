@@ -267,3 +267,36 @@ Placeholder-экраны дополнительно позволяют прой�
 - Текущий `CostCalculator` уже реализует эту семантику; production-код стоимости не переписывается без необходимости, семантика закрепляется regression-тестами.
 
 **Почему:** порядок создания должен быть наблюдаемым и детерминированным, а условные заряды не должны исчезать на неподходящих картах.
+
+
+### D-033 · утверждено пользователем · 2026-10-06 — AI information boundary и no-cheat policy
+
+Источник: ТЗ Stage 3 пользователя.
+
+Решение: AI полностью офлайн и принимает решения только по доступной игроку информации. Собственная рука, собственные ресурсы и публичное поле доступны; рука противника раскрывается только числом карт, обе колоды — только размером. Запрещены identity/order скрытых карт, будущий draw, будущие случайные результаты, RNG state и внутренние очереди MatchEngine. Раскрытые владельцу варианты текущего CHOOSE доступны AI.
+
+Последствия: будущая карта не может повлиять на решение до фактического добора; изменение скрытой руки/порядка колоды/RNG при неизменном observation не должно менять команду AI.
+
+### D-034 · утверждено пользователем · 2026-10-06 — Три детерминированные сложности AI
+
+Источник: ТЗ Stage 3 пользователя.
+
+Решение: ровно три уровня — NOVICE («Новичок»), TACTICIAN («Тактик»), STRATEGIST («Стратег»). Все полностью детерминированы и используют одинаковый information boundary. Разница — только в качестве функции оценки. Нейросети, ML, внешние AI API и намеренно случайные плохие ходы запрещены.
+
+### D-035 · принято · 2026-10-06 — Sanitized observation как граница MatchEngine → AI
+
+Решение: MatchEngine.get_observation(viewer_player) возвращает новую plain-data копию. Строитель находится в scripts/battle/ai_observation_builder.gd, потому что только battle-слой имеет право читать внутренний MatchState. В scripts/ai/ прямой доступ к .state, .snapshot(), ._rng, ._resolver и глобальному RNG запрещён и проверяется source-audit тестом.
+
+### D-036 · принято · 2026-10-06 — Legal-command scoring и canonical tie-break
+
+Решение: AiController получает только sanitized observation и массив MatchEngine.get_legal_commands(). Каждая команда получает integer score с explainable components; симуляции скрытого будущего нет. Равный score разрешается стабильным ключом kind → source_id → target_id → sorted replace_ids → canonical choices. После фактического исполнения следующая команда оценивается заново.
+
+Последствия: card-id spaghetti для 40 карт не используется — evaluator читает CardDefinition, CardEffectSpec и runtime observation. Отдельная оценка hero powers допустима через HeroCatalog.
+
+### D-037 · принято · 2026-10-06 — AI turn runner и предохранитель
+
+Решение: AiTurnRunner перед исполнением проверяет принадлежность команды legal-set и MatchEngine.validate(), затем вызывает только execute(). После каждой команды цикл получает новый observation/legal-set. Лимит — MAX_AI_COMMANDS_PER_TURN = 64; при его достижении runner отправляет legal END_TURN, если матч продолжается и выбор игрока не ожидается.
+
+### D-038 · принято · 2026-10-06 — AI QA harness, stress и mutation testing
+
+Решение: tests/ai/ содержит unit/information-barrier/determinism тесты и QA-only AI-vs-AI harness. Harness не является продуктовым режимом. CI сохраняет Stage 2 mutations и дополнительно временно мутирует no-cheat boundary, deck privacy, tie-break, legal-command guard и turn safety guard; mutation copies восстанавливаются и не коммитятся. Timing benchmark существует только как ручной dev-инструмент и не является CI threshold.

@@ -1,9 +1,10 @@
-name: Stage 2 corrective audit
+name: Stage 2+3 regression audit
 
 on:
   push:
     branches:
       - claude/odraveth-stage2-match-engine
+      - claude/odraveth-stage3-ai
   pull_request:
     branches:
       - main
@@ -132,5 +133,105 @@ jobs:
           PY
           expect_failure consume-skipped-thoughtscar
           git checkout -- scripts/battle/cost_calculator.gd
+
+          git diff --exit-code
+
+
+      - name: Stage 3 AI mutation tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          GODOT="$PWD/.tools/Godot_v4.7.2-stable_linux.x86_64"
+
+          expect_failure() {
+            local name="$1"
+            local log=".tools/ai-mutation-${name}.log"
+            set +e
+            GODOT_BIN="$GODOT" tests/run_tests.sh >"$log" 2>&1
+            local code=$?
+            set -e
+            if [ "$code" -eq 0 ]; then
+              echo "AI MUTATION SURVIVED: $name"
+              cat "$log"
+              exit 1
+            fi
+            echo "AI MUTATION CAUGHT: $name (exit $code)"
+            grep -E "FAILED|failed|ERROR|SCRIPT ERROR|Parse Error|SMOKE TEST" "$log" | tail -40 || true
+          }
+
+          python3 - <<'PY'
+          from pathlib import Path
+          p = Path("scripts/ai/ai_turn_runner.gd")
+          s = p.read_text()
+          old = """\t\tvar observation := engine.get_observation(player)
+          \t\tif observation.is_empty() or observation[\"match_over\"]:"""
+          new = """\t\tvar observation := engine.get_observation(player)
+          \t\tvar leaked_opponent_card := \"\" if engine.state.players[1 - player].hand.is_empty() else String(engine.state.players[1 - player].hand[0].card_id())
+          \t\tif leaked_opponent_card == \"__never__\":
+          \t\t\tbreak
+          \t\tif observation.is_empty() or observation[\"match_over\"]:"""
+          assert old in s
+          p.write_text(s.replace(old, new, 1))
+          PY
+          expect_failure reads-opponent-hand
+          git checkout -- scripts/ai/ai_turn_runner.gd
+
+          python3 - <<'PY'
+          from pathlib import Path
+          p = Path("scripts/battle/ai_observation_builder.gd")
+          s = p.read_text()
+          old = """\tif include_hand:
+          \t\tvar hand: Array[Dictionary] = []"""
+          new = """\tresult[\"deck\"] = player.deck.map(func(card: CardInstance) -> String: return String(card.card_id()))
+          \tif include_hand:
+          \t\tvar hand: Array[Dictionary] = []"""
+          assert old in s
+          p.write_text(s.replace(old, new, 1))
+          PY
+          expect_failure leaks-deck-order
+          git checkout -- scripts/battle/ai_observation_builder.gd
+
+          python3 - <<'PY'
+          from pathlib import Path
+          p = Path("scripts/ai/ai_controller.gd")
+          s = p.read_text()
+          old = """\treturn \"%02d|%010d|%010d|%s|%s\" % ["""
+          new = """\tvar random_tie := randi()
+          \treturn (\"%010d|\" % random_tie) + (\"%02d|%010d|%010d|%s|%s\" % ["""
+          assert old in s
+          s = s.replace(old, new, 1)
+          old_end = """\t\t\",\".join(replace_parts), \";\".join(choice_parts),
+          \t]"""
+          new_end = """\t\t\",\".join(replace_parts), \";\".join(choice_parts),
+          \t])"""
+          assert old_end in s
+          p.write_text(s.replace(old_end, new_end, 1))
+          PY
+          expect_failure random-tie-break
+          git checkout -- scripts/ai/ai_controller.gd
+
+          python3 - <<'PY'
+          from pathlib import Path
+          p = Path("scripts/ai/ai_turn_runner.gd")
+          s = p.read_text()
+          old = """\t\tif not _contains_command(legal, decision.selected_command):"""
+          new = """\t\tif false and not _contains_command(legal, decision.selected_command):"""
+          assert old in s
+          p.write_text(s.replace(old, new, 1))
+          PY
+          expect_failure accepts-nonlegal-command
+          git checkout -- scripts/ai/ai_turn_runner.gd
+
+          python3 - <<'PY'
+          from pathlib import Path
+          p = Path("scripts/ai/ai_turn_runner.gd")
+          s = p.read_text()
+          old = """\tif int(trace[\"commands_executed\"]) >= max_commands_per_turn:"""
+          new = """\tif false and int(trace[\"commands_executed\"]) >= max_commands_per_turn:"""
+          assert old in s
+          p.write_text(s.replace(old, new, 1))
+          PY
+          expect_failure removes-turn-guard
+          git checkout -- scripts/ai/ai_turn_runner.gd
 
           git diff --exit-code

@@ -26,6 +26,9 @@ Source of truth по продукту: [`docs/PRODUCT_BASELINE.md`](docs/PRODUCT
 - Карты — только 40 утверждённых (`data/cards/*.json` — канонический источник). Изменение карты — только по решению пользователя и одновременно в JSON, `tests/approved_cards.gd` и `PRODUCT_BASELINE.md` §6.6.
 - Эффекты карт — декларативные данные из закрытого словаря `EffectVocabulary`; их исполняет MatchEngine по правилам PRODUCT_BASELINE §5–6. Не дублировать карты в коде движка и не придумывать правила, которых нет в baseline.
 - `MatchEngine` — не autoload: один экземпляр — один матч. Правила матча — только в `scripts/battle/`; UI и ИИ получают проверку и допустимые команды от движка и не дублируют её.
+- Production AI в scripts/ai/ получает состояние только через MatchEngine.get_observation(); прямые .state, .snapshot(), ._rng, ._resolver запрещены.
+- AI выбирает только из get_legal_commands() и выполняет команды только через MatchEngine. Нельзя использовать global RNG, hidden opponent hand, identity/order колод или future draw/random results.
+- Различие NOVICE / TACTICIAN / STRATEGIST — только scoring quality; tie-break всегда canonical deterministic.
 - Вся случайность матча — через инжектируемый `MatchRng`; глобальные `randi`/`randf`/`randomize`/`Array.shuffle` в коде матча запрещены. Отвергнутая команда не должна менять состояние.
 - Изменение правила матча — вместе с тестом в `tests/engine/`; каждая карта должна иметь поведенческий тест и строку в `docs/CARD_TEST_COVERAGE.md`.
 - Не ослаблять строгие предупреждения GDScript в `project.godot` — исправлять код.
@@ -41,6 +44,7 @@ Source of truth по продукту: [`docs/PRODUCT_BASELINE.md`](docs/PRODUCT
 | [`docs/PRODUCT_BASELINE.md`](docs/PRODUCT_BASELINE.md) | Утверждённые продуктовые решения и открытые вопросы |
 | [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) | Устройство проекта, autoload, навигация, сохранения, данные, MatchEngine |
 | [`docs/CARD_TEST_COVERAGE.md`](docs/CARD_TEST_COVERAGE.md) | Поведенческие тесты каждой из 40 карт |
+| [docs/AI_DESIGN.md](docs/AI_DESIGN.md) | Stage 3 AI boundary, scoring, deterministic loop и QA |
 | [`docs/DEVELOPMENT.md`](docs/DEVELOPMENT.md) | Установка Godot, запуск, проверки, соглашения |
 | [`docs/DECISIONS.md`](docs/DECISIONS.md) | Журнал технических решений |
 

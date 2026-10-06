@@ -9,13 +9,15 @@ ODRAVETH — offline fantasy card strategy game for Android
 
 ## Статус
 
-**Stage 2 — MatchEngine.** Поверх технического фундамента Stage 0 (сервисы ядра, Boot → главное меню, временные экраны утверждённого UI flow) и базы карт Stage 1 (строгая типизированная `CardDatabase` с ровно 40 утверждёнными картами из `data/cards/*.json`) есть:
+**Stage 3 — deterministic offline AI.** Поверх Stage 0 foundation, Stage 1 CardDatabase и Stage 2 MatchEngine реализованы:
 
-- детерминированный `MatchEngine` (`scripts/battle/`): подготовка матча и проверка колод, замена стартовых карт, ходы, энергия и «Осколок импульса», добор и сгорание, «Разлом», бой и броня, гибель существ, Осколки души, артефакты, 4 способности героев, исполнение всех 40 карт по их данным, Победа / Поражение / Ничья;
-- инжектируемый seeded RNG, канонические снимки состояния, структурированный журнал событий, отказ от недопустимых команд без изменения состояния;
-- headless-тесты: правила, каждая карта и способность, ключевые слова, replay и fuzz-матчи.
+- честный sanitized observation API без opponent hand, deck order, future draw и RNG;
+- NOVICE / TACTICIAN / STRATEGIST с детерминированным explainable command scoring;
+- mulligan, play/targets, Soulmonger choice, hero powers, Impulse Shard, attacks, Cartographer CHOOSE и полный AI turn;
+- canonical tie-break без AI randomness и guard от бесконечного хода;
+- information-barrier, determinism, AI-vs-AI, stress и mutation tests.
 
-ИИ, финальный UI (включая боевой экран) и Android-сборка — следующие этапы. Матч пока нельзя сыграть из интерфейса.
+AI не использует neural network, external API или сеть. Финальный Battle UI и Android-сборка в Stage 3 не входят; матч пока не подключён к финальному игровому интерфейсу.
 
 ## Быстрый старт
 
@@ -35,4 +37,5 @@ GODOT_BIN=/path/to/godot-4.7.2 tests/run_tests.sh   # все проверки
 | [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md) | Установка, запуск, проверки, соглашения |
 | [docs/DECISIONS.md](docs/DECISIONS.md) | Журнал технических решений |
 | [docs/CARD_TEST_COVERAGE.md](docs/CARD_TEST_COVERAGE.md) | Покрытие 40 карт поведенческими тестами |
+| [docs/AI_DESIGN.md](docs/AI_DESIGN.md) | Information boundary, scoring, difficulty, turn loop и QA AI |
 | [CLAUDE.md](CLAUDE.md) | Правила работы Claude в репозитории |

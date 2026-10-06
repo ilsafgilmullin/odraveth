@@ -93,6 +93,12 @@ func get_legal_commands(player: int) -> Array[MatchCommand]:
 	return CommandValidator.legal_commands(state, player)
 
 
+## Sanitized, viewer-specific plain data for UI/AI. The result intentionally
+## excludes hidden hand identities, all deck identities/order, RNG and resolver queues.
+func get_observation(viewer_player: int) -> Dictionary:
+	return AiObservationBuilder.build(state, viewer_player)
+
+
 ## Valid target ids for playing hand card [param card_id] (0 = "no target").
 func get_valid_play_targets(player: int, card_id: int) -> Array[int]:
 	var targets: Array[int] = []

@@ -378,3 +378,38 @@ var result := engine.play_card(player, card_instance_id, target_id, {"soul_shard
 - Тест перехватывает все ошибки и предупреждения движка (`Logger`): вне блоков ожидаемых ошибок любая ошибка проваливает тест.
 - `tests/run_tests.sh` — импорт, smoke-тест, запуск main scene. Подробности — в [`DEVELOPMENT.md`](DEVELOPMENT.md).
 - Предупреждения GDScript, указывающие на вероятные дефекты (неиспользуемые переменные, затенение, недостижимый код, вызов static через экземпляр и др.), переведены в ошибки в `project.godot`, поэтому headless-проверка их видит.
+
+
+## 13. Offline AI (Stage 3)
+
+Подробный контракт — docs/AI_DESIGN.md.
+
+### 13.1. Граница информации
+
+MatchEngine.get_observation(viewer_player) делегирует построение AiObservationBuilder внутри battle-слоя. Возвращается независимый plain-data Dictionary без ссылок на MatchState.
+
+Для viewer доступны собственная рука и публичные ресурсы/поле; для соперника — публичные hero/resources/board/artifact/graveyard и только hand_count / deck_count. Identity/order обеих колод, opponent hand, RNG, WHEN/AFTER queues и delayed internals отсутствуют. Pending CHOOSE options раскрываются только владельцу выбора.
+
+scripts/ai/ не читает MatchEngine internals; статический тест запрещает .state, .snapshot(), ._rng, ._resolver и global RNG.
+
+### 13.2. Модули
+
+| Модуль | Роль |
+|---|---|
+| AiDifficulty | ровно NOVICE / TACTICIAN / STRATEGIST |
+| AiDecision | выбранная команда, total score, components, candidate count, optional ranked trace |
+| AiEvaluator | bounded generic scoring CardDefinition / CardEffectSpec / public runtime state |
+| AiMulliganPolicy | детерминированная оценка legal mulligan subsets без просмотра результата замены |
+| AiChoicePolicy | оценка только фактически раскрытых CHOOSE options |
+| AiController | observation + legal commands → одна команда; canonical tie-break |
+| AiTurnRunner | validate/execute loop через публичный MatchEngine; guard 64 команды |
+
+### 13.3. Алгоритм решения
+
+AI не строит game tree и не клонирует MatchEngine. Для каждой фактической позиции: получить observation, получить legal commands, оценить кандидатов, выбрать максимум с canonical tie-break, проверить legal membership/validate, выполнить execute и заново получить observation.
+
+Таким образом card draw и random target становятся известны только после реального разрешения MatchEngine.
+
+### 13.4. QA и производительность
+
+tests/ai/ проверяет information barriers, 100-кратную повторяемость решения, immediate lethal, self-lethal avoidance, различия сложностей, mulligan, Cartographer, Soulmonger, все hero powers, Impulse Shard, targets, full turns, guard, trace privacy, AI-vs-AI и fixed-seed stress. benchmark_ai.gd — ручной bounded benchmark без CI-порога по миллисекундам.
