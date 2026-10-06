@@ -40,6 +40,7 @@ func run() -> void:
 	_test_immediate_lethal()
 	_test_self_lethal_avoidance()
 	_test_difficulty_separation()
+	_test_strategist_synergy()
 	_test_mulligan()
 	_test_cartographer_choice()
 	_test_soulmonger_choice()
@@ -223,6 +224,24 @@ func _test_difficulty_separation() -> void:
 		"difficulty: Tactician values the favorable threat-removing trade")
 	_ok(strategist.selected_command.kind == MatchCommand.Kind.ATTACK and strategist.selected_command.target_id == threat,
 		"difficulty: Strategist also preserves tactical board control")
+
+
+func _test_strategist_synergy() -> void:
+	var engine := f.scenario(K, T)
+	f.board(0, &"neutral_kelvarn_relicbearer")
+	var artifact := f.hand(0, &"ashravael_furnace_sigil")
+	var raw_stats := f.hand(0, &"neutral_sablequill_nomad")
+	var legal := engine.get_legal_commands(0)
+	var observation := engine.get_observation(0)
+	var tactician := AiController.new(AiDifficulty.Level.TACTICIAN).decide(observation, legal)
+	var strategist := AiController.new(AiDifficulty.Level.STRATEGIST).decide(observation, legal)
+	_ok(tactician.selected_command.kind == MatchCommand.Kind.PLAY_CARD
+		and tactician.selected_command.source_id == raw_stats,
+		"difficulty: Tactician prefers immediate standalone board value")
+	_ok(strategist.selected_command.kind == MatchCommand.Kind.PLAY_CARD
+		and strategist.selected_command.source_id == artifact
+		and int(strategist.score_components.get("SYNERGY_SETUP", 0)) > 0,
+		"difficulty: Strategist recognizes generic artifact setup synergy with the visible board")
 
 
 func _test_mulligan() -> void:
