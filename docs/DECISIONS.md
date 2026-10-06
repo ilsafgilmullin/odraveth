@@ -36,7 +36,7 @@ Godot Engine **4.7.2 stable**, **GDScript**. C# не используется, 4
 
 ### D-006 · принято · 2026-10-05 — Формат сохранений
 
-**Решение:** локальный JSON в `user://odraveth_save.json`, обязательное поле `save_version` (сейчас 1), атомарная запись (`*.tmp` + rename), пошаговые миграции `_migrate_from_vN`, защита от перезаписи сохранения более новой версии, копия повреждённого файла.
+**Решение:** локальный JSON в `user://odraveth_save.json`, обязательное поле `save_version` (на момент решения — 1; текущая v2 введена D-045), атомарная запись (`*.tmp` + rename), пошаговые миграции `_migrate_from_vN`, защита от перезаписи сохранения более новой версии, копия повреждённого файла.
 **Почему:** JSON читаем человеком и безопасен (в отличие от `str_to_var`/`bytes_to_var` с объектами); `save_version` — требование ТЗ; атомарность защищает от порчи при закрытии приложения Android во время записи.
 **Последствия:** числа в JSON — `float`, код чтения приводит типы явно.
 
@@ -350,3 +350,19 @@ UserDeck хранит устойчивый локальный `id`, имя, `her
 ### D-048 · исправление Stage 4 · 2026-10-06 — Уникальный seed быстрого rematch
 
 Старый технический генератор XOR миллисекундного времени допускал одинаковые seed при двух быстрых запусках. Новый генератор использует микросекунды и монотонный fallback, чтобы подряд созданные launch config имели разные seed. Явно переданный seed не изменяется; семантика RNG MatchEngine и AI не меняется. Проверяется серией быстрых запусков и Result/rematch integration.
+
+### D-049 · исправление Stage 6 · 2026-10-06 — Безопасный Android Back во время боя
+
+`SceneRouter` сначала передаёт Back текущему экрану через `handle_back_request()`. Setup-экраны закрывают открытое описание карты или confirmation dialog. Реальный Battle закрывает описание карты либо показывает нейтральное подтверждение выхода; только подтверждение уничтожает текущую сессию и ведёт в главное меню. Кнопка «Меню» использует тот же путь. Правила MatchEngine, AI и сохранение незавершённого матча не меняются.
+
+### D-050 · принято · 2026-10-06 — Stage 6 pre-APK gate
+
+Android export разрешён только после чистого import, полного regression, Stage 2/3 mutation gates, E2E setup→battle, responsive и re-audit без известных воспроизводимых BLOCKER/CRITICAL/HIGH. Аудит нашёл и исправил один HIGH (выход из активного боя одним Back) и два LOW documentation/comment contradictions; Stage 2 gameplay и Stage 3 AI не менялись.
+
+### D-051 · заменено D-052 · 2026-10-06 — Android QA identity и export
+
+Первый technical alpha — debug APK `ODRAVETH Stage 6 QA`, package `com.example.odraveth.qa`, version `0.6.0-qa`/6. Это временная непубличная identity, не store decision. Preset использует официальный prebuilt template Godot 4.7.2, четыре ABI, immersive edge-to-edge, user/sensor landscape, пустые custom permissions и исключает tests/docs/CI. ETC2/ASTC включён как обязательное Android export требование. Техническая SVG-иконка — placeholder, не final art. Q-15 остаётся открытым.
+
+### D-052 · исправление Stage 6 · 2026-10-06 — Атомарная выдача Android QA APK
+
+Первый переданный `0.6.0-qa`/6 оказался обрезан внутри `lib/x86_64/libgodot_android.so`: локальный заголовок ZIP присутствовал, но central directory и APK Signing Block отсутствовали, поэтому Android сообщал «Не удалось обработать пакет». Corrective artifact имеет version `0.6.1-qa`/7. `tools/build_android_qa.sh` экспортирует во временный APK, полностью проверяет ZIP, package/version и подпись v2/v3 и только затем атомарно заменяет итоговый файл. Невалидный временный export удаляется и не выдаётся пользователю.

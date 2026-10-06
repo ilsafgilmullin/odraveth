@@ -27,11 +27,7 @@ func _ready() -> void:
 	back.name = "BackButton"
 	back.text = "Назад"
 	back.custom_minimum_size = Vector2(180, 72)
-	back.pressed.connect(func() -> void:
-		if SceneRouter.can_go_back():
-			SceneRouter.go_back()
-		else:
-			SceneRouter.reset_to(Routes.MAIN_MENU))
+	back.pressed.connect(_request_back)
 	header.add_child(back)
 	var title := Label.new()
 	title.name = "ScreenTitle"
@@ -57,3 +53,26 @@ func _build_content() -> void:
 
 func show_message(text_value: String) -> void:
 	message.text = text_value
+
+
+## Gives transient UI first refusal of Android/UI Back. SceneRouter calls this
+## before changing screens, so a detail or confirmation is dismissed safely.
+func handle_back_request() -> bool:
+	var detail_overlay := find_child("CardDetailOverlay", true, false) as CanvasItem
+	if detail_overlay != null and detail_overlay.visible:
+		detail_overlay.visible = false
+		return true
+	for child: Node in get_children():
+		if child is ConfirmationDialog and child.visible:
+			(child as ConfirmationDialog).hide()
+			return true
+	return false
+
+
+func _request_back() -> void:
+	if handle_back_request():
+		return
+	if SceneRouter.can_go_back():
+		SceneRouter.go_back()
+	else:
+		SceneRouter.reset_to(Routes.MAIN_MENU)

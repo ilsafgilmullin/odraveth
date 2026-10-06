@@ -6,6 +6,8 @@
 
 UIState: MULLIGAN → PLAYER_IDLE ↔ CARD_SELECTED / ATTACKER_SELECTED / HERO_POWER_TARGET → RESOLVING → PLAYER_IDLE или AI_TURN; SOUL_SHARD_CHOICE обрабатывает опциональный платёж Soulmonger, CHOICE_MODAL — выбор Cartographer; MATCH_ENDED завершает маршрут. Любые повторные команды во время RESOLVING/AI_TURN/модального окна игнорируются. TEST_MODE возможен только при явном открытии Battle без config в legacy smoke-тесте.
 
+Системный Android Back и кнопка «Меню» в реальном матче открывают подтверждение выхода и не меняют состояние MatchEngine. Если открыт read-only Card Detail, Back сначала закрывает его. Это предотвращает случайную потерю активной сессии одним жестом; незавершённый матч по-прежнему не сохраняется.
+
 `AiTurnRunner.after_command` вызывает BattleSession после каждой принятой команды; сессия возвращает ordered `[{command, events, observation_after_command}]`. Observation — независимый публичный словарь **с точки зрения игрока**: нет opponent hand, порядков колод, RNG, MatchState. Весь ход AI вычисляется синхронно, но UI сохраняет observation до него и показывает каждый шаг/событие перед следующим. Время анимации не влияет на RNG или правила.
 
 Card Detail — общий с Collection/Deck Builder read-only overlay по отдельной `i` рядом с картой в руке и mulligan. Показаны русское имя, текущая стоимость, фракция, редкость, тип, stats, rules text и keywords; нажатие карты по-прежнему играет/выбирает её. Декоративный арт не используется.

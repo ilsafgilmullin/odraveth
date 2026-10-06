@@ -74,6 +74,7 @@ var _shard_overlay: Control
 var _shard_lbl: Label
 var _detail_overlay: Control
 var _detail_text: RichTextLabel
+var _exit_dialog: ConfirmationDialog
 
 
 func apply_route_params(params: Dictionary) -> void:
@@ -164,6 +165,7 @@ func _build_battle_ui() -> void:
 	_build_choice_overlay()
 	_build_shard_overlay()
 	_build_detail_overlay()
+	_build_exit_dialog()
 
 
 func _build_top_bar(parent: Control) -> void:
@@ -178,7 +180,7 @@ func _build_top_bar(parent: Control) -> void:
 	menu_btn.name = "MainMenuButton"
 	menu_btn.text = "Меню"
 	menu_btn.custom_minimum_size.x = 160
-	menu_btn.pressed.connect(func() -> void: SceneRouter.reset_to(Routes.MAIN_MENU))
+	menu_btn.pressed.connect(_request_exit_battle)
 	bar.add_child(menu_btn)
 
 
@@ -404,6 +406,37 @@ func _build_detail_overlay() -> void:
 	_detail_overlay = CardDetailOverlay.new()
 	add_child(_detail_overlay)
 	_detail_text = (_detail_overlay as CardDetailOverlay).detail_text
+
+
+func _build_exit_dialog() -> void:
+	_exit_dialog = ConfirmationDialog.new()
+	_exit_dialog.name = "ExitBattleConfirmation"
+	_exit_dialog.title = "Выйти из боя?"
+	_exit_dialog.dialog_text = "Текущий бой будет завершён. Выйти в главное меню?"
+	_exit_dialog.ok_button_text = "ВЫЙТИ"
+	_exit_dialog.cancel_button_text = "ОСТАТЬСЯ"
+	_exit_dialog.confirmed.connect(SceneRouter.reset_to.bind(Routes.MAIN_MENU))
+	add_child(_exit_dialog)
+
+
+## Consumed by SceneRouter before history navigation. Back closes read-only
+## detail first and requires an explicit confirmation before abandoning a match.
+func handle_back_request() -> bool:
+	if _ui_state == UIState.TEST_MODE:
+		return false
+	if _detail_overlay != null and _detail_overlay.visible:
+		_detail_overlay.visible = false
+		return true
+	if _exit_dialog != null and _exit_dialog.visible:
+		_exit_dialog.hide()
+		return true
+	_request_exit_battle()
+	return true
+
+
+func _request_exit_battle() -> void:
+	if _exit_dialog != null and not _exit_dialog.visible:
+		_exit_dialog.popup_centered(Vector2i(680, 300))
 
 
 func _show_card_detail(card_data: Dictionary) -> void:

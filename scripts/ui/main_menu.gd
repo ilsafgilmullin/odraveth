@@ -1,7 +1,5 @@
 extends Control
-## Main menu — Stage 0 technical placeholder, not the final approved UI.
-## Buttons and their order follow docs/PRODUCT_BASELINE.md section 8; the target
-## of every button is a technical mapping (docs/DECISIONS.md, D-009).
+## Main menu with the Stage 5 approved setup routes (Q-14).
 
 
 func _ready() -> void:

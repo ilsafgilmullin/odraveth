@@ -10,6 +10,7 @@ extends Node
 ## outcome) moves between screens this way instead of living in a global singleton.
 
 const PARAMS_METHOD := &"apply_route_params"
+const BACK_HANDLER_METHOD := &"handle_back_request"
 
 enum _HistoryMode { PUSH, KEEP, CLEAR }
 
@@ -116,6 +117,10 @@ func _on_scene_changed() -> void:
 
 func _on_back_requested() -> void:
 	if _is_changing:
+		return
+	var screen := get_tree().current_scene
+	if screen != null and screen.has_method(BACK_HANDLER_METHOD) \
+			and bool(screen.call(BACK_HANDLER_METHOD)):
 		return
 	if can_go_back():
 		go_back()
