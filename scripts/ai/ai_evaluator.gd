@@ -157,6 +157,8 @@ static func _score_play(observation: Dictionary, command: MatchCommand,
 	var cost := int(card.get("current_cost", definition.get("cost", 0)))
 	components["BOARD_VALUE"] = estimate_definition_value(definition, difficulty)
 	components["ENERGY_EFFICIENCY"] = -cost * _w(difficulty, 1, 2, 2)
+	if difficulty == AiDifficulty.Level.STRATEGIST:
+		components["SYNERGY_SETUP"] = _strategic_setup_synergy(definition, observation)
 	if definition.get("type", "") == "CREATURE":
 		var board_count := (observation["own"]["board"] as Array).size()
 		if difficulty == AiDifficulty.Level.STRATEGIST and board_count >= GameRules.MAX_CREATURES_PER_SIDE - 1:
@@ -279,6 +281,63 @@ static func _score_impulse(observation: Dictionary, difficulty: AiDifficulty.Lev
 	if not observation["own"]["hero_power_used_this_turn"] and energy < GameRules.HERO_ABILITY_COST 			and energy + GameRules.IMPULSE_SHARD_ENERGY >= GameRules.HERO_ABILITY_COST:
 		unlocks += 1
 	components["RESOURCE_VALUE"] = unlocks * _w(difficulty, 8, 30, 38) if unlocks > 0 else _w(difficulty, 1, -30, -45)
+
+
+static func _strategic_setup_synergy(definition: Dictionary, observation: Dictionary) -> int:
+	var candidate_artifact := definition.get("type", "") == "ARTIFACT"
+	var candidate_self_damage := false
+	var candidate_shard_gain := false
+	var candidate_shard_spend := false
+	var candidate_cost_disruption := false
+	for effect: Dictionary in definition.get("effects", []):
+		for action: Dictionary in effect.get("actions", []):
+			match String(action.get("type", "")):
+				"DEAL_DAMAGE":
+					candidate_self_damage = candidate_self_damage or action.get("target", "") == "OWN_HERO"
+				"GAIN_SOUL_SHARDS":
+					candidate_shard_gain = true
+				"SPEND_SOUL_SHARDS":
+					candidate_shard_spend = true
+				"INCREASE_NEXT_OPPONENT_CARD_COST", "INCREASE_PLAYED_CARD_COST":
+					candidate_cost_disruption = true
+
+	var wants_artifact := false
+	var reacts_hero_damage := false
+	var reacts_increased_cost := false
+	var visible_shard_gain := false
+	var visible_shard_spend := false
+	var visible_definitions: Array = []
+	for creature: Dictionary in observation["own"]["board"]:
+		visible_definitions.append(creature["definition"])
+	for card: Dictionary in observation["own"].get("hand", []):
+		if card["definition"]["id"] != definition["id"]:
+			visible_definitions.append(card["definition"])
+	for other: Dictionary in visible_definitions:
+		for effect: Dictionary in other.get("effects", []):
+			if effect.get("trigger", "") == "OWN_HERO_DAMAGED":
+				reacts_hero_damage = true
+			if effect.get("trigger", "") == "OPPONENT_PAYS_INCREASED_COST":
+				reacts_increased_cost = true
+			for condition: Dictionary in effect.get("conditions", []):
+				if condition.get("type", "") == "OWN_ACTIVE_ARTIFACT":
+					wants_artifact = true
+			for action: Dictionary in effect.get("actions", []):
+				if action.get("type", "") == "GAIN_SOUL_SHARDS":
+					visible_shard_gain = true
+				if action.get("type", "") == "SPEND_SOUL_SHARDS":
+					visible_shard_spend = true
+	var score := 0
+	if candidate_artifact and wants_artifact:
+		score += 28
+	if candidate_self_damage and reacts_hero_damage:
+		score += 24
+	if candidate_cost_disruption and reacts_increased_cost:
+		score += 24
+	if candidate_shard_gain and visible_shard_spend:
+		score += 20
+	if candidate_shard_spend and visible_shard_gain:
+		score += 20
+	return score
 
 
 static func _effect_static_value(effect: Dictionary, difficulty: AiDifficulty.Level) -> int:
