@@ -1,0 +1,260 @@
+{
+	"cards": [
+		{
+			"id": "nerqathen_gravewisp",
+			"name_en": "Nerqathen Gravewisp",
+			"name_ru": "Могильный огонёк",
+			"faction": "NERQATHEN",
+			"type": "CREATURE",
+			"rarity": "COMMON",
+			"cost": 1,
+			"deck_limit": 2,
+			"attack": 1,
+			"health": 2,
+			"armor": 0,
+			"rules_text_ru": "Предсмертие: получите 1 Осколок души.",
+			"effects": [
+				{
+					"effect_id": "last_breath_soul_shard",
+					"trigger": "LAST_BREATH",
+					"actions": [
+						{
+							"type": "GAIN_SOUL_SHARDS",
+							"amount": 1
+						}
+					]
+				}
+			]
+		},
+		{
+			"id": "nerqathen_pale_binder",
+			"name_en": "Nerqathen Pale Binder",
+			"name_ru": "Бледный пленитель",
+			"faction": "NERQATHEN",
+			"type": "CREATURE",
+			"rarity": "COMMON",
+			"cost": 2,
+			"deck_limit": 2,
+			"attack": 2,
+			"health": 3,
+			"armor": 0,
+			"rules_text_ru": "Вход в бой: если у вас есть хотя бы 1 Осколок души, получает +1 брони. Осколок не расходуется.",
+			"effects": [
+				{
+					"effect_id": "enter_battle_armor",
+					"trigger": "ENTER_BATTLE",
+					"conditions": [
+						{
+							"type": "OWN_SOUL_SHARDS_AT_LEAST",
+							"value": 1
+						}
+					],
+					"actions": [
+						{
+							"type": "MODIFY_STATS",
+							"target": "SELF",
+							"armor": 1,
+							"duration": "NOT_STATED"
+						}
+					]
+				}
+			]
+		},
+		{
+			"id": "nerqathen_bone_cantor",
+			"name_en": "Nerqathen Bone Cantor",
+			"name_ru": "Певец костей",
+			"faction": "NERQATHEN",
+			"type": "CREATURE",
+			"rarity": "RARE",
+			"cost": 3,
+			"deck_limit": 2,
+			"attack": 2,
+			"health": 4,
+			"armor": 0,
+			"rules_text_ru": "Первый раз за ход после гибели союзного существа получает постоянный +1 к атаке.",
+			"effects": [
+				{
+					"effect_id": "ally_death_attack",
+					"trigger": "ALLY_CREATURE_DIED",
+					"limits": {
+						"per_turn": 1
+					},
+					"actions": [
+						{
+							"type": "MODIFY_STATS",
+							"target": "SELF",
+							"attack": 1,
+							"duration": "PERMANENT"
+						}
+					]
+				}
+			]
+		},
+		{
+			"id": "nerqathen_mourning_husk",
+			"name_en": "Nerqathen Mourning Husk",
+			"name_ru": "Скорбная оболочка",
+			"faction": "NERQATHEN",
+			"type": "CREATURE",
+			"rarity": "RARE",
+			"cost": 4,
+			"deck_limit": 2,
+			"attack": 3,
+			"health": 5,
+			"armor": 1,
+			"rules_text_ru": "Провокация. Предсмертие: получите 1 Осколок души.",
+			"effects": [
+				{
+					"effect_id": "provoke",
+					"keyword": "PROVOKE",
+					"trigger": "STATIC",
+					"actions": []
+				},
+				{
+					"effect_id": "last_breath_soul_shard",
+					"trigger": "LAST_BREATH",
+					"actions": [
+						{
+							"type": "GAIN_SOUL_SHARDS",
+							"amount": 1
+						}
+					]
+				}
+			]
+		},
+		{
+			"id": "nerqathen_soulmonger",
+			"name_en": "Nerqathen Soulmonger",
+			"name_ru": "Скупщик душ",
+			"faction": "NERQATHEN",
+			"type": "CREATURE",
+			"rarity": "LEGENDARY",
+			"cost": 7,
+			"deck_limit": 1,
+			"attack": 5,
+			"health": 7,
+			"armor": 0,
+			"rules_text_ru": "Вход в бой: можно потратить до 3 Осколков души. За каждый потраченный Осколок получает +1 к атаке и +1 к здоровью. Если потрачено ровно 3, получает +1 брони.",
+			"effects": [
+				{
+					"effect_id": "enter_battle_soul_feast",
+					"trigger": "ENTER_BATTLE",
+					"actions": [
+						{
+							"type": "SPEND_SOUL_SHARDS",
+							"up_to": 3
+						},
+						{
+							"type": "MODIFY_STATS",
+							"target": "SELF",
+							"attack": 1,
+							"health": 1,
+							"duration": "NOT_STATED",
+							"multiplier": "SOUL_SHARDS_SPENT"
+						},
+						{
+							"type": "MODIFY_STATS",
+							"target": "SELF",
+							"armor": 1,
+							"duration": "NOT_STATED",
+							"conditions": [
+								{
+									"type": "SOUL_SHARDS_SPENT_EQUALS",
+									"value": 3
+								}
+							]
+						}
+					]
+				}
+			]
+		},
+		{
+			"id": "nerqathen_soul_harvest",
+			"name_en": "Nerqathen Soul Harvest",
+			"name_ru": "Жатва душ",
+			"faction": "NERQATHEN",
+			"type": "SPELL",
+			"rarity": "COMMON",
+			"cost": 2,
+			"deck_limit": 2,
+			"rules_text_ru": "Уничтожьте выбранное союзное существо. Получите 2 Осколка души и возьмите 1 карту.",
+			"effects": [
+				{
+					"effect_id": "soul_harvest",
+					"trigger": "ON_PLAY",
+					"actions": [
+						{
+							"type": "DESTROY",
+							"target": "CHOSEN_ALLY_CREATURE"
+						},
+						{
+							"type": "GAIN_SOUL_SHARDS",
+							"amount": 2
+						},
+						{
+							"type": "DRAW_CARDS",
+							"amount": 1
+						}
+					]
+				}
+			]
+		},
+		{
+			"id": "nerqathen_second_burial",
+			"name_en": "Nerqathen Second Burial",
+			"name_ru": "Второе погребение",
+			"faction": "NERQATHEN",
+			"type": "SPELL",
+			"rarity": "EPIC",
+			"cost": 4,
+			"deck_limit": 2,
+			"rules_text_ru": "Верните на поле последнее погибшее союзное существо. Оно возвращается с 1 здоровьем. Его эффект “Вход в бой” повторно не срабатывает.",
+			"effects": [
+				{
+					"effect_id": "second_burial",
+					"trigger": "ON_PLAY",
+					"actions": [
+						{
+							"type": "RETURN_TO_BOARD",
+							"target": "LAST_DIED_ALLY_CREATURE",
+							"set_health": 1,
+							"enter_battle_triggers": false
+						}
+					]
+				}
+			]
+		},
+		{
+			"id": "nerqathen_ossuary_bell",
+			"name_en": "Nerqathen Ossuary Bell",
+			"name_ru": "Колокол костницы",
+			"faction": "NERQATHEN",
+			"type": "ARTIFACT",
+			"rarity": "EPIC",
+			"cost": 3,
+			"deck_limit": 2,
+			"charges": 4,
+			"rules_text_ru": "Первый раз за ход, когда погибает ваше существо, расходуется 1 заряд и вы получаете 1 Осколок души.",
+			"effects": [
+				{
+					"effect_id": "toll",
+					"trigger": "ALLY_CREATURE_DIED",
+					"limits": {
+						"per_turn": 1
+					},
+					"actions": [
+						{
+							"type": "SPEND_CHARGES",
+							"amount": 1
+						},
+						{
+							"type": "GAIN_SOUL_SHARDS",
+							"amount": 1
+						}
+					]
+				}
+			]
+		}
+	]
+}

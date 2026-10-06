@@ -40,6 +40,13 @@ const MAX_ACTIVE_ARTIFACTS := 1
 ## Creatures one player may have on their side of the board.
 const MAX_CREATURES_PER_SIDE := 7
 
+## «Осколки души»: Nerqathen resource, neither a card nor energy. Kept between
+## turns, never below 0; a gain above the maximum is lost (9 + 2 = 10). Spent only
+## by effects that say so; an effect whose mandatory shard cost exceeds the
+## current amount cannot be activated.
+const STARTING_SOUL_SHARDS := 0
+const MAX_SOUL_SHARDS := 10
+
 
 static func max_copies_in_deck(rarity: CardEnums.Rarity) -> int:
 	return MAX_COPIES_LEGENDARY if rarity == CardEnums.Rarity.LEGENDARY else MAX_COPIES_PER_CARD

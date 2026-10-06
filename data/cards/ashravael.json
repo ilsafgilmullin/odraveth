@@ -1,0 +1,290 @@
+{
+	"cards": [
+		{
+			"id": "ashravael_bloodsworn",
+			"name_en": "Ashravael Bloodsworn",
+			"name_ru": "Кровный присяжник",
+			"faction": "ASHRAVAEL",
+			"type": "CREATURE",
+			"rarity": "COMMON",
+			"cost": 1,
+			"deck_limit": 2,
+			"attack": 2,
+			"health": 1,
+			"armor": 0,
+			"rules_text_ru": "Вход в бой: если ваш герой уже получил урон в этом ходу, получает +1 к атаке.",
+			"effects": [
+				{
+					"effect_id": "enter_battle_attack_bonus",
+					"trigger": "ENTER_BATTLE",
+					"conditions": [
+						{
+							"type": "OWN_HERO_DAMAGED_THIS_TURN"
+						}
+					],
+					"actions": [
+						{
+							"type": "MODIFY_STATS",
+							"target": "SELF",
+							"attack": 1,
+							"duration": "NOT_STATED"
+						}
+					]
+				}
+			]
+		},
+		{
+			"id": "ashravael_cinderclaw",
+			"name_en": "Ashravael Cinderclaw",
+			"name_ru": "Углекоготь",
+			"faction": "ASHRAVAEL",
+			"type": "CREATURE",
+			"rarity": "COMMON",
+			"cost": 2,
+			"deck_limit": 2,
+			"attack": 3,
+			"health": 2,
+			"armor": 0,
+			"rules_text_ru": "Неистовство: первый раз за ход после получения урона получает +1 к атаке.",
+			"effects": [
+				{
+					"effect_id": "frenzy",
+					"keyword": "FRENZY",
+					"trigger": "SELF_DAMAGED",
+					"limits": {
+						"per_turn": 1
+					},
+					"actions": [
+						{
+							"type": "MODIFY_STATS",
+							"target": "SELF",
+							"attack": 1,
+							"duration": "NOT_STATED"
+						}
+					]
+				}
+			]
+		},
+		{
+			"id": "ashravael_emberbound",
+			"name_en": "Ashravael Emberbound",
+			"name_ru": "Скованный жаром",
+			"faction": "ASHRAVAEL",
+			"type": "CREATURE",
+			"rarity": "RARE",
+			"cost": 3,
+			"deck_limit": 2,
+			"attack": 3,
+			"health": 4,
+			"armor": 0,
+			"rules_text_ru": "После того как ваш герой получает урон в ваш ход, получает +1 к атаке до конца хода. Максимум 2 раза за ход.",
+			"effects": [
+				{
+					"effect_id": "hero_damaged_attack_bonus",
+					"trigger": "OWN_HERO_DAMAGED",
+					"conditions": [
+						{
+							"type": "IS_OWN_TURN"
+						}
+					],
+					"limits": {
+						"per_turn": 2
+					},
+					"actions": [
+						{
+							"type": "MODIFY_STATS",
+							"target": "SELF",
+							"attack": 1,
+							"duration": "END_OF_TURN"
+						}
+					]
+				}
+			]
+		},
+		{
+			"id": "ashravael_gorebrand",
+			"name_en": "Ashravael Gorebrand",
+			"name_ru": "Клеймённый кровью",
+			"faction": "ASHRAVAEL",
+			"type": "CREATURE",
+			"rarity": "EPIC",
+			"cost": 4,
+			"deck_limit": 2,
+			"attack": 4,
+			"health": 4,
+			"armor": 0,
+			"rules_text_ru": "Вход в бой: ваш герой получает 1 урон. Нанесите 2 урона выбранному вражескому существу.",
+			"effects": [
+				{
+					"effect_id": "enter_battle_blood_strike",
+					"trigger": "ENTER_BATTLE",
+					"actions": [
+						{
+							"type": "DEAL_DAMAGE",
+							"target": "OWN_HERO",
+							"amount": 1
+						},
+						{
+							"type": "DEAL_DAMAGE",
+							"target": "CHOSEN_ENEMY_CREATURE",
+							"amount": 2
+						}
+					]
+				}
+			]
+		},
+		{
+			"id": "ashravael_warfiend",
+			"name_en": "Ashravael Warfiend",
+			"name_ru": "Изверг войны",
+			"faction": "ASHRAVAEL",
+			"type": "CREATURE",
+			"rarity": "LEGENDARY",
+			"cost": 7,
+			"deck_limit": 1,
+			"attack": 7,
+			"health": 6,
+			"armor": 0,
+			"rules_text_ru": "Если у вашего героя 15 здоровья или меньше, получает Натиск. После первой атаки, если ваш герой получал урон в этом ходу, может атаковать ещё раз. Максимум 2 атаки за ход.",
+			"effects": [
+				{
+					"effect_id": "low_health_onslaught",
+					"trigger": "STATIC",
+					"conditions": [
+						{
+							"type": "OWN_HERO_HEALTH_AT_MOST",
+							"value": 15
+						}
+					],
+					"actions": [
+						{
+							"type": "GRANT_KEYWORD",
+							"target": "SELF",
+							"keyword": "ONSLAUGHT",
+							"duration": "WHILE_ACTIVE"
+						}
+					]
+				},
+				{
+					"effect_id": "second_attack",
+					"trigger": "AFTER_SELF_ATTACK",
+					"conditions": [
+						{
+							"type": "FIRST_ATTACK_THIS_TURN"
+						},
+						{
+							"type": "OWN_HERO_DAMAGED_THIS_TURN"
+						}
+					],
+					"actions": [
+						{
+							"type": "GRANT_EXTRA_ATTACK",
+							"target": "SELF",
+							"amount": 1,
+							"max_attacks_per_turn": 2
+						}
+					]
+				}
+			]
+		},
+		{
+			"id": "ashravael_blood_tithe",
+			"name_en": "Ashravael Blood Tithe",
+			"name_ru": "Кровавая десятина",
+			"faction": "ASHRAVAEL",
+			"type": "SPELL",
+			"rarity": "RARE",
+			"cost": 2,
+			"deck_limit": 2,
+			"rules_text_ru": "Ваш герой получает 2 урона. Возьмите 2 карты.",
+			"effects": [
+				{
+					"effect_id": "blood_tithe",
+					"trigger": "ON_PLAY",
+					"actions": [
+						{
+							"type": "DEAL_DAMAGE",
+							"target": "OWN_HERO",
+							"amount": 2
+						},
+						{
+							"type": "DRAW_CARDS",
+							"amount": 2
+						}
+					]
+				}
+			]
+		},
+		{
+			"id": "ashravael_cinder_oath",
+			"name_en": "Ashravael Cinder Oath",
+			"name_ru": "Клятва пепла",
+			"faction": "ASHRAVAEL",
+			"type": "SPELL",
+			"rarity": "COMMON",
+			"cost": 3,
+			"deck_limit": 2,
+			"rules_text_ru": "Выбранное союзное существо получает +3 к атаке и Натиск до конца хода. В конце хода оно получает 1 урон.",
+			"effects": [
+				{
+					"effect_id": "cinder_oath",
+					"trigger": "ON_PLAY",
+					"actions": [
+						{
+							"type": "MODIFY_STATS",
+							"target": "CHOSEN_ALLY_CREATURE",
+							"attack": 3,
+							"duration": "END_OF_TURN"
+						},
+						{
+							"type": "GRANT_KEYWORD",
+							"target": "CHOSEN_ALLY_CREATURE",
+							"keyword": "ONSLAUGHT",
+							"duration": "END_OF_TURN"
+						},
+						{
+							"type": "DEAL_DAMAGE",
+							"target": "CHOSEN_ALLY_CREATURE",
+							"amount": 1,
+							"delay": "END_OF_TURN"
+						}
+					]
+				}
+			]
+		},
+		{
+			"id": "ashravael_furnace_sigil",
+			"name_en": "Ashravael Furnace Sigil",
+			"name_ru": "Печать горнила",
+			"faction": "ASHRAVAEL",
+			"type": "ARTIFACT",
+			"rarity": "EPIC",
+			"cost": 4,
+			"deck_limit": 2,
+			"charges": 3,
+			"rules_text_ru": "Первый раз за ход, когда ваш герой получает урон: расходуется 1 заряд; случайное союзное существо получает +1 к атаке и +1 к здоровью.",
+			"effects": [
+				{
+					"effect_id": "furnace",
+					"trigger": "OWN_HERO_DAMAGED",
+					"limits": {
+						"per_turn": 1
+					},
+					"actions": [
+						{
+							"type": "SPEND_CHARGES",
+							"amount": 1
+						},
+						{
+							"type": "MODIFY_STATS",
+							"target": "RANDOM_ALLY_CREATURE",
+							"attack": 1,
+							"health": 1,
+							"duration": "NOT_STATED"
+						}
+					]
+				}
+			]
+		}
+	]
+}

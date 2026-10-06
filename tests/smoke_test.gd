@@ -5,14 +5,13 @@ extends Node
 ##   godot --headless --path . --scene res://tests/smoke_test.tscn
 ## Exit code 0 = all checks passed, 1 = at least one check failed.
 ##
-## Card definitions used below are in-memory test fixtures with "test_" ids,
-## not game cards; they are never written to res://data.
+## Card tests live in tests/card_database_tests.gd; their fixtures are fictional
+## "test_" cards written only to user://, never to res://data.
 ## Every engine error or warning is captured: those logged inside an
 ## _expect_errors(true) ... _expect_errors(false) block belong to negative checks
 ## and are printed but allowed; any other one fails the run.
 
-## CardDatabase is an autoload without class_name; static helpers are called on the script.
-const CardDatabaseScript := preload("res://scripts/cards/card_database.gd")
+const CardDatabaseTests := preload("res://tests/card_database_tests.gd")
 const EXPECTED_AUTOLOADS: Array[String] = ["EventBus", "SceneRouter", "AppState", "CardDatabase"]
 const MAIN_MENU_BUTTONS := [
 	["PlayButton", "Играть", Routes.PREBATTLE],
@@ -156,6 +155,7 @@ func _test_game_rules() -> void:
 	_check(GameRules.DECK_SIZE == 30, "deck size 30")
 	_check(GameRules.MAX_HAND_SIZE == 10, "hand limit 10")
 	_check(GameRules.MAX_CREATURES_PER_SIDE == 7, "board limit 7 creatures per side")
+	_check(GameRules.STARTING_SOUL_SHARDS == 0 and GameRules.MAX_SOUL_SHARDS == 10, "soul shards start at 0, maximum 10")
 	_check(GameRules.FIRST_PLAYER_STARTING_HAND == 3 and GameRules.SECOND_PLAYER_STARTING_HAND == 4,
 		"starting hands 3 / 4")
 	_check(GameRules.STARTING_HAND_REPLACEMENTS == 1, "one starting hand replacement")
@@ -239,48 +239,8 @@ func _test_save_manager() -> void:
 
 
 func _test_card_database() -> void:
-	_section("CardDatabase")
-	var database: Node = CardDatabaseScript.new()
-	var creature := {
-		"id": "test_creature", "type": "CREATURE", "rarity": "COMMON", "faction": "NEUTRAL",
-		"cost": 1.0, "attack": 1.0, "health": 2.0, "armor": 0.0,
-	}
-	_check(CardDatabaseScript.validate_card(creature).is_empty(), "valid creature passes")
-	_check(not CardDatabaseScript.validate_card({"id": "test_x", "type": "HERO", "rarity": "COMMON",
-		"faction": "NEUTRAL", "cost": 1}).is_empty(), "unknown type rejected")
-	_check(not CardDatabaseScript.validate_card({"id": "test_x", "type": "SPELL", "rarity": "MYTHIC",
-		"faction": "NEUTRAL", "cost": 1}).is_empty(), "unknown rarity rejected")
-	_check(not CardDatabaseScript.validate_card({"id": "test_x", "type": "SPELL", "rarity": "COMMON",
-		"faction": "UNKNOWN", "cost": 1}).is_empty(), "unknown faction rejected")
-	_check(not CardDatabaseScript.validate_card({"id": "test_x", "type": "CREATURE", "rarity": "COMMON",
-		"faction": "NEUTRAL", "cost": 1, "attack": 1, "health": 0, "armor": 0}).is_empty(), "creature without health rejected")
-	_check(not CardDatabaseScript.validate_card({"id": "test_x", "type": "SPELL", "rarity": "COMMON",
-		"faction": "NEUTRAL", "cost": -1}).is_empty(), "negative cost rejected")
-
-	_check(database.register_card(creature) == OK and database.has_card("test_creature"), "register card")
-	_expect_errors(true)
-	_check(database.register_card(creature) == ERR_ALREADY_EXISTS, "duplicate id rejected")
-	_expect_errors(false)
-	var copy: Dictionary = database.get_card("test_creature")
-	_check(typeof(copy.cost) == TYPE_INT and copy.health == 2, "integer fields normalised")
-	copy.attack = 99
-	_check(database.get_card("test_creature").attack == 1, "get_card returns a copy")
-
-	var cards_dir := TEMP_DIR.path_join("cards")
-	DirAccess.make_dir_recursive_absolute(cards_dir)
-	_write_text(cards_dir.path_join("a.json"), JSON.stringify({"cards": [creature]}))
-	_check(database.load_directory(cards_dir) == OK and database.get_card_ids() == PackedStringArray(["test_creature"]),
-		"load directory")
-	_write_text(cards_dir.path_join("b.json"), JSON.stringify({"cards": [creature]}))
-	_expect_errors(true)
-	_check(database.load_directory(cards_dir) == ERR_ALREADY_EXISTS, "duplicate id across files rejected")
-	_write_text(cards_dir.path_join("b.json"), "{ broken")
-	_check(database.load_directory(cards_dir) == ERR_PARSE_ERROR and database.get_card_count() == 1,
-		"failed load keeps previous contents")
-	_check(database.load_directory(TEMP_DIR.path_join("missing")) == ERR_FILE_NOT_FOUND, "missing directory reported")
-	_expect_errors(false)
-	_check(database.load_directory() == OK, "project card directory loads (%d cards)" % database.get_card_count())
-	database.free()
+	_section("CardDatabase and the approved cards")
+	CardDatabaseTests.new(_check, _expect_errors, TEMP_DIR.path_join("cards")).run()
 
 
 func _test_navigation() -> void:
@@ -291,6 +251,7 @@ func _test_navigation() -> void:
 	_check(await _wait_for_route(Routes.MAIN_MENU), "Boot opens the main menu")
 	_check(_route_log == [Routes.BOOT, Routes.MAIN_MENU], "route_changed emitted for Boot and Main Menu")
 	_check(AppState.is_initialized, "AppState initialised by Boot")
+	_check(CardDatabase.get_card_count() == 40, "Boot loaded the 40 approved cards into CardDatabase")
 	_check(SceneRouter.get_history_size() == 0, "main menu is the history root")
 
 	var menu := get_tree().current_scene

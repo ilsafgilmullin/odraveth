@@ -1,0 +1,224 @@
+{
+	"cards": [
+		{
+			"id": "neutral_mireglass_wanderer",
+			"name_en": "Mireglass Wanderer",
+			"name_ru": "Странник болотного стекла",
+			"faction": "NEUTRAL",
+			"type": "CREATURE",
+			"rarity": "COMMON",
+			"cost": 1,
+			"deck_limit": 2,
+			"attack": 1,
+			"health": 2,
+			"armor": 0,
+			"rules_text_ru": "Вход в бой: если у вас нет других существ, получает +1 здоровья.",
+			"effects": [
+				{
+					"effect_id": "enter_battle_alone",
+					"trigger": "ENTER_BATTLE",
+					"conditions": [
+						{
+							"type": "NO_OTHER_ALLY_CREATURES"
+						}
+					],
+					"actions": [
+						{
+							"type": "MODIFY_STATS",
+							"target": "SELF",
+							"health": 1,
+							"duration": "NOT_STATED"
+						}
+					]
+				}
+			]
+		},
+		{
+			"id": "neutral_vantrel_duskling",
+			"name_en": "Vantrel Duskling",
+			"name_ru": "Сумеречник Вантрела",
+			"faction": "NEUTRAL",
+			"type": "CREATURE",
+			"rarity": "COMMON",
+			"cost": 2,
+			"deck_limit": 2,
+			"attack": 2,
+			"health": 3,
+			"armor": 0,
+			"rules_text_ru": "",
+			"effects": []
+		},
+		{
+			"id": "neutral_threnic_cartographer",
+			"name_en": "Threnic Cartographer",
+			"name_ru": "Тренический картограф",
+			"faction": "NEUTRAL",
+			"type": "CREATURE",
+			"rarity": "RARE",
+			"cost": 3,
+			"deck_limit": 2,
+			"attack": 2,
+			"health": 3,
+			"armor": 0,
+			"rules_text_ru": "Вход в бой: посмотрите 2 верхние карты вашей колоды. Выберите, какая останется сверху; вторую поместите под низ колоды.",
+			"effects": [
+				{
+					"effect_id": "enter_battle_survey",
+					"trigger": "ENTER_BATTLE",
+					"actions": [
+						{
+							"type": "LOOK_AT_TOP_CARDS",
+							"amount": 2,
+							"keep_on_top": 1
+						}
+					]
+				}
+			]
+		},
+		{
+			"id": "neutral_orryxian_wayfarer",
+			"name_en": "Orryxian Wayfarer",
+			"name_ru": "Орриксийский путник",
+			"faction": "NEUTRAL",
+			"type": "CREATURE",
+			"rarity": "COMMON",
+			"cost": 3,
+			"deck_limit": 2,
+			"attack": 3,
+			"health": 3,
+			"armor": 0,
+			"rules_text_ru": "Пока на вашей стороне поля нет других существ, получает +1 брони.",
+			"effects": [
+				{
+					"effect_id": "alone_armor",
+					"trigger": "STATIC",
+					"conditions": [
+						{
+							"type": "NO_OTHER_ALLY_CREATURES"
+						}
+					],
+					"actions": [
+						{
+							"type": "MODIFY_STATS",
+							"target": "SELF",
+							"armor": 1,
+							"duration": "WHILE_ACTIVE"
+						}
+					]
+				}
+			]
+		},
+		{
+			"id": "neutral_sablequill_nomad",
+			"name_en": "Sablequill Nomad",
+			"name_ru": "Кочевник Чёрного Пера",
+			"faction": "NEUTRAL",
+			"type": "CREATURE",
+			"rarity": "RARE",
+			"cost": 4,
+			"deck_limit": 2,
+			"attack": 4,
+			"health": 4,
+			"armor": 0,
+			"rules_text_ru": "После того как переживает атаку другого существа, получает +1 здоровья. Максимум 1 раз за ход.",
+			"effects": [
+				{
+					"effect_id": "survivor_health",
+					"trigger": "SELF_SURVIVED_CREATURE_ATTACK",
+					"limits": {
+						"per_turn": 1
+					},
+					"actions": [
+						{
+							"type": "MODIFY_STATS",
+							"target": "SELF",
+							"health": 1,
+							"duration": "NOT_STATED"
+						}
+					]
+				}
+			]
+		},
+		{
+			"id": "neutral_kelvarn_relicbearer",
+			"name_en": "Kelvarn Relicbearer",
+			"name_ru": "Реликвеносец Келварна",
+			"faction": "NEUTRAL",
+			"type": "CREATURE",
+			"rarity": "RARE",
+			"cost": 4,
+			"deck_limit": 2,
+			"attack": 3,
+			"health": 5,
+			"armor": 1,
+			"rules_text_ru": "Если у вас установлен активный артефакт, получает +1 к атаке.",
+			"effects": [
+				{
+					"effect_id": "artifact_attack",
+					"trigger": "STATIC",
+					"conditions": [
+						{
+							"type": "OWN_ACTIVE_ARTIFACT"
+						}
+					],
+					"actions": [
+						{
+							"type": "MODIFY_STATS",
+							"target": "SELF",
+							"attack": 1,
+							"duration": "WHILE_ACTIVE"
+						}
+					]
+				}
+			]
+		},
+		{
+			"id": "neutral_rivenshade_grazer",
+			"name_en": "Rivenshade Grazer",
+			"name_ru": "Травояд Ривеншейда",
+			"faction": "NEUTRAL",
+			"type": "CREATURE",
+			"rarity": "COMMON",
+			"cost": 5,
+			"deck_limit": 2,
+			"attack": 5,
+			"health": 6,
+			"armor": 0,
+			"rules_text_ru": "",
+			"effects": []
+		},
+		{
+			"id": "neutral_pale_meridian",
+			"name_en": "Pale Meridian",
+			"name_ru": "Бледный меридиан",
+			"faction": "NEUTRAL",
+			"type": "SPELL",
+			"rarity": "EPIC",
+			"cost": 3,
+			"deck_limit": 2,
+			"rules_text_ru": "Возьмите 1 карту. Если в вашей колоде осталось 15 карт или меньше, возьмите ещё 1 карту.",
+			"effects": [
+				{
+					"effect_id": "pale_meridian",
+					"trigger": "ON_PLAY",
+					"actions": [
+						{
+							"type": "DRAW_CARDS",
+							"amount": 1
+						},
+						{
+							"type": "DRAW_CARDS",
+							"amount": 1,
+							"conditions": [
+								{
+									"type": "OWN_DECK_SIZE_AT_MOST",
+									"value": 15
+								}
+							]
+						}
+					]
+				}
+			]
+		}
+	]
+}
