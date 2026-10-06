@@ -19,6 +19,8 @@ const ENGINE_TEST_MODULES := [
 	["Keywords, durations, static abilities, timing", preload("res://tests/engine/keyword_tests.gd")],
 	["Behaviour of the 40 approved cards", preload("res://tests/engine/card_behavior_tests.gd")],
 	["Determinism, replay and fuzz matches", preload("res://tests/engine/determinism_tests.gd")],
+	["AI observation, policies and deterministic turns", preload("res://tests/ai/ai_tests.gd")],
+	["AI vs AI and stress matches", preload("res://tests/ai/ai_stress_tests.gd")],
 ]
 const EXPECTED_AUTOLOADS: Array[String] = ["EventBus", "SceneRouter", "AppState", "CardDatabase"]
 const MAIN_MENU_BUTTONS := [
