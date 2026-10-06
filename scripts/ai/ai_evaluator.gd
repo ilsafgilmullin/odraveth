@@ -173,7 +173,7 @@ static func _score_play(observation: Dictionary, command: MatchCommand,
 		var reserve_weight := _w(difficulty, 1, 4, 7)
 		var pressure := _board_attack(observation["opponent"]["board"]) - _board_attack(observation["own"]["board"])
 		if difficulty == AiDifficulty.Level.STRATEGIST and pressure <= 0:
-			reserve_weight += 5
+			reserve_weight += 20
 		components["RESOURCE_VALUE"] = int(components.get("RESOURCE_VALUE", 0)) - shards_spent * reserve_weight
 
 
@@ -320,6 +320,9 @@ static func _known_conditions_allow(observation: Dictionary, command: MatchComma
 					return false
 			"OWN_SOUL_SHARDS_AT_LEAST":
 				if int(observation["own"]["soul_shards"]) < int(condition.get("value", 0)):
+					return false
+			"SOUL_SHARDS_SPENT_EQUALS":
+				if int(command.choices.get(MatchCommand.CHOICE_SOUL_SHARDS, 0)) != int(condition.get("value", 0)):
 					return false
 			"TARGET_ARMOR_FULL", "TARGET_ARMOR_NOT_FULL":
 				var target := _target_creature(observation, command.target_id)
