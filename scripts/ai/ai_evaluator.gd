@@ -284,7 +284,7 @@ static func _score_impulse(observation: Dictionary, difficulty: AiDifficulty.Lev
 
 
 static func _strategic_setup_synergy(definition: Dictionary, observation: Dictionary) -> int:
-	var candidate_artifact := definition.get("type", "") == "ARTIFACT"
+	var candidate_artifact: bool = definition.get("type", "") == "ARTIFACT"
 	var candidate_self_damage := false
 	var candidate_shard_gain := false
 	var candidate_shard_spend := false
