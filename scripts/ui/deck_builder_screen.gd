@@ -164,6 +164,10 @@ func _refresh_selector() -> void:
 
 func _open_selected(index: int) -> void:
 	var id: String = deck_select.get_item_metadata(index)
+	if id.is_empty():
+		draft = UserDeck.create(draft.hero_id)
+		_refresh_all()
+		return
 	for saved: UserDeck in PlayerSetupData.decks_for(AppState.profile, draft.hero_id):
 		if saved.id == id:
 			draft = saved

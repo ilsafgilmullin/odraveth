@@ -56,6 +56,14 @@ func _select_id(button: OptionButton, id: int) -> void:
 			return
 
 
+func _select_deck_metadata(scene: DeckBuilderScreen, deck_id: String) -> void:
+	for index in scene.deck_select.item_count:
+		if String(scene.deck_select.get_item_metadata(index)) == deck_id:
+			scene.deck_select.select(index)
+			scene.deck_select.item_selected.emit(index)
+			return
+
+
 func _test_collection() -> void:
 	var scene := _scene(Routes.COLLECTION) as CollectionScreen
 	_ok(scene.card_grid.get_child_count() == 40, "all 40 starter cards visible")
@@ -119,16 +127,67 @@ func _test_builder() -> void:
 		scene.draft.card_ids.clear()
 		(scene.find_child("Add_%s" % legendary.id, true, false) as Button).pressed.emit()
 		_ok((scene.find_child("Add_%s" % legendary.id, true, false) as Button).disabled, "second legendary copy disabled")
-	scene.name_edit.text = "Моя колода"
+	scene.name_edit.text = "Колода A"
 	scene.name_edit.text_changed.emit(scene.name_edit.text)
 	(scene.find_child("SaveDeckButton", true, false) as Button).pressed.emit()
-	_ok(AppState.profile["user_decks"].size() == 1 and AppState.profile["user_decks"][0]["name"] == "Моя колода",
-		"draft save persists name")
+	var deck_a_id := scene.draft.id
+	var deck_a_cards := scene.draft.card_ids.duplicate()
+	_ok(AppState.profile["user_decks"].size() == 1 and AppState.profile["user_decks"][0]["name"] == "Колода A",
+		"draft save persists deck A")
+
 	(scene.find_child("NewDeckButton", true, false) as Button).pressed.emit()
-	_ok(scene.draft.id != AppState.profile["user_decks"][0]["id"], "new deck uses distinct ID")
+	_ok(scene.draft.id != deck_a_id, "new deck uses distinct ID")
 	_ok(scene.deck_select.get_selected_id() == 0, "unsaved draft is distinct in deck selector")
+	scene.name_edit.text = "Колода B"
+	scene.name_edit.text_changed.emit(scene.name_edit.text)
 	(scene.find_child("SaveDeckButton", true, false) as Button).pressed.emit()
+	var deck_b_id := scene.draft.id
+	_ok(AppState.profile["user_decks"].size() == 2 and deck_b_id != deck_a_id,
+		"deck B save creates a second distinct record")
 	_ok(scene.deck_select.item_count == 3, "UI selector offers both saved decks and new draft")
+
+	_select_deck_metadata(scene, deck_a_id)
+	_ok(scene.draft.id == deck_a_id and scene.draft.name == "Колода A",
+		"DeckSelector switches B -> A")
+	_select_deck_metadata(scene, deck_b_id)
+	_ok(scene.draft.id == deck_b_id and scene.draft.name == "Колода B",
+		"DeckSelector switches A -> B")
+	_select_deck_metadata(scene, deck_a_id)
+	_ok(scene.draft.id == deck_a_id and scene.draft.name == "Колода A",
+		"DeckSelector switches B -> A again")
+
+	_select_deck_metadata(scene, "")
+	var new_draft_id := scene.draft.id
+	_ok(new_draft_id != deck_a_id and new_draft_id != deck_b_id,
+		"DeckSelector draft item creates a new UserDeck ID")
+	_ok(scene.draft.card_ids.is_empty(), "DeckSelector draft starts with empty card_ids")
+	_ok(scene.draft.name == "Новая колода", "DeckSelector draft uses default name")
+	scene.name_edit.text = "Новая третья"
+	scene.name_edit.text_changed.emit(scene.name_edit.text)
+	scene.draft.card_ids.append("neutral_vantrel_duskling")
+	var saved_a_before := PlayerSetupData.decks_for(AppState.profile, HeroCatalog.KEZHARYN).filter(
+		func(deck: UserDeck) -> bool: return deck.id == deck_a_id)[0]
+	var saved_b_before := PlayerSetupData.decks_for(AppState.profile, HeroCatalog.KEZHARYN).filter(
+		func(deck: UserDeck) -> bool: return deck.id == deck_b_id)[0]
+	_ok(saved_a_before.name == "Колода A" and saved_a_before.card_ids == deck_a_cards
+		and saved_b_before.name == "Колода B" and saved_b_before.card_ids.is_empty(),
+		"editing selector-created draft does not mutate saved A/B")
+	(scene.find_child("SaveDeckButton", true, false) as Button).pressed.emit()
+	_ok(AppState.profile["user_decks"].size() == 3
+		and AppState.profile["user_decks"].any(func(record: Dictionary) -> bool: return record["id"] == new_draft_id),
+		"saving selector-created draft creates a third record")
+
+	_select_deck_metadata(scene, deck_a_id)
+	scene.name_edit.text = "Колода A обновлена"
+	scene.name_edit.text_changed.emit(scene.name_edit.text)
+	(scene.find_child("SaveDeckButton", true, false) as Button).pressed.emit()
+	var a_records := AppState.profile["user_decks"].filter(
+		func(record: Dictionary) -> bool: return record["id"] == deck_a_id)
+	_ok(AppState.profile["user_decks"].size() == 3 and a_records.size() == 1
+		and a_records[0]["name"] == "Колода A обновлена",
+		"re-saving A updates its record without creating a duplicate")
+
+	_select_deck_metadata(scene, "")
 	(scene.find_child("ClearDeckButton", true, false) as Button).pressed.emit()
 	_ok(scene.clear_dialog.visible, "clear requires confirmation")
 	scene.clear_dialog.confirmed.emit()
