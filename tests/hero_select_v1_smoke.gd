@@ -1,12 +1,16 @@
 extends Node
 
 const HeroSelectV1Tests := preload("res://tests/hero_select_v1_tests.gd")
+const WATCHDOG_SECONDS := 30.0
+
 var failures: PackedStringArray = []
 var checks := 0
+var current_section := "startup"
 
 
 func _ready() -> void:
 	get_tree().current_scene = null
+	get_tree().create_timer(WATCHDOG_SECONDS).timeout.connect(_on_watchdog_timeout)
 	_run.call_deferred()
 
 
@@ -24,8 +28,14 @@ func _run() -> void:
 
 func _check(condition: bool, description: String) -> void:
 	checks += 1
+	current_section = description
 	if condition:
 		print("ok: %s" % description)
 	else:
 		failures.append(description)
 		print("FAIL: %s" % description)
+
+
+func _on_watchdog_timeout() -> void:
+	print("STAGE 7C TARGETED FAILED: watchdog after %.0f s near '%s'." % [WATCHDOG_SECONDS, current_section])
+	get_tree().quit(1)
