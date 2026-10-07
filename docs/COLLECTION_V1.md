@@ -61,3 +61,24 @@ The current 40-card catalogue does not justify pooling/virtualization. Runtime s
 ## Art status
 
 Final unique card illustrations are still deferred. Stage 7D exact-card resolver/fallback behavior remains visible and explicit; Collection does not disguise placeholder art as final production art.
+
+
+## Stage 7E verification
+
+Checkpoint validation requires:
+
+- official Godot 4.7.2 stable on a clean checkout with no existing `.godot/`;
+- 40/40 authoritative cards, no duplicates, stable CardDatabase ordering;
+- RU/EN partial, case-insensitive, whitespace-normalized search;
+- faction/type/rarity/cost filters combined with logical AND;
+- filter reset preserving Search;
+- explicit zero-result state;
+- Stage 7D FullCardView for every visible tile and shared CardDetailOverlay for whole-card activation;
+- exact responsive grid policy 1600×900→4, 1920×1080→5, 2400×1080→5, 2800×1752→6;
+- longest current RU title fully visible at every required grid density;
+- vertical scrolling with last row reachable and scroll position preserved across detail open/close;
+- Back priority: Card Detail, then Search/IME focus, then route navigation;
+- repeated search/filter/reset, 10+ detail opens and route cycles without stale IDs, duplicate signals or unbounded card nodes;
+- Stage 7D card-presentation regression;
+- clean re-import after deleting `.godot/`;
+- one full project regression at the checkpoint.
