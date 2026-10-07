@@ -59,7 +59,11 @@ func _test_typography() -> void:
 func _test_responsive_metrics() -> void:
 	_ok(ResponsiveLayout.collection_columns(1500) == 4, "narrow landscape prepares 4-column grid")
 	_ok(ResponsiveLayout.collection_columns(1920) == 5, "1920 width prepares 5-column grid")
-	_ok(ResponsiveLayout.collection_columns(2400) == 6, "2400 width prepares 6-column grid")
+	_ok(ResponsiveLayout.collection_columns(2400) == 6, "legacy width-only helper remains stable")
+	_ok(ResponsiveLayout.collection_columns_for_size(Vector2(1600, 900)) == 4, "Collection size-aware 1600x900 uses 4 columns")
+	_ok(ResponsiveLayout.collection_columns_for_size(Vector2(1920, 1080)) == 5, "Collection size-aware 1920x1080 uses 5 columns")
+	_ok(ResponsiveLayout.collection_columns_for_size(Vector2(2400, 1080)) == 5, "Collection treats 2400x1080 as very-wide phone with 5 columns")
+	_ok(ResponsiveLayout.collection_columns_for_size(Vector2(2800, 1752)) == 6, "Collection treats 2800x1752 as tablet/large landscape with 6 columns")
 	_ok(ResponsiveLayout.outer_margin(2400) > ResponsiveLayout.outer_margin(1920),
 		"wide landscape increases shared outer margin")
 	var compact := Control.new()

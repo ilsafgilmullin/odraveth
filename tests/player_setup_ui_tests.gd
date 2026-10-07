@@ -70,27 +70,32 @@ func _select_deck_metadata(scene: DeckBuilderScreen, deck_id: String) -> void:
 
 func _test_collection() -> void:
 	var scene := _scene(Routes.COLLECTION) as CollectionScreen
-	_ok(scene.card_grid.get_child_count() == 40, "all 40 starter cards visible")
-	_select_id(scene.filter_bar.faction, Faction.Id.NEUTRAL)
+	_ok(scene.card_grid.get_child_count() == 40 and scene.visible_card_ids.size() == 40,
+		"all 40 starter cards visible through FullCard grid")
+	_select_id(scene.faction_filter, Faction.Id.NEUTRAL)
 	_ok(scene.card_grid.get_child_count() == 8
-		and scene.filter_bar.faction.get_item_text(scene.filter_bar.faction.selected) == "Нейтральные", "Neutral filter and official label")
-	_select_id(scene.filter_bar.faction, CardFilterBar.ALL)
+		and scene.faction_filter.get_item_text(scene.faction_filter.selected) == "НЕЙТРАЛЬНЫЕ",
+		"Neutral filter and official label")
+	_select_id(scene.faction_filter, CollectionFilterState.ALL)
 	var card: CardDefinition = CardDatabase.get_all_cards()[0]
-	scene.filter_bar.search.text = card.name_ru.to_lower()
-	scene.filter_bar.search.text_changed.emit(scene.filter_bar.search.text)
-	_ok(scene.card_grid.get_child_count() >= 1 and scene.filter_bar.matches(card), "case-insensitive RU name search")
-	scene.filter_bar.search.text = card.name_en.to_upper()
-	scene.filter_bar.search.text_changed.emit(scene.filter_bar.search.text)
-	_ok(scene.card_grid.get_child_count() >= 1 and scene.filter_bar.matches(card), "case-insensitive EN name search")
-	scene.filter_bar.search.text = ""
-	scene.filter_bar.search.text_changed.emit("")
-	_select_id(scene.filter_bar.card_type, card.card_type)
-	_select_id(scene.filter_bar.rarity, card.rarity)
-	_select_id(scene.filter_bar.cost, card.cost)
-	_select_id(scene.filter_bar.faction, card.faction)
-	_ok(scene.filter_bar.matches(card) and scene.card_grid.get_child_count() >= 1, "type, rarity, cost and faction combined")
-	_select_id(scene.filter_bar.cost, 10 if card.cost != 10 else 0)
-	_ok(not scene.filter_bar.matches(card), "cost filter excludes other costs")
+	scene.search.text = card.name_ru.to_lower()
+	scene.search.text_changed.emit(scene.search.text)
+	_ok(scene.card_grid.get_child_count() >= 1 and scene.filter_state.matches(card), "case-insensitive RU name search")
+	scene.search.text = card.name_en.to_upper()
+	scene.search.text_changed.emit(scene.search.text)
+	_ok(scene.card_grid.get_child_count() >= 1 and scene.filter_state.matches(card), "case-insensitive EN name search")
+	scene.search.text = ""
+	scene.search.text_changed.emit("")
+	_select_id(scene.type_filter, card.card_type)
+	_select_id(scene.rarity_filter, card.rarity)
+	_select_id(scene.cost_filter, card.cost if card.cost >= 2 and card.cost <= 6
+		else CollectionFilterState.COST_0_1 if card.cost <= 1 else CollectionFilterState.COST_7_PLUS)
+	_select_id(scene.faction_filter, card.faction)
+	_ok(scene.filter_state.matches(card) and scene.card_grid.get_child_count() >= 1,
+		"type, rarity, cost and faction combined")
+	_select_id(scene.faction_filter, Faction.Id.NEUTRAL if card.faction != Faction.Id.NEUTRAL else Faction.Id.ASHRAVAEL)
+	_ok(not scene.filter_state.matches(card), "faction filter excludes other factions")
+	scene.reset_button.pressed.emit()
 	scene.detail.show_card(card)
 	_ok(scene.detail.visible and scene.detail.detail_text.text.contains(card.name_en)
 		and scene.detail.detail_text.text.contains(card.rules_text_ru), "read-only detail shows English name and approved rules")
