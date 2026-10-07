@@ -1,0 +1,10 @@
+Copyright 2018 The Noto Project Authors (github.com/googlei18n/noto-fonts)
+
+This Font Software is licensed under the SIL Open Font License, Version 1.1.
+The full license text is available at https://openfontlicense.org/open-font-license-official-text/
+
+Bundled Stage 7A font files:
+- NotoSerif-Regular.ttf
+- NotoSerif-SemiBold.ttf
+
+Upstream snapshot: notofonts/noto-fonts commit ffebf8c1ee449e544955a7e813c54f9b73848eac
