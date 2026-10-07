@@ -79,3 +79,8 @@ Checkpoint validation requires:
 - repeated detail switching and 30-card create/destroy batch without retained nodes;
 - clean re-import after deleting `.godot/`;
 - one full project regression at the checkpoint.
+
+
+### Legacy compatibility regression
+
+The Stage 7D checkpoint also preserves the existing `CardDetailOverlay.detail_text` complete-text contract used by Battle/setup code. The new structured visible detail body is separate, so presentation can evolve without breaking existing read-only callers.
