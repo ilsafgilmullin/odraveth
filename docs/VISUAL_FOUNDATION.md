@@ -38,3 +38,18 @@ Pressed/toggled controls change border geometry and, where relevant, show a chec
 Source fonts and SVG files are Git-tracked. Godot-generated `.import` sidecars are tracked after clean Godot 4.7.2 import. The `.godot/` imported cache remains ignored and must never be copied between checkouts.
 
 No Stage 7A resource uses an absolute machine path.
+
+
+## Verification
+
+Stage 7A is gated on a GitHub Actions clean checkout using the official Godot 4.7.2 stable binary:
+
+1. start with no `.godot/`;
+2. import the project and reject any resource/font/theme/parse error;
+3. require tracked font/SVG `.import` sidecars and script UIDs to regenerate without diff;
+4. run the focused visual-foundation scene/resource suite;
+5. at the Stage 7A checkpoint, remove `.godot/` again and repeat clean import;
+6. require a clean Git worktree outside ignored generated cache/tooling;
+7. run one full project regression checkpoint.
+
+The generated `.godot/` cache is never copied or committed.
