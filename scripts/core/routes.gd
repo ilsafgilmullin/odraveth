@@ -13,6 +13,7 @@ const DECK_BUILDER := &"deck_builder"
 const PREBATTLE := &"prebattle"
 const BATTLE := &"battle"
 const RESULT := &"result"
+const HISTORY := &"history"
 const PROGRESS := &"progress"
 const SETTINGS := &"settings"
 
@@ -37,6 +38,7 @@ const _SCENE_PATHS := {
 	PREBATTLE: "res://scenes/prebattle/prebattle.tscn",
 	BATTLE: "res://scenes/battle/battle.tscn",
 	RESULT: "res://scenes/result/result.tscn",
+	HISTORY: "res://scenes/history/history_shell.tscn",
 	PROGRESS: "res://scenes/progress/progress.tscn",
 	SETTINGS: "res://scenes/settings/settings.tscn",
 }
@@ -50,6 +52,7 @@ const _TITLES := {
 	PREBATTLE: "Подготовка к бою",
 	BATTLE: "Боевой экран",
 	RESULT: "Результат боя",
+	HISTORY: "Книга Нулмериса",
 	PROGRESS: "Прогресс",
 	SETTINGS: "Настройки",
 }

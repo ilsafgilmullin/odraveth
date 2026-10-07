@@ -1,0 +1,69 @@
+[gd_scene load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scripts/ui/history_shell.gd" id="1_history"]
+[ext_resource type="Script" path="res://scripts/ui/safe_area_container.gd" id="2_safe"]
+
+[node name="HistoryShell" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_history")
+
+[node name="Background" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+color = Color(0.901961, 0.87451, 0.819608, 1)
+
+[node name="SafeArea" type="MarginContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("2_safe")
+
+[node name="Layout" type="VBoxContainer" parent="SafeArea"]
+layout_mode = 2
+theme_override_constants/separation = 28
+
+[node name="BackButton" type="Button" parent="SafeArea/Layout"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(220, 64)
+layout_mode = 2
+text = "НАЗАД"
+
+[node name="Center" type="CenterContainer" parent="SafeArea/Layout"]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="BookPanel" type="PanelContainer" parent="SafeArea/Layout/Center"]
+custom_minimum_size = Vector2(820, 360)
+layout_mode = 2
+
+[node name="Content" type="VBoxContainer" parent="SafeArea/Layout/Center/BookPanel"]
+layout_mode = 2
+theme_override_constants/separation = 20
+
+[node name="HistoryTitle" type="Label" parent="SafeArea/Layout/Center/BookPanel/Content"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_font_sizes/font_size = 58
+text = "КНИГА НУЛМЕРИСА"
+horizontal_alignment = 1
+
+[node name="HistoryNote" type="Label" parent="SafeArea/Layout/Center/BookPanel/Content"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.407843, 0.447059, 0.462745, 1)
+theme_override_font_sizes/font_size = 28
+text = "Раздел истории будет раскрыт в отдельном этапе Visual Alpha."
+horizontal_alignment = 1
+autowrap_mode = 2

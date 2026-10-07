@@ -1,7 +1,9 @@
-[gd_scene format=3]
+[gd_scene load_steps=5 format=3]
 
 [ext_resource type="Script" path="res://scripts/ui/main_menu.gd" id="1_menu"]
 [ext_resource type="Script" path="res://scripts/ui/safe_area_container.gd" id="2_safe"]
+[ext_resource type="Script" path="res://scripts/ui/main_menu_backdrop.gd" id="3_backdrop"]
+[ext_resource type="Script" path="res://scripts/ui/guardian_placeholder.gd" id="4_guardian"]
 
 [node name="MainMenu" type="Control"]
 layout_mode = 3
@@ -12,6 +14,16 @@ grow_horizontal = 2
 grow_vertical = 2
 script = ExtResource("1_menu")
 
+[node name="GuardianTerraceBackdrop" type="Control" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+script = ExtResource("3_backdrop")
+
 [node name="SafeArea" type="MarginContainer" parent="."]
 layout_mode = 1
 anchors_preset = 15
@@ -21,51 +33,151 @@ grow_horizontal = 2
 grow_vertical = 2
 script = ExtResource("2_safe")
 
-[node name="Center" type="CenterContainer" parent="SafeArea"]
+[node name="Composition" type="Control" parent="SafeArea"]
 layout_mode = 2
 
-[node name="Menu" type="VBoxContainer" parent="SafeArea/Center"]
-layout_mode = 2
-theme_override_constants/separation = 16
+[node name="GuardianRegion" type="Control" parent="SafeArea/Composition"]
+unique_name_in_owner = true
+layout_mode = 1
+anchor_left = 0.03
+anchor_top = 0.04
+anchor_right = 0.42
+anchor_bottom = 0.96
+grow_horizontal = 2
+grow_vertical = 2
 
-[node name="Title" type="Label" parent="SafeArea/Center/Menu"]
+[node name="GuardianPlaceholder" type="Control" parent="SafeArea/Composition/GuardianRegion"]
+unique_name_in_owner = true
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+script = ExtResource("4_guardian")
+
+[node name="GuardianCaption" type="Label" parent="SafeArea/Composition/GuardianRegion"]
+layout_mode = 1
+anchor_left = 0.03
+anchor_top = 0.87
+anchor_right = 0.97
+anchor_bottom = 0.97
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_colors/font_color = Color(0.133333, 0.168627, 0.180392, 0.86)
+theme_override_font_sizes/font_size = 28
+text = "ХРАНИТЕЛЬ НУЛМЕРИСА"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="RightRegion" type="VBoxContainer" parent="SafeArea/Composition"]
+unique_name_in_owner = true
+layout_mode = 1
+anchor_left = 0.54
+anchor_top = 0.045
+anchor_right = 0.97
+anchor_bottom = 0.955
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/separation = 24
+
+[node name="BrandArea" type="VBoxContainer" parent="SafeArea/Composition/RightRegion"]
 layout_mode = 2
-theme_override_font_sizes/font_size = 96
+theme_override_constants/separation = 0
+
+[node name="Wordmark" type="Label" parent="SafeArea/Composition/RightRegion/BrandArea"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_font_sizes/font_size = 76
 text = "ODRAVETH"
 horizontal_alignment = 1
 
-[node name="PlayButton" type="Button" parent="SafeArea/Center/Menu"]
+[node name="BrandSubtitle" type="Label" parent="SafeArea/Composition/RightRegion/BrandArea"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(640, 112)
 layout_mode = 2
-text = "Играть"
+theme_override_font_sizes/font_size = 28
+text = "НУЛМЕРИС"
+horizontal_alignment = 1
 
-[node name="CollectionButton" type="Button" parent="SafeArea/Center/Menu"]
-unique_name_in_owner = true
-custom_minimum_size = Vector2(640, 112)
+[node name="LocationLabel" type="Label" parent="SafeArea/Composition/RightRegion/BrandArea"]
 layout_mode = 2
-text = "Коллекция"
+theme_override_colors/font_color = Color(0.407843, 0.447059, 0.462745, 1)
+theme_override_font_sizes/font_size = 21
+text = "ТЕРРАСА ХРАНИТЕЛЯ"
+horizontal_alignment = 1
 
-[node name="DecksButton" type="Button" parent="SafeArea/Center/Menu"]
-unique_name_in_owner = true
-custom_minimum_size = Vector2(640, 112)
+[node name="Menu" type="VBoxContainer" parent="SafeArea/Composition/RightRegion"]
 layout_mode = 2
-text = "Колоды"
+size_flags_vertical = 3
+theme_override_constants/separation = 10
 
-[node name="HeroesButton" type="Button" parent="SafeArea/Center/Menu"]
+[node name="PlayButton" type="Button" parent="SafeArea/Composition/RightRegion/Menu"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(640, 112)
+custom_minimum_size = Vector2(0, 76)
 layout_mode = 2
-text = "Герои"
+text = "ВОЙТИ В НУЛМЕРИС"
 
-[node name="ProgressButton" type="Button" parent="SafeArea/Center/Menu"]
+[node name="CollectionButton" type="Button" parent="SafeArea/Composition/RightRegion/Menu"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(640, 112)
+custom_minimum_size = Vector2(0, 64)
 layout_mode = 2
-text = "Прогресс"
+text = "КОЛЛЕКЦИЯ"
 
-[node name="SettingsButton" type="Button" parent="SafeArea/Center/Menu"]
+[node name="DecksButton" type="Button" parent="SafeArea/Composition/RightRegion/Menu"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(640, 112)
+custom_minimum_size = Vector2(0, 64)
 layout_mode = 2
-text = "Настройки"
+text = "КОЛОДЫ"
+
+[node name="HeroesButton" type="Button" parent="SafeArea/Composition/RightRegion/Menu"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 64)
+layout_mode = 2
+text = "ГЕРОИ"
+
+[node name="HistoryButton" type="Button" parent="SafeArea/Composition/RightRegion/Menu"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 64)
+layout_mode = 2
+text = "ИСТОРИЯ"
+
+[node name="ProgressButton" type="Button" parent="SafeArea/Composition/RightRegion/Menu"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 64)
+layout_mode = 2
+text = "ПРОГРЕСС"
+
+[node name="SettingsButton" type="Button" parent="SafeArea/Composition/RightRegion/Menu"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 64)
+layout_mode = 2
+text = "НАСТРОЙКИ"
+
+[node name="StatusPanel" type="PanelContainer" parent="SafeArea/Composition/RightRegion"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 108)
+layout_mode = 2
+
+[node name="StatusContent" type="HBoxContainer" parent="SafeArea/Composition/RightRegion/StatusPanel"]
+layout_mode = 2
+theme_override_constants/separation = 20
+
+[node name="HeroStatusLabel" type="Label" parent="SafeArea/Composition/RightRegion/StatusPanel/StatusContent"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_colors/font_color = Color(0.133333, 0.168627, 0.180392, 0.88)
+theme_override_font_sizes/font_size = 24
+text = "Герой не выбран"
+vertical_alignment = 1
+
+[node name="DeckStatusLabel" type="Label" parent="SafeArea/Composition/RightRegion/StatusPanel/StatusContent"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_colors/font_color = Color(0.133333, 0.168627, 0.180392, 0.82)
+theme_override_font_sizes/font_size = 24
+text = "Колода: не выбрана"
+horizontal_alignment = 2
+vertical_alignment = 1
