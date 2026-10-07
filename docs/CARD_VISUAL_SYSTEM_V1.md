@@ -45,3 +45,37 @@ Compact Battle Card and Board Piece are not implemented in Stage 7D. They should
 ## Art status
 
 **FINAL CARD ART IS NOT PRESENT.** No random final-looking illustrations were generated. Every missing exact-card artwork resolves safely to a visibly non-final Citadel/geometric fallback.
+
+
+## Originality audit
+
+The Stage 7D shell deliberately avoids Hearthstone-specific visual grammar:
+
+- outer silhouette is an architectural cut-corner polygon rather than an ornate oval/scroll frame;
+- artwork is a large rectangular architectural slot, never a circular minion window;
+- Energy cost uses a dark steel rectangular plate, not a blue crystal;
+- attack/health are restrained labelled plates, not opposing coloured gems;
+- armor and artifact charges use their own labelled treatment;
+- rarity is a small geometry mark in the metadata row rather than a central gem;
+- Legendary uses a restrained multifaceted old-gold seal with no crown/dragon motif.
+
+This is a structural audit of the implemented component grammar; final illustration art is still deferred.
+
+## Stage 7D verification
+
+Checkpoint validation requires:
+
+- official Godot 4.7.2 stable;
+- fresh checkout with no pre-existing `.godot/`;
+- error-free import of Stage 7A typography/theme, Stage 7B Main Menu, Stage 7C Hero Select and Stage 7D card resources;
+- runtime construction of all 40 authoritative starter definitions;
+- creature/spell/artifact type invariants plus synthetic presentation-only CURSE coverage;
+- four rarity geometry identities and five faction groups;
+- long-name and long-rules semantic wrapping checks;
+- reusable FullCard packed scene and normal/selected/disabled/pressed/focus states;
+- exact-card artwork resolver with safe non-final fallback;
+- responsive Card Detail at 1600×900, 1920×1080, 2400×1080 and 2800×1752;
+- System Back closes Card Detail before route navigation;
+- repeated detail switching and 30-card create/destroy batch without retained nodes;
+- clean re-import after deleting `.godot/`;
+- one full project regression at the checkpoint.

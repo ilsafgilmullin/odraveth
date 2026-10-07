@@ -58,3 +58,8 @@ The generated `.godot/` cache is never copied or committed.
 ## Stage 7C consumer — Hero Select V1
 
 Hero Select V1 consumes the shared Visual Alpha theme, buttons, spacing/touch policy and responsive width classes. Its final character art and faction symbols remain explicitly deferred; see `docs/HERO_SELECT_V1.md`.
+
+
+## Stage 7D consumer — Card Visual System V1
+
+The shared card shell consumes Stage 7A typography, palette, spacing, touch and responsive helpers. It extends the same Citadel material language with card-specific architectural geometry; it does not introduce a parallel theme. See `docs/CARD_VISUAL_SYSTEM_V1.md`.
