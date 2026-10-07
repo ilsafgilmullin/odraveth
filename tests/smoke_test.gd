@@ -21,6 +21,7 @@ const MainMenuV2Tests := preload("res://tests/main_menu_v2_tests.gd")
 const HeroSelectV1Tests := preload("res://tests/hero_select_v1_tests.gd")
 const CardVisualSystemTests := preload("res://tests/card_visual_system_tests.gd")
 const CollectionV1Tests := preload("res://tests/collection_v1_tests.gd")
+const VisualAlphaSmoke := preload("res://tests/visual_alpha_smoke.gd")
 const ENGINE_TEST_MODULES := [
 	["MatchEngine core rules", preload("res://tests/engine/engine_core_tests.gd")],
 	["Hero abilities", preload("res://tests/engine/hero_power_tests.gd")],
@@ -104,6 +105,9 @@ func _run() -> void:
 	await CardVisualSystemTests.new(_check, get_tree()).run()
 	_section("Stage 7E Collection V1")
 	await CollectionV1Tests.new(_check, get_tree()).run()
+	for module: Array in VisualAlphaSmoke.MODULES:
+		_section("Stage 7 Visual Alpha: %s" % module[0])
+		await module[1].new(_check, get_tree()).run()
 	_test_save_manager()
 	_test_card_database()
 	_section("Player setup data and persistence")

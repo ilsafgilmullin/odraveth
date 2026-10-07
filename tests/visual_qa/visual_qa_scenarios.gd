@@ -24,6 +24,11 @@ func all() -> Array:
 		["collection", collection],
 		["collection-bottom", collection_bottom],
 		["collection-search", collection_search],
+		["deck_builder-cards", deck_builder_cards],
+		["deck_builder-deck_ready", deck_builder_deck_ready],
+		["deck_builder-deck_not_ready", deck_builder_deck_not_ready],
+		["deck_builder-detail", deck_builder_detail],
+		["deck_builder-rename", deck_builder_rename],
 	]
 
 
@@ -156,6 +161,59 @@ func collection_search() -> bool:
 	var screen := runner.get_tree().current_scene as CollectionScreen
 	screen.search.text = "стран"
 	screen.search.text_changed.emit(screen.search.text)
+	return true
+
+
+func _deck_builder(card_count: int) -> DeckBuilderScreen:
+	_clear_overlay()
+	_use_profile(qa_profile())
+	if not await runner.open_route(Routes.DECK_BUILDER):
+		return null
+	var screen := runner.get_tree().current_scene as DeckBuilderScreen
+	if screen == null:
+		return null
+	var ids := BattleLaunchConfig.technical_opponent_deck(HeroCatalog.KEZHARYN, CardDatabase)
+	screen.draft.card_ids.clear()
+	for i in mini(card_count, ids.size()):
+		screen.draft.card_ids.append(String(ids[i]))
+	screen._after_deck_change()
+	return screen
+
+
+func deck_builder_cards() -> bool:
+	var screen := await _deck_builder(18)
+	return screen != null
+
+
+func deck_builder_deck_ready() -> bool:
+	var screen := await _deck_builder(30)
+	if screen == null:
+		return false
+	screen.show_tab(DeckBuilderScreen.Tab.DECK)
+	return screen.draft.is_ready(CardDatabase)
+
+
+func deck_builder_deck_not_ready() -> bool:
+	var screen := await _deck_builder(18)
+	if screen == null:
+		return false
+	screen.show_tab(DeckBuilderScreen.Tab.DECK)
+	return not screen.draft.is_ready(CardDatabase)
+
+
+func deck_builder_detail() -> bool:
+	var screen := await _deck_builder(18)
+	return screen != null and screen.detail.open_card(&"ashravael_warfiend")
+
+
+func deck_builder_rename() -> bool:
+	var screen := await _deck_builder(30)
+	if screen == null:
+		return false
+	screen.name_edit.grab_focus()
+	screen.name_edit.text = "Пламя Нулмериса"
+	screen.name_edit.text_changed.emit(screen.name_edit.text)
+	screen.name_edit.caret_column = screen.name_edit.text.length()
 	return true
 
 

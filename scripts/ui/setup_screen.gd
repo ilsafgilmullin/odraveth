@@ -70,6 +70,9 @@ func handle_back_request() -> bool:
 		detail_overlay.visible = false
 		return true
 	for child: Node in get_children():
+		if child is ConfirmModal and (child as ConfirmModal).visible:
+			(child as ConfirmModal).cancel()
+			return true
 		if child is ConfirmationDialog and child.visible:
 			(child as ConfirmationDialog).hide()
 			return true

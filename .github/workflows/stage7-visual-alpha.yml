@@ -1,0 +1,108 @@
+name: Stage 7 Visual Alpha
+
+on:
+  push:
+    branches:
+      - claude/odraveth-visual-alpha
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  visual-alpha:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - name: Clean checkout
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - name: Install Xvfb and Godot 4.7.2 stable
+        shell: bash
+        run: |
+          set -euo pipefail
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq xvfb
+          mkdir -p .tools
+          base="https://github.com/godotengine/godot-builds/releases/download/4.7.2-stable"
+          curl -fsSL "$base/Godot_v4.7.2-stable_linux.x86_64.zip" -o .tools/godot.zip
+          curl -fsSL "$base/SHA512-SUMS.txt" -o .tools/SHA512-SUMS.txt
+          (
+            cd .tools
+            grep "Godot_v4.7.2-stable_linux.x86_64.zip" SHA512-SUMS.txt | sed 's#Godot_v4.7.2-stable_linux.x86_64.zip#godot.zip#' | sha512sum -c -
+            unzip -q godot.zip
+            chmod +x Godot_v4.7.2-stable_linux.x86_64
+          )
+          .tools/Godot_v4.7.2-stable_linux.x86_64 --version
+
+      - name: Fresh import
+        shell: bash
+        run: |
+          set -euo pipefail
+          test ! -d .godot
+          GODOT="$PWD/.tools/Godot_v4.7.2-stable_linux.x86_64"
+          "$GODOT" --headless --path . --import 2>&1 | tee stage7-import.log
+          if grep -E "ERROR:|SCRIPT ERROR:|Parse Error|Failed loading resource|Can't open" stage7-import.log; then
+            echo "Fresh import produced errors"
+            exit 1
+          fi
+
+      - name: Stage 7 targeted runtime checks
+        shell: bash
+        run: |
+          set -euo pipefail
+          GODOT="$PWD/.tools/Godot_v4.7.2-stable_linux.x86_64"
+          "$GODOT" --headless --path . --scene res://tests/visual_alpha_smoke.tscn 2>&1 | tee stage7-targeted.log
+          grep -q "STAGE 7 VISUAL ALPHA TARGETED PASSED" stage7-targeted.log
+
+      - name: Render runtime screenshot matrix
+        shell: bash
+        run: |
+          set -euo pipefail
+          GODOT="$PWD/.tools/Godot_v4.7.2-stable_linux.x86_64"
+          for res in 1600x900 1920x1080 2400x1080 2800x1752; do
+            out="$RUNNER_TEMP/visual-qa/$res"
+            mkdir -p "$out"
+            xvfb-run -a -s "-screen 0 3000x2000x24" "$GODOT" --path . --resolution "$res" \
+              --rendering-method gl_compatibility res://tests/visual_qa/visual_capture.tscn \
+              -- --out="$out" 2>&1 | tee "$out/capture.log"
+            grep -q "VISUAL CAPTURE COMPLETE" "$out/capture.log"
+            grep "VISUAL CAPTURE SIZE $res" "$out/capture.log"
+          done
+          find "$RUNNER_TEMP/visual-qa" -name '*.png' | sort
+
+      - name: Upload screenshots
+        uses: actions/upload-artifact@v4
+        with:
+          name: stage7-visual-alpha-screenshots-${{ github.sha }}
+          path: ${{ runner.temp }}/visual-qa
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Checkpoint clean re-import
+        if: contains(github.event.head_commit.message, 'checkpoint')
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -rf .godot
+          GODOT="$PWD/.tools/Godot_v4.7.2-stable_linux.x86_64"
+          "$GODOT" --headless --path . --import 2>&1 | tee stage7-clean-import.log
+          if grep -E "ERROR:|SCRIPT ERROR:|Parse Error|Failed loading resource|Can't open" stage7-clean-import.log; then
+            echo "Clean re-import produced errors"
+            exit 1
+          fi
+          status="$(git status --short --untracked-files=all)"
+          if [ -n "$status" ]; then
+            echo "$status"
+            exit 1
+          fi
+
+      - name: Checkpoint full regression
+        if: contains(github.event.head_commit.message, 'checkpoint')
+        shell: bash
+        run: |
+          set -euo pipefail
+          GODOT_BIN="$PWD/.tools/Godot_v4.7.2-stable_linux.x86_64" tests/run_tests.sh | tee stage7-regression.log
+          grep -q "All checks passed." stage7-regression.log

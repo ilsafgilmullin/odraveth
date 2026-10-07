@@ -252,10 +252,16 @@ func _test_sizes() -> void:
 				var panel := scene.find_child("DeckPanel", true, false) as Control
 				var grid_scroll := scene.find_child("AvailableScroll", true, false) as Control
 				var deck_scroll := scene.find_child("DeckScroll", true, false) as ScrollContainer
-				_ok(grid_scroll.get_global_rect().end.x <= panel.get_global_rect().position.x + 2
+				_ok(grid_scroll.is_visible_in_tree() and not panel.is_visible_in_tree()
+					and viewport.encloses(grid_scroll.get_global_rect()) and grid_scroll.size.y > 0,
+					"%s: КАРТЫ tab owns the full body without a cramped split view (%s)" % [dimensions,
+						grid_scroll.get_global_rect()])
+				editor.show_tab(DeckBuilderScreen.Tab.DECK)
+				await tree.process_frame
+				_ok(panel.is_visible_in_tree() and not grid_scroll.is_visible_in_tree()
 					and viewport.encloses(panel.get_global_rect()) and deck_scroll.size.y > 0,
-					"%s: editor grid and scrollable deck panel do not overlap (%s, %s)" % [dimensions,
-						grid_scroll.get_global_rect(), panel.get_global_rect()])
+					"%s: КОЛОДА tab shows a scrollable deck panel inside the viewport (%s)" % [dimensions,
+						panel.get_global_rect()])
 				_ok(editor.grid.columns >= 2 and viewport.encloses((scene.find_child("SaveDeckButton", true, false) as Control).get_global_rect()),
 					"%s: deck actions visible" % dimensions)
 				editor.draft.card_ids.assign(BattleLaunchConfig.technical_opponent_deck(HeroCatalog.KEZHARYN, CardDatabase))
