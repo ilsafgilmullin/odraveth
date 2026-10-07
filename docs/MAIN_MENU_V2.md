@@ -28,3 +28,18 @@ No technical player deck/config is generated.
 ## History
 
 `Routes.HISTORY` points to a minimal Visual Alpha shell titled **КНИГА НУЛМЕРИСА**. Library content remains deferred; Stage 7B does not invent book sections or author credit.
+
+
+## Stage 7B verification
+
+Checkpoint requirements:
+
+- official Godot 4.7.2 stable;
+- clean checkout with no pre-existing `.godot/`;
+- clean import with zero resource/script/font/theme load errors;
+- Stage 7A foundation remains green;
+- Stage 7B runtime tests cover 1600×900, 1920×1080 and 2400×1080;
+- runtime routing verifies Deck Builder vs Prebattle from authoritative selected-deck state;
+- repeated Collection → Main Menu cycles verify one menu root and one signal connection per action;
+- checkpoint repeats clean import after deleting `.godot/` and requires a clean worktree;
+- one full regression runs after targeted checks.
