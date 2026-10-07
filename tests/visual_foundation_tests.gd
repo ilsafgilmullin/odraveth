@@ -23,7 +23,9 @@ func run() -> void:
 
 func _test_resources() -> void:
 	var theme_path := "res://assets/ui/visual_alpha/theme/visual_alpha_theme.tres"
-	_ok(ProjectSettings.get_setting("gui/theme/custom") == theme_path, "project uses Stage 7A shared Theme")
+	_ok(ProjectSettings.get_setting("gui/theme/custom") == "res://assets/ui/placeholder_theme.tres",
+		"bootstrap project Theme remains import-safe")
+	_ok(UiKit.THEME_PATH == theme_path, "UI kit exposes the shared Stage 7A Theme")
 	for path in [
 		theme_path,
 		"res://assets/ui/visual_alpha/fonts/NotoSerif-Regular.ttf",
@@ -76,14 +78,17 @@ func _test_component_preview() -> void:
 	tree.root.add_child(preview)
 	await tree.process_frame
 	for component_name in [
-		"PrimaryButton", "SecondaryButton", "SubtleButton", "CompactBattleButton", "IconButton",
+		"DisplayTitle", "PrimaryButton", "SecondaryButton", "SubtleButton", "CompactBattleButton", "IconButton",
 		"FilterChip", "Switch", "Select", "TextField", "SegmentedControl", "Panel", "Modal",
 		"HeroPortraitFrame", "CardFrameBase", "StatusMarker", "ScrollView",
 	]:
 		_ok(preview.find_child(component_name, true, false) != null, "%s component exists" % component_name)
+	var display := preview.find_child("DisplayTitle", true, false) as Label
 	var primary := preview.find_child("PrimaryButton", true, false) as Button
 	var filter := preview.find_child("FilterChip", true, false) as Button
 	var select := preview.find_child("Select", true, false) as OptionButton
+	_ok(preview.theme != null and display.get_theme_font("font") != null and display.get_theme_font_size("font_size") >= 52,
+		"display typography is applied at UI-root after import")
 	_ok(primary.custom_minimum_size.y >= 64 and primary.get_theme_stylebox("pressed").get_border_width(SIDE_LEFT) >
 		primary.get_theme_stylebox("normal").get_border_width(SIDE_LEFT),
 		"primary pressed/selected silhouette changes beyond colour")

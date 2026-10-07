@@ -4,9 +4,30 @@ extends RefCounted
 
 enum ButtonRole { PRIMARY, SECONDARY, SUBTLE, COMPACT_BATTLE, ICON, FILTER_CHIP, SEGMENT }
 
+const THEME_PATH := "res://assets/ui/visual_alpha/theme/visual_alpha_theme.tres"
+const DISPLAY_FONT_PATH := "res://assets/ui/visual_alpha/fonts/NotoSerif-SemiBold.ttf"
 const CHECK_ICON := preload("res://assets/ui/visual_alpha/icons/check.svg")
 const CHEVRON_ICON := preload("res://assets/ui/visual_alpha/icons/chevron_down.svg")
 const STATUS_ICON := preload("res://assets/ui/visual_alpha/icons/status_diamond.svg")
+
+
+static func apply_root_theme(control: Control) -> bool:
+	var visual_theme := load(THEME_PATH) as Theme
+	if visual_theme == null:
+		return false
+	control.theme = visual_theme
+	return true
+
+
+static func make_display_label(text_value: String) -> Label:
+	var label := Label.new()
+	label.text = text_value
+	var display_font := load(DISPLAY_FONT_PATH) as Font
+	if display_font != null:
+		label.add_theme_font_override("font", display_font)
+	label.add_theme_font_size_override("font_size", VisualTokens.FONT_DISPLAY)
+	label.add_theme_color_override("font_color", VisualTokens.COLOR_STEEL_900)
+	return label
 
 
 static func _box(background: Color, border: Color, border_width: int, radius: int,

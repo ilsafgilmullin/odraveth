@@ -71,8 +71,11 @@ jobs:
           GODOT="$PWD/.tools/Godot_v4.7.2-stable_linux.x86_64"
           "$GODOT" --headless --path . --import 2>&1 | tee stage7a-clean-import.log
           ! grep -E "ERROR:|SCRIPT ERROR:|Parse Error|Failed loading resource|Can't open" stage7a-clean-import.log
-          git status --short --untracked-files=all -- ':!.godot' > stage7a-git-status.txt
-          test ! -s stage7a-git-status.txt
+          status="$(git status --short --untracked-files=all)"
+          if [ -n "$status" ]; then
+            echo "$status"
+            exit 1
+          fi
 
       - name: Stage 7A checkpoint full regression
         if: contains(github.event.head_commit.message, 'Stage 7A checkpoint')

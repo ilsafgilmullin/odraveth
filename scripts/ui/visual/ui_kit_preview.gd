@@ -6,6 +6,7 @@ var component_names: PackedStringArray = []
 
 
 func _ready() -> void:
+	UiKit.apply_root_theme(self)
 	var margin := MarginContainer.new()
 	margin.set_anchors_and_offsets_preset(PRESET_FULL_RECT)
 	var pad := ResponsiveLayout.outer_margin(get_viewport_rect().size.x)
@@ -17,6 +18,7 @@ func _ready() -> void:
 	root.add_theme_constant_override("separation", ResponsiveLayout.section_gap(get_viewport_rect().size.x))
 	margin.add_child(root)
 
+	_add(root, "DisplayTitle", UiKit.make_display_label("ODRAVETH · НУЛМЕРИС"))
 	_add(root, "PrimaryButton", UiKit.make_button("Primary", UiKit.ButtonRole.PRIMARY))
 	_add(root, "SecondaryButton", UiKit.make_button("Secondary", UiKit.ButtonRole.SECONDARY))
 	_add(root, "SubtleButton", UiKit.make_button("Subtle", UiKit.ButtonRole.SUBTLE))

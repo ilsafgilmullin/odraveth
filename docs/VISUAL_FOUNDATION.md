@@ -6,7 +6,9 @@ Stage 7A is presentation infrastructure only. It does not change MatchEngine, ca
 
 The reusable palette models the light ancient Citadel of Nulmeris: aged grey-beige stone, dark steel, matte old gold, and restrained blue/turquoise magical accents.
 
-The shared project theme is `res://assets/ui/visual_alpha/theme/visual_alpha_theme.tres`.
+The Visual Alpha theme resource is `res://assets/ui/visual_alpha/theme/visual_alpha_theme.tres`.
+
+The asset-free `placeholder_theme.tres` remains the ProjectSettings bootstrap theme. This is deliberate: Godot initializes the project theme before a brand-new `.godot/imported` cache exists. Stage screens opt into the Visual Alpha theme through `UiKit.apply_root_theme()` after import, avoiding bootstrap errors without copying cache files.
 
 ## Typography
 
