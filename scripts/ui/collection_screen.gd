@@ -303,8 +303,8 @@ func _refresh_cards() -> void:
 		card_grid.add_child(cell)
 
 		var card_view := FullCardView.new()
-		card_view.name = "Card_%s" % card.id
 		card_view.configure(card)
+		card_view.name = "Card_%s" % card.id
 		card_view.card_activated.connect(_open_detail)
 		cell.add_child(card_view)
 
