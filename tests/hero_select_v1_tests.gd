@@ -7,6 +7,7 @@ const VIEWPORTS := [
 	Vector2i(2400, 1080),
 ]
 const ROUTE_TIMEOUT_FRAMES := 120
+const PresentationAudit := preload("res://tests/visual_qa/presentation_audit.gd")
 
 var check: Callable
 var tree: SceneTree
@@ -78,11 +79,14 @@ func _test_responsive_scene() -> void:
 				"%dx%d %s Russian name from HeroCatalog" % [viewport_size.x, viewport_size.y, hero])
 			_ok(card.faction_label.text == SetupUi.faction_name(HeroCatalog.faction_of(hero)).to_upper(),
 				"%dx%d %s faction label authoritative" % [viewport_size.x, viewport_size.y, hero])
-			_ok(card.portrait.hero_id == hero and card.art_status_label.text.contains("ВРЕМЕННО"),
-				"%dx%d %s portrait is explicit production placeholder" % [viewport_size.x, viewport_size.y, hero])
-			_ok(card.faction_symbol_placeholder.text == "◇"
-				and card.faction_symbol_placeholder.tooltip_text.contains("Временный"),
-				"%dx%d %s faction symbol slot is explicitly temporary" % [viewport_size.x, viewport_size.y, hero])
+			_ok(card.portrait.hero_id == hero and card.portrait.is_temporary_asset()
+				and card.portrait.faction == HeroCatalog.faction_of(hero),
+				"%dx%d %s portrait is a documented temporary Visual Alpha asset" % [viewport_size.x, viewport_size.y, hero])
+			_ok(card.faction_symbol.kind == NulmerisEmblems.Kind.FACTION
+				and card.faction_symbol.faction == HeroCatalog.faction_of(hero),
+				"%dx%d %s shows its own faction symbol" % [viewport_size.x, viewport_size.y, hero])
+			_ok(not _has_developer_words(card),
+				"%dx%d %s exposes no developer placeholder words" % [viewport_size.x, viewport_size.y, hero])
 			var rect := card.get_global_rect()
 			_ok(rect.position.x >= 0.0 and rect.end.x <= float(viewport_size.x) + 1.0,
 				"%dx%d %s card remains horizontally visible" % [viewport_size.x, viewport_size.y, hero])
@@ -252,6 +256,10 @@ func _test_reentry_stability() -> void:
 			if child.name == "HeroSelect":
 				hero_select_roots += 1
 		_ok(hero_select_roots == 0, "cycle %d leaves no stale Hero Select root" % (cycle + 1))
+
+
+func _has_developer_words(root: Node) -> bool:
+	return PresentationAudit.has_developer_words(root)
 
 
 func _ready_deck(hero: StringName, deck_name: String) -> UserDeck:

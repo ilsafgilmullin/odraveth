@@ -44,7 +44,13 @@ Compact Battle Card and Board Piece are not implemented in Stage 7D. They should
 
 ## Art status
 
-**FINAL CARD ART IS NOT PRESENT.** No random final-looking illustrations were generated. Every missing exact-card artwork resolves safely to a visibly non-final Citadel/geometric fallback.
+**FINAL CARD ART IS NOT PRESENT.** No random final-looking illustrations were generated.
+
+Stage 7 Visual Alpha replaced the former debug fallback text (`АРТ · ВРЕМЕННО` + card ID + type key) with an art-directed **temporary** composition drawn by `CardArtSlot`: faction palette, a type motif (Citadel arch for creatures, rune rings for spells, ring mechanism for artifacts, fractured ring for curses), the Visual Alpha faction symbol and deterministic per-card variation derived only from the card ID. It shows no developer words; `uses_placeholder` remains `true`, so the temporary status stays explicit in code and tests. Individual final illustrations still replace it through `CardArtResolver` without any layout change.
+
+## Content fit (Stage 7 corrective)
+
+Real-device screenshots showed long rules escaping the frame and pushing stat plates outside the card. `FullCardView` now budgets height from real font metrics (`TextParagraph` wrapping identical to the Label, measured meta/stat rows): the artwork window yields height to long rules (minimum 92 px at base size) and rules step down from 19 px to a 16 px floor. A regression test checks all 40 cards at 320×448, 350×490 and 370×518: title, every rules line and stat plates stay inside the frame. Full authoritative text is always available in Card Detail.
 
 
 ## Originality audit

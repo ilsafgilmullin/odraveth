@@ -1,4 +1,4 @@
-[gd_resource type="Theme" load_steps=11 format=3]
+[gd_resource type="Theme" load_steps=13 format=3]
 
 [ext_resource type="FontFile" path="res://assets/ui/visual_alpha/fonts/NotoSerif-Regular.ttf" id="1_body"]
 [ext_resource type="FontFile" path="res://assets/ui/visual_alpha/fonts/NotoSerif-SemiBold.ttf" id="2_display"]
@@ -111,6 +111,29 @@ content_margin_top = 10.0
 content_margin_right = 18.0
 content_margin_bottom = 10.0
 
+[sub_resource type="StyleBoxFlat" id="popup_panel"]
+bg_color = Color(0.956863, 0.941176, 0.905882, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.717647, 0.607843, 0.333333, 1)
+corner_radius_top_left = 12
+corner_radius_top_right = 12
+corner_radius_bottom_right = 12
+corner_radius_bottom_left = 12
+content_margin_left = 10.0
+content_margin_top = 10.0
+content_margin_right = 10.0
+content_margin_bottom = 10.0
+
+[sub_resource type="StyleBoxFlat" id="popup_hover"]
+bg_color = Color(0.858824, 0.811765, 0.733333, 1)
+corner_radius_top_left = 8
+corner_radius_top_right = 8
+corner_radius_bottom_right = 8
+corner_radius_bottom_left = 8
+
 [sub_resource type="StyleBoxFlat" id="scroll_track"]
 bg_color = Color(0.784314, 0.741176, 0.670588, 0.35)
 corner_radius_top_left = 5
@@ -166,6 +189,7 @@ CheckButton/fonts/font = ExtResource("1_body")
 CheckButton/font_sizes/font_size = 32
 CheckButton/colors/font_color = Color(0.12549, 0.152941, 0.164706, 1)
 Panel/styles/panel = SubResource("panel")
+PanelContainer/styles/panel = SubResource("panel")
 VScrollBar/styles/scroll = SubResource("scroll_track")
 VScrollBar/styles/scroll_focus = SubResource("scroll_track")
 VScrollBar/styles/grabber = SubResource("scroll_grabber")
@@ -178,4 +202,10 @@ HScrollBar/styles/grabber_highlight = SubResource("scroll_grabber")
 HScrollBar/styles/grabber_pressed = SubResource("scroll_grabber")
 PopupMenu/fonts/font = ExtResource("1_body")
 PopupMenu/font_sizes/font_size = 30
+PopupMenu/colors/font_color = Color(0.12549, 0.152941, 0.164706, 1)
+PopupMenu/colors/font_hover_color = Color(0.12549, 0.152941, 0.164706, 1)
+PopupMenu/constants/v_separation = 18
+PopupMenu/styles/panel = SubResource("popup_panel")
+PopupMenu/styles/hover = SubResource("popup_hover")
 TooltipPanel/styles/panel = SubResource("panel")
+TooltipLabel/colors/font_color = Color(0.12549, 0.152941, 0.164706, 1)

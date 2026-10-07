@@ -1,14 +1,14 @@
 class_name HeroSelectCard
 extends Button
-## Interactive Hero Select portrait card. Art and faction emblem are explicit placeholders.
+## Interactive Hero Select portrait card. Portrait is a documented Visual Alpha temporary
+## asset; the faction symbol is the Visual Alpha faction mark.
 
 var hero_id: StringName = &""
 var portrait: HeroPortraitPlaceholder
 var hero_name_label: Label
 var faction_label: Label
 var selected_marker: Label
-var faction_symbol_placeholder: Label
-var art_status_label: Label
+var faction_symbol: EmblemView
 
 var _accent := VisualTokens.COLOR_STEEL_500
 var _built := false
@@ -23,7 +23,7 @@ func configure(id: StringName) -> void:
 	hero_name_label.text = String(data["name_ru"]).to_upper()
 	faction_label.text = SetupUi.faction_name(HeroCatalog.faction_of(id)).to_upper()
 	faction_label.add_theme_color_override("font_color", _accent)
-	faction_symbol_placeholder.add_theme_color_override("font_color", _accent)
+	faction_symbol.configure_faction(HeroCatalog.faction_of(id), Color("eee9df"))
 	_apply_styles()
 
 
@@ -62,16 +62,13 @@ func _ensure_structure() -> void:
 
 	var top := HBoxContainer.new()
 	top.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	top.custom_minimum_size.y = 30
+	top.custom_minimum_size.y = 40
 	stack.add_child(top)
 
-	faction_symbol_placeholder = Label.new()
-	faction_symbol_placeholder.name = "FactionSymbolPlaceholder"
-	faction_symbol_placeholder.text = "◇"
-	faction_symbol_placeholder.tooltip_text = "Временный слот символа фракции"
-	faction_symbol_placeholder.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	faction_symbol_placeholder.add_theme_font_size_override("font_size", 26)
-	top.add_child(faction_symbol_placeholder)
+	faction_symbol = EmblemView.new()
+	faction_symbol.name = "FactionSymbol"
+	faction_symbol.custom_minimum_size = Vector2(40, 40)
+	top.add_child(faction_symbol)
 
 	var spacer := Control.new()
 	spacer.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -88,19 +85,10 @@ func _ensure_structure() -> void:
 	top.add_child(selected_marker)
 
 	portrait = HeroPortraitPlaceholder.new()
-	portrait.name = "HeroArtPlaceholder"
+	portrait.name = "HeroPortrait"
 	portrait.custom_minimum_size = Vector2(0, 160)
 	portrait.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	stack.add_child(portrait)
-
-	art_status_label = Label.new()
-	art_status_label.name = "HeroArtStatus"
-	art_status_label.text = "АРТ ГЕРОЯ · ВРЕМЕННО"
-	art_status_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	art_status_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	art_status_label.add_theme_color_override("font_color", VisualTokens.COLOR_MUTED)
-	art_status_label.add_theme_font_size_override("font_size", 17)
-	stack.add_child(art_status_label)
 
 	hero_name_label = Label.new()
 	hero_name_label.name = "HeroName"

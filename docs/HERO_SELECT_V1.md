@@ -38,11 +38,11 @@ Faction hue remains a restrained secondary accent.
 
 ## Art status
 
-**HERO ART = PLACEHOLDER.**
+**HERO ART = VISUAL ALPHA TEMPORARY ASSET.**
 
-All four portrait slots use the same neutral production placeholder geometry and consistent crop. No final face, costume, weapon or body details are invented. `HeroPortraitPlaceholder.presentation_gender` preserves the approved identity contract; in particular Syrraveth is explicitly `female`.
+Stage 7 replaced the grey debug bust with an art-directed temporary portrait (`HeroPortraitPlaceholder`, `is_temporary_asset() == true`): arched Citadel niche, faction backlight, faction symbol and a rim-lit silhouette that preserves the approved presentation gender (Syrraveth explicitly `female`). No face, costume, weapon or equipment canon is invented; the visible card no longer shows developer words. Final Character V1 artwork replaces it without layout changes.
 
-Faction symbols are also temporary: the card reserves a dedicated symbol slot with the neutral geometric mark **◇** and labels it as a temporary symbol slot via tooltip. Final faction emblems are a separate asset task.
+Faction symbols use the Visual Alpha marks from `NulmerisEmblems` (Ashravael broken blade + angular flame crown, Nerqathen segmented ring with empty core, Dumoryss displaced ring with central fracture, Khevaruun interlocking shield plates). They are Visual Alpha candidates, not approved final emblems.
 
 ## Responsive policy
 

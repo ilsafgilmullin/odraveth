@@ -36,6 +36,7 @@ func run() -> void:
 	await _test_all_40_presentations()
 	await _test_full_card_scene_and_states()
 	await _test_long_content()
+	await _test_all_cards_fit_frame()
 	_test_rarity_geometry()
 	await _test_curse_future_variant()
 	await _test_preview_scene()
@@ -212,6 +213,42 @@ func _test_long_content() -> void:
 		"longest rules text is exact authoritative prose with wrapping")
 	_ok(view.rules_label.get_visible_line_count() == view.rules_label.get_line_count(),
 		"longest rules text has no hidden/clipped lines in FullCard")
+	viewport.queue_free()
+	await tree.process_frame
+
+
+## Regression for real-device screenshots where long rules escaped the card silhouette:
+## every authoritative card keeps title, all rules lines and stat plates inside the frame.
+func _test_all_cards_fit_frame() -> void:
+	var viewport := SubViewport.new()
+	viewport.size = Vector2i(1920, 1080)
+	viewport.render_target_update_mode = SubViewport.UPDATE_DISABLED
+	tree.root.add_child(viewport)
+	var themed := Control.new()
+	themed.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	UiKit.apply_root_theme(themed)
+	viewport.add_child(themed)
+	var holder := HBoxContainer.new()
+	themed.add_child(holder)
+	for card_size: Vector2 in [FullCardView.BASE_SIZE, Vector2(350, 490), Vector2(370, 518)]:
+		var view := FullCardView.new()
+		view.custom_minimum_size = card_size
+		holder.add_child(view)
+		var failures := PackedStringArray()
+		var smallest_font := 999
+		for card: CardDefinition in cards:
+			view.configure(card)
+			await tree.process_frame
+			await tree.process_frame
+			if not view.content_fits_frame() or view.rules_label.text != (card.rules_text_ru if not card.rules_text_ru.is_empty() else " "):
+				failures.append(String(card.id))
+			smallest_font = mini(smallest_font, view.rules_label.get_theme_font_size("font_size"))
+		_ok(failures.is_empty(), "%dx%d: all 40 cards keep rules and stats inside the frame (%s)" % [
+			int(card_size.x), int(card_size.y), ", ".join(failures)])
+		_ok(smallest_font >= FullCardView.RULES_MIN,
+			"%dx%d: rules typography stays at or above the readable floor (min %d)" % [int(card_size.x), int(card_size.y), smallest_font])
+		view.queue_free()
+		await tree.process_frame
 	viewport.queue_free()
 	await tree.process_frame
 
