@@ -49,3 +49,21 @@ Faction symbols are also temporary: the card reserves a dedicated symbol slot wi
 The screen uses four simultaneous cards at 1600×900, 1920×1080 and 2400×1080. Width classes adjust card-row height, spacing and title size without hiding heroes or shrinking the canonical full-description body text below the Stage 7C mobile readability target.
 
 The power description uses word wrapping, clipping disabled and a reserved minimum height to prevent the Stage 6 real-device description-clipping regression.
+
+
+## Stage 7C verification
+
+Checkpoint validation uses the official Godot 4.7.2 stable binary and requires:
+
+- clean checkout with no existing `.godot/`;
+- error-free import of Stage 7A typography/theme, Stage 7B Main Menu and Stage 7C Hero Select;
+- runtime Hero Select tests at 1600×900, 1920×1080 and 2400×1080;
+- all four hero IDs/names/factions visible simultaneously;
+- semantic full-description wrapping with clipping disabled and reserved height;
+- explicit non-colour selected affordance;
+- preview-only taps and explicit confirmation persistence;
+- hero/deck isolation and stored-deck preservation;
+- UI Back and Android-style system Back without unconfirmed mutation;
+- repeated entry/exit without duplicate card nodes or signal connections;
+- clean re-import after deleting `.godot/`;
+- one full project regression at the checkpoint.
