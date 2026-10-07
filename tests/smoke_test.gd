@@ -17,6 +17,7 @@ const BattleUiTests := preload("res://tests/battle_ui_tests.gd")
 const PlayerSetupTests := preload("res://tests/player_setup_tests.gd")
 const PlayerSetupUiTests := preload("res://tests/player_setup_ui_tests.gd")
 const VisualFoundationTests := preload("res://tests/visual_foundation_tests.gd")
+const MainMenuV2Tests := preload("res://tests/main_menu_v2_tests.gd")
 const ENGINE_TEST_MODULES := [
 	["MatchEngine core rules", preload("res://tests/engine/engine_core_tests.gd")],
 	["Hero abilities", preload("res://tests/engine/hero_power_tests.gd")],
@@ -29,12 +30,13 @@ const ENGINE_TEST_MODULES := [
 ]
 const EXPECTED_AUTOLOADS: Array[String] = ["EventBus", "SceneRouter", "AppState", "CardDatabase"]
 const MAIN_MENU_BUTTONS := [
-	["PlayButton", "Играть", Routes.DECK_BUILDER],
-	["CollectionButton", "Коллекция", Routes.COLLECTION],
-	["DecksButton", "Колоды", Routes.DECK_BUILDER],
-	["HeroesButton", "Герои", Routes.HERO_SELECT],
-	["ProgressButton", "Прогресс", Routes.PROGRESS],
-	["SettingsButton", "Настройки", Routes.SETTINGS],
+	["PlayButton", "ВОЙТИ В НУЛМЕРИС", Routes.DECK_BUILDER],
+	["CollectionButton", "КОЛЛЕКЦИЯ", Routes.COLLECTION],
+	["DecksButton", "КОЛОДЫ", Routes.DECK_BUILDER],
+	["HeroesButton", "ГЕРОИ", Routes.HERO_SELECT],
+	["HistoryButton", "ИСТОРИЯ", Routes.HISTORY],
+	["ProgressButton", "ПРОГРЕСС", Routes.PROGRESS],
+	["SettingsButton", "НАСТРОЙКИ", Routes.SETTINGS],
 ]
 const ROUTE_TIMEOUT_FRAMES := 120
 const WATCHDOG_SECONDS := 60.0
@@ -91,6 +93,8 @@ func _run() -> void:
 	_test_cyrillic_font()
 	_section("Stage 7A visual foundation and reusable UI kit")
 	await VisualFoundationTests.new(_check, get_tree()).run()
+	_section("Stage 7B Main Menu V2")
+	await MainMenuV2Tests.new(_check, get_tree()).run()
 	_test_save_manager()
 	_test_card_database()
 	_section("Player setup data and persistence")
@@ -324,7 +328,7 @@ func _test_navigation() -> void:
 	for entry: Array in MAIN_MENU_BUTTONS:
 		var button := menu.find_child(entry[0]) as Button
 		captions.append(button.text if button != null else "<missing %s>" % entry[0])
-	_check(captions == ["Играть", "Коллекция", "Колоды", "Герои", "Прогресс", "Настройки"],
+	_check(captions == ["ВОЙТИ В НУЛМЕРИС", "КОЛЛЕКЦИЯ", "КОЛОДЫ", "ГЕРОИ", "ИСТОРИЯ", "ПРОГРЕСС", "НАСТРОЙКИ"],
 		"main menu buttons in approved order: %s" % ", ".join(captions))
 
 	for entry: Array in MAIN_MENU_BUTTONS:
