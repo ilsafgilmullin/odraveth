@@ -16,6 +16,7 @@ const CardDatabaseScript := preload("res://scripts/cards/card_database.gd")
 const BattleUiTests := preload("res://tests/battle_ui_tests.gd")
 const PlayerSetupTests := preload("res://tests/player_setup_tests.gd")
 const PlayerSetupUiTests := preload("res://tests/player_setup_ui_tests.gd")
+const VisualFoundationTests := preload("res://tests/visual_foundation_tests.gd")
 const ENGINE_TEST_MODULES := [
 	["MatchEngine core rules", preload("res://tests/engine/engine_core_tests.gd")],
 	["Hero abilities", preload("res://tests/engine/hero_power_tests.gd")],
@@ -88,6 +89,8 @@ func _run() -> void:
 	_test_routes()
 	_test_game_rules()
 	_test_cyrillic_font()
+	_section("Stage 7A visual foundation and reusable UI kit")
+	await VisualFoundationTests.new(_check, get_tree()).run()
 	_test_save_manager()
 	_test_card_database()
 	_section("Player setup data and persistence")
