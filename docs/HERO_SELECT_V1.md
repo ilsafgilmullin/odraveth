@@ -32,7 +32,7 @@ Selection is not colour-only:
 
 - explicit **✓ ВЫБРАН** marker;
 - stronger/thicker selected frame;
-- slight 1.8% geometric elevation/scale.
+- slight 0.8% geometric elevation/scale that remains inside the four-card spacing budget.
 
 Faction hue remains a restrained secondary accent.
 

@@ -40,11 +40,15 @@ func run() -> void:
 func _test_hero() -> void:
 	var scene := _scene(Routes.HERO_SELECT) as HeroSelectScreen
 	_ok(scene.hero_buttons.size() == 4 and scene.hero_buttons.has(HeroCatalog.TAZHYRION), "Hero Select displays exactly four heroes")
-	scene.hero_buttons[HeroCatalog.SYRRAVETH].pressed.emit()
-	_ok(scene.pending_hero == HeroCatalog.SYRRAVETH and scene.hero_buttons[HeroCatalog.SYRRAVETH].text.contains("ВЫБРАН"),
-		"tap marks selected hero by text")
-	_ok(scene.hero_buttons[HeroCatalog.KEZHARYN].text.contains("Кровавый приказ")
-		and scene.hero_buttons[HeroCatalog.TAZHYRION].text.contains("Закалка"), "power names from HeroCatalog")
+	var persisted_before: String = AppState.profile["selected_hero_id"]
+	(scene.hero_buttons[HeroCatalog.SYRRAVETH] as HeroSelectCard).pressed.emit()
+	var selected_card := scene.hero_buttons[HeroCatalog.SYRRAVETH] as HeroSelectCard
+	_ok(scene.pending_hero == HeroCatalog.SYRRAVETH and selected_card.selected_marker.visible
+		and selected_card.button_pressed, "tap marks selected hero explicitly")
+	_ok(AppState.profile["selected_hero_id"] == persisted_before, "hero tap is preview-only before confirmation")
+	_ok(scene.power_name_label.text == String(HeroCatalog.HEROES[HeroCatalog.SYRRAVETH]["power_ru"]).to_upper()
+		and scene.power_description_label.text == HeroPresentation.power_description(HeroCatalog.SYRRAVETH),
+		"selected hero power name and full description come from authoritative presentation path")
 	scene.free()
 
 

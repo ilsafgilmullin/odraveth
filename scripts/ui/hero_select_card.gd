@@ -30,7 +30,7 @@ func configure(id: StringName) -> void:
 func set_selected_state(selected: bool) -> void:
 	button_pressed = selected
 	selected_marker.visible = selected
-	scale = Vector2(1.018, 1.018) if selected else Vector2.ONE
+	scale = Vector2(1.008, 1.008) if selected else Vector2.ONE
 	z_index = 2 if selected else 0
 
 
