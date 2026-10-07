@@ -34,6 +34,7 @@ func run() -> void:
 	_ok(cards.size() == 40, "exactly 40 authoritative starter definitions available")
 
 	await _test_all_40_presentations()
+	await _test_full_card_scene_and_states()
 	await _test_long_content()
 	_test_rarity_geometry()
 	await _test_curse_future_variant()
@@ -119,8 +120,57 @@ func _test_all_40_presentations() -> void:
 		and seen_types.has(CardEnums.Type.SPELL) and seen_types.has(CardEnums.Type.ARTIFACT),
 		"all current starter types render")
 	_ok(seen_rarities.size() == 4, "all four rarity families render")
-	_ok(placeholder_count == 40, "all 40 current cards explicitly use non-final artwork fallback")
+	var missing_art := cards.filter(func(card: CardDefinition) -> bool: return CardArtResolver.resolve(card.id) == null)
+	_ok(placeholder_count == missing_art.size(),
+		"fallback count exactly matches cards missing individual artwork")
 	host.queue_free()
+	await tree.process_frame
+
+
+func _test_full_card_scene_and_states() -> void:
+	var packed := load("res://scenes/common/full_card_view.tscn") as PackedScene
+	var view := packed.instantiate() as FullCardView if packed != null else null
+	_ok(view != null, "reusable FullCard scene loads")
+	if view == null:
+		return
+	tree.root.add_child(view)
+	view.configure(cards[0])
+	await tree.process_frame
+	_ok(view.custom_minimum_size == FullCardView.BASE_SIZE
+		and view.size.x >= VisualTokens.TOUCH_MIN.x and view.size.y >= VisualTokens.TOUCH_MIN.y,
+		"whole FullCard is an accessible interactive target")
+
+	var activated := PackedStringArray()
+	view.card_activated.connect(func(card_id: StringName) -> void: activated.append(String(card_id)))
+	view.pressed.emit()
+	_ok(activated == PackedStringArray([String(cards[0].id)]),
+		"whole-card activation signal exposes card ID without caller coupling")
+
+	view.set_selected_state(true)
+	_ok(view.selected_marker.visible and view.scale.x > 1.0 and view.frame_visual.selected,
+		"selected state uses explicit marker plus geometry")
+	view.set_selected_state(false)
+	_ok(not view.selected_marker.visible and is_equal_approx(view.scale.x, 1.0),
+		"selected state clears without stale elevation")
+
+	view.set_copy_count(2)
+	_ok(view.copy_count_badge.visible and view.copy_count_badge.text == "×2",
+		"optional caller-supplied copy-count hook renders without deck query")
+	view.set_copy_count(0)
+	_ok(not view.copy_count_badge.visible, "copy-count hook can be cleared")
+
+	view.set_available(false)
+	_ok(view.disabled and view.frame_visual.unavailable, "disabled/unavailable presentation state is explicit")
+	view.set_available(true)
+	view.button_down.emit()
+	_ok(view.frame_visual.interaction_pressed, "pressed state reaches architectural frame")
+	view.button_up.emit()
+	_ok(not view.frame_visual.interaction_pressed, "pressed state clears")
+	view.grab_focus()
+	await tree.process_frame
+	_ok(view.frame_visual.interaction_focused, "focus state reaches architectural frame")
+
+	view.queue_free()
 	await tree.process_frame
 
 

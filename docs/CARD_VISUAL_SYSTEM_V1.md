@@ -10,7 +10,7 @@ Stage 7D is presentation infrastructure only. The 40 gameplay definitions, balan
 - `CardArtSlot` renders resolved art with aspect-cover behavior or an explicit deterministic **АРТ · ВРЕМЕННО** fallback.
 - `RarityMark` uses distinct geometry for Common/Rare/Epic/Legendary, not colour alone.
 - `CardFrameVisual` draws the ODRAVETH architectural cut-corner silhouette. CURSE already has a fracture/asymmetry presentation variant without adding Curse gameplay.
-- `FullCardView` is the canonical reusable FULL CARD component.
+- `FullCardView` is the canonical reusable FULL CARD component; `scenes/common/full_card_view.tscn` is its reusable packed-scene entrypoint.
 - `CardDetailOverlay` remains backward-compatible with existing callers while adding `open_card(card_id/definition)` and structured detail UI.
 
 ## Full Card anatomy
