@@ -53,3 +53,8 @@ Stage 7A is gated on a GitHub Actions clean checkout using the official Godot 4.
 7. run one full project regression checkpoint.
 
 The generated `.godot/` cache is never copied or committed.
+
+
+## Stage 7C consumer — Hero Select V1
+
+Hero Select V1 consumes the shared Visual Alpha theme, buttons, spacing/touch policy and responsive width classes. Its final character art and faction symbols remain explicitly deferred; see `docs/HERO_SELECT_V1.md`.
