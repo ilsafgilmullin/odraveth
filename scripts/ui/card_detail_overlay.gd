@@ -3,7 +3,8 @@ extends ColorRect
 ## Reusable Stage 7D card detail modal shared by setup and battle callers.
 ## Backward-compatible show_card() and detail_text are preserved.
 
-var detail_text: RichTextLabel
+var detail_text: RichTextLabel # Legacy compatibility surface for existing Battle/setup callers.
+var body_text: RichTextLabel
 var full_card: FullCardView
 var close_button: Button
 var ru_name_label: Label
@@ -104,14 +105,22 @@ func _build_ui() -> void:
 	identity_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	info.add_child(identity_label)
 
+	# Hidden compatibility buffer: old callers/tests retain the complete textual representation.
 	detail_text = RichTextLabel.new()
 	detail_text.name = "CardDetailText"
+	detail_text.visible = false
 	detail_text.fit_content = true
 	detail_text.scroll_active = false
-	detail_text.custom_minimum_size.y = 230
-	detail_text.add_theme_font_size_override("normal_font_size", 28)
-	detail_text.add_theme_color_override("default_color", VisualTokens.COLOR_INK)
 	info.add_child(detail_text)
+
+	body_text = RichTextLabel.new()
+	body_text.name = "CardDetailBodyText"
+	body_text.fit_content = true
+	body_text.scroll_active = false
+	body_text.custom_minimum_size.y = 230
+	body_text.add_theme_font_size_override("normal_font_size", 28)
+	body_text.add_theme_color_override("default_color", VisualTokens.COLOR_INK)
+	info.add_child(body_text)
 
 	var keyword_title := Label.new()
 	keyword_title.text = "КЛЮЧЕВЫЕ СЛОВА"
@@ -161,17 +170,30 @@ func _populate(card: CardDefinition, current_cost: int) -> void:
 		presentation.current_cost,
 	]
 
-	var lines := PackedStringArray()
+	var visible_lines := PackedStringArray()
 	if presentation.is_creature():
-		lines.append("Атака: %d    Здоровье: %d" % [presentation.attack, presentation.health])
+		visible_lines.append("Атака: %d    Здоровье: %d" % [presentation.attack, presentation.health])
 		if presentation.shows_armor():
-			lines.append("Броня: %d" % presentation.armor)
+			visible_lines.append("Броня: %d" % presentation.armor)
 	elif presentation.shows_charges():
-		lines.append("Заряды: %d" % presentation.charges)
+		visible_lines.append("Заряды: %d" % presentation.charges)
 	if not presentation.rules_text_ru.is_empty():
-		lines.append("")
-		lines.append(presentation.rules_text_ru)
-	detail_text.text = "\n".join(lines)
+		visible_lines.append("")
+		visible_lines.append(presentation.rules_text_ru)
+	body_text.text = "\n".join(visible_lines)
+
+	var legacy_lines := PackedStringArray([
+		presentation.name_ru,
+		presentation.name_en,
+		"Стоимость: %d" % presentation.current_cost,
+		"Фракция: %s" % presentation.faction_label,
+		"Редкость: %s" % presentation.rarity_label,
+		"Тип: %s" % presentation.type_label,
+	])
+	for line: String in visible_lines:
+		legacy_lines.append(line)
+	legacy_lines.append("Ключевые слова: %s" % ", ".join(presentation.keywords))
+	detail_text.text = "\n".join(legacy_lines)
 
 	for child: Node in keywords_row.get_children():
 		keywords_row.remove_child(child)

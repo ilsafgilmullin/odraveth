@@ -36,7 +36,7 @@ Curse: common base grammar with disrupted lower-corner/fracture geometry reserve
 
 Card Detail uses a responsive Stage 7A modal. Left: enlarged `FullCardView`. Right: Russian name, English reference name, faction/type/rarity/cost, only relevant stats, full rules and structured keyword markers.
 
-Existing `show_card(CardDefinition, current_cost)` remains supported for Collection/Deck Builder/Battle. New callers may use `open_card(card_id/definition)`.
+Existing `show_card(CardDefinition, current_cost)` remains supported for Collection/Deck Builder/Battle. The legacy `detail_text` buffer also retains its complete textual contract for existing Battle/setup code, while the Stage 7D UI renders structured fields through a separate visible body. New callers may use `open_card(card_id/definition)`.
 
 ## Future mode contract
 

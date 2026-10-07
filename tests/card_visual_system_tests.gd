@@ -302,20 +302,20 @@ func _test_detail_all_40() -> void:
 			"%s Card Detail reuses canonical FullCard/presentation" % card.id)
 		match card.card_type:
 			CardEnums.Type.CREATURE:
-				_ok(overlay.detail_text.text.contains("Атака:") and overlay.detail_text.text.contains("Здоровье:"),
+				_ok(overlay.body_text.text.contains("Атака:") and overlay.body_text.text.contains("Здоровье:"),
 					"%s detail shows creature stats" % card.id)
-				_ok(overlay.detail_text.text.contains("Броня:") == (card.armor > 0),
+				_ok(overlay.body_text.text.contains("Броня:") == (card.armor > 0),
 					"%s detail armor omission is meaningful" % card.id)
 			CardEnums.Type.SPELL:
-				_ok(not overlay.detail_text.text.contains("Атака:")
-					and not overlay.detail_text.text.contains("Здоровье:")
-					and not overlay.detail_text.text.contains("Броня:")
-					and not overlay.detail_text.text.contains("Заряды:"),
+				_ok(not overlay.body_text.text.contains("Атака:")
+					and not overlay.body_text.text.contains("Здоровье:")
+					and not overlay.body_text.text.contains("Броня:")
+					and not overlay.body_text.text.contains("Заряды:"),
 					"%s spell detail omits irrelevant stats" % card.id)
 			CardEnums.Type.ARTIFACT:
-				_ok(overlay.detail_text.text.contains("Заряды: %d" % card.charges)
-					and not overlay.detail_text.text.contains("Атака:")
-					and not overlay.detail_text.text.contains("Здоровье:"),
+				_ok(overlay.body_text.text.contains("Заряды: %d" % card.charges)
+					and not overlay.body_text.text.contains("Атака:")
+					and not overlay.body_text.text.contains("Здоровье:"),
 					"%s artifact detail shows dedicated charges only" % card.id)
 
 	var keyword_card := CardDatabase.get_card(&"khevaruun_ironwarden")
@@ -365,7 +365,7 @@ func _test_detail_responsive() -> void:
 			"%dx%d right information column remains readable/scrollable" % [viewport_size.x, viewport_size.y])
 		_ok(overlay.close_button.size.y >= 64.0,
 			"%dx%d close action keeps Android touch target" % [viewport_size.x, viewport_size.y])
-		_ok(overlay.detail_text.fit_content and overlay.detail_text.text.contains(stress_card.rules_text_ru),
+		_ok(overlay.body_text.fit_content and overlay.body_text.text.contains(stress_card.rules_text_ru),
 			"%dx%d full authoritative rules remain accessible" % [viewport_size.x, viewport_size.y])
 
 		viewport.queue_free()
