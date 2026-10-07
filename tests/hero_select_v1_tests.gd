@@ -223,7 +223,7 @@ func _test_back_without_commit() -> void:
 	await _wait_for_route(Routes.HERO_SELECT)
 	scene = tree.current_scene as HeroSelectScreen
 	(scene.hero_buttons[HeroCatalog.TAZHYRION] as HeroSelectCard).pressed.emit()
-	tree.root.propagate_notification(NOTIFICATION_WM_GO_BACK_REQUEST)
+	tree.root.propagate_notification(MainLoop.NOTIFICATION_WM_GO_BACK_REQUEST)
 	_ok(await _wait_for_route(Routes.MAIN_MENU)
 		and AppState.profile["selected_hero_id"] == String(HeroCatalog.KEZHARYN),
 		"system Back discards unconfirmed preview")
