@@ -254,7 +254,7 @@ func _test_responsive_grid() -> void:
 			longest_name = card
 
 	for index in VIEWPORTS.size():
-		var dimensions := VIEWPORTS[index]
+		var dimensions: Vector2i = VIEWPORTS[index]
 		var viewport := SubViewport.new()
 		viewport.size = dimensions
 		viewport.render_target_update_mode = SubViewport.UPDATE_DISABLED
@@ -333,9 +333,12 @@ func _test_rebuild_stress() -> void:
 				"stress cycle %d query '%s' has no duplicate IDs" % [cycle + 1, query])
 		_select_id(scene.faction_filter, Faction.Id.NEUTRAL, true)
 		await tree.process_frame
-		_ok(scene.visible_card_ids.all(func(id: String) -> bool:
-			return CardDatabase.get_card(StringName(id)).faction == Faction.Id.NEUTRAL),
-			"stress cycle %d faction result has no stale cards" % (cycle + 1))
+		var neutral_only := true
+		for id: String in scene.visible_card_ids:
+			if CardDatabase.get_card(StringName(id)).faction != Faction.Id.NEUTRAL:
+				neutral_only = false
+				break
+		_ok(neutral_only, "stress cycle %d faction result has no stale cards" % (cycle + 1))
 		scene.reset_button.pressed.emit()
 		await tree.process_frame
 		_ok(scene.filter_state.active_filter_count() == 0, "stress cycle %d reset clears active filters" % (cycle + 1))
@@ -384,12 +387,12 @@ func _scene() -> CollectionScreen:
 	return scene
 
 
-func _select_id(control: OptionButton, id: int, emit_signal: bool) -> void:
+func _select_id(control: OptionButton, id: int, emit_selected: bool) -> void:
 	var index := _index_for_id(control, id)
 	if index < 0:
 		return
 	control.select(index)
-	if emit_signal:
+	if emit_selected:
 		control.item_selected.emit(index)
 
 
