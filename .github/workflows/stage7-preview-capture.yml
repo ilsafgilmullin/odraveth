@@ -1,0 +1,64 @@
+name: Stage 7D visual screenshot preview
+
+on:
+  push:
+    branches:
+      - preview/stage7d-screenshots
+
+permissions:
+  contents: read
+
+jobs:
+  capture:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout exact preview branch
+        uses: actions/checkout@v5
+
+      - name: Install Xvfb and Godot 4.7.2 stable
+        shell: bash
+        run: |
+          set -euo pipefail
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq xvfb
+          mkdir -p .tools
+          base="https://github.com/godotengine/godot-builds/releases/download/4.7.2-stable"
+          curl -fsSL "$base/Godot_v4.7.2-stable_linux.x86_64.zip" -o .tools/godot.zip
+          curl -fsSL "$base/SHA512-SUMS.txt" -o .tools/SHA512-SUMS.txt
+          (
+            cd .tools
+            grep "Godot_v4.7.2-stable_linux.x86_64.zip" SHA512-SUMS.txt | sed 's#Godot_v4.7.2-stable_linux.x86_64.zip#godot.zip#' | sha512sum -c -
+            unzip -q godot.zip
+            chmod +x Godot_v4.7.2-stable_linux.x86_64
+          )
+          .tools/Godot_v4.7.2-stable_linux.x86_64 --version
+
+      - name: Fresh import
+        shell: bash
+        run: |
+          set -euo pipefail
+          GODOT="$PWD/.tools/Godot_v4.7.2-stable_linux.x86_64"
+          "$GODOT" --headless --path . --import 2>&1 | tee preview-import.log
+          if grep -E "ERROR:|SCRIPT ERROR:|Parse Error|Failed loading resource|Can't open" preview-import.log; then
+            exit 1
+          fi
+
+      - name: Render current Stage 7D screens
+        shell: bash
+        run: |
+          set -euo pipefail
+          GODOT="$PWD/.tools/Godot_v4.7.2-stable_linux.x86_64"
+          xvfb-run -a -s "-screen 0 1920x1080x24"             "$GODOT" --path . --scene res://tools/visual_capture.tscn             --resolution 1920x1080 --rendering-method gl_compatibility             2>&1 | tee visual-capture.log
+          grep -q "VISUAL CAPTURE COMPLETE" visual-capture.log
+          test -s preview_output/stage7d-main-menu.png
+          test -s preview_output/stage7d-hero-select.png
+          test -s preview_output/stage7d-card-visual-preview.png
+
+      - name: Upload screenshots
+        uses: actions/upload-artifact@v4
+        with:
+          name: stage7d-visual-screenshots
+          path: preview_output/*.png
+          if-no-files-found: error
+          retention-days: 3
