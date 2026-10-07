@@ -121,14 +121,14 @@ func _ensure_structure() -> void:
 func _apply_styles() -> void:
 	var normal := _card_box(Color("eee9df"), _accent, 2)
 	var hover := _card_box(Color("f5f1e9"), _accent, 3)
-	var pressed := _card_box(Color("f7f3ea"), VisualTokens.COLOR_GOLD_500, 5)
-	var disabled := _card_box(Color("dedbd4"), VisualTokens.COLOR_STONE_500, 1)
+	var pressed_box := _card_box(Color("f7f3ea"), VisualTokens.COLOR_GOLD_500, 5)
+	var disabled_box := _card_box(Color("dedbd4"), VisualTokens.COLOR_STONE_500, 1)
 	add_theme_stylebox_override("normal", normal)
 	add_theme_stylebox_override("hover", hover)
-	add_theme_stylebox_override("pressed", pressed)
-	add_theme_stylebox_override("hover_pressed", pressed)
+	add_theme_stylebox_override("pressed", pressed_box)
+	add_theme_stylebox_override("hover_pressed", pressed_box)
 	add_theme_stylebox_override("focus", _card_box(Color(0, 0, 0, 0), VisualTokens.COLOR_MAGIC_500, 3))
-	add_theme_stylebox_override("disabled", disabled)
+	add_theme_stylebox_override("disabled", disabled_box)
 
 
 func _card_box(background: Color, border: Color, width: int) -> StyleBoxFlat:
