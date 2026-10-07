@@ -123,7 +123,7 @@ func _ensure_structure() -> void:
 
 	var art_wrap := MarginContainer.new()
 	art_wrap.name = "ArtWrap"
-	art_wrap.custom_minimum_size.y = 242
+	art_wrap.custom_minimum_size.y = 210
 	art_wrap.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	art_wrap.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	stack.add_child(art_wrap)
@@ -172,7 +172,7 @@ func _ensure_structure() -> void:
 
 	name_label = Label.new()
 	name_label.name = "CardName"
-	name_label.custom_minimum_size.y = 54
+	name_label.custom_minimum_size.y = 52
 	name_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	name_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	name_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
@@ -184,7 +184,7 @@ func _ensure_structure() -> void:
 
 	var meta := HBoxContainer.new()
 	meta.name = "MetaRow"
-	meta.custom_minimum_size.y = 34
+	meta.custom_minimum_size.y = 32
 	meta.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	stack.add_child(meta)
 	type_label = Label.new()
@@ -207,7 +207,7 @@ func _ensure_structure() -> void:
 
 	rules_label = Label.new()
 	rules_label.name = "RulesText"
-	rules_label.custom_minimum_size.y = 82
+	rules_label.custom_minimum_size.y = 70
 	rules_label.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	rules_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	rules_label.clip_text = false
@@ -219,7 +219,7 @@ func _ensure_structure() -> void:
 
 	stats_row = HBoxContainer.new()
 	stats_row.name = "StatsRow"
-	stats_row.custom_minimum_size.y = 42
+	stats_row.custom_minimum_size.y = 38
 	stats_row.alignment = BoxContainer.ALIGNMENT_CENTER
 	stats_row.add_theme_constant_override("separation", 8)
 	stats_row.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -234,7 +234,9 @@ func _rebuild_stats() -> void:
 	health_badge = null
 	charges_badge = null
 	if presentation == null:
+		stats_row.visible = false
 		return
+	stats_row.visible = presentation.is_creature() or presentation.shows_charges()
 	if presentation.is_creature():
 		attack_badge = _stat_badge("АТК", presentation.attack, Color("76453d"))
 		stats_row.add_child(attack_badge)
