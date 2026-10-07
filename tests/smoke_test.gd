@@ -382,13 +382,21 @@ func _test_navigation() -> void:
 	_find_button("PlayButton").pressed.emit()
 	_check(await _wait_for_route(Routes.PREBATTLE), "Play with selected ready deck opens Prebattle")
 	var prebattle := get_tree().current_scene as PrebattleScreen
-	_check(not prebattle.start_button.disabled and prebattle.deck_summary.text.contains("30/30"),
+	_check(not prebattle.find_button.disabled and prebattle.deck_summary.text.contains("30/30"),
 		"Prebattle shows selected ready deck")
-	prebattle.opponent_buttons[HeroCatalog.TAZHYRION].pressed.emit()
-	prebattle.difficulty.select(2)
-	prebattle.difficulty.item_selected.emit(2)
-	_check(prebattle.start_button.text == "НАЧАТЬ БОЙ", "prebattle offers 'Начать бой'")
-	prebattle.start_button.pressed.emit()
+	(prebattle.difficulty_buttons["STRATEGIST"] as Button).button_pressed = true
+	_check(prebattle.find_button.text == "НАЙТИ СОПЕРНИКА" and prebattle.find_child("Opponent_*", true, false) == null,
+		"prebattle offers 'НАЙТИ СОПЕРНИКА' without manual opponent selection")
+	prebattle.find_button.pressed.emit()
+	var chosen: BattleLaunchConfig = prebattle.last_config
+	_check(chosen != null and HeroCatalog.has_hero(chosen.opponent_hero), "Find Opponent draws a concrete opponent hero")
+	_check(await _wait_for_route(Routes.OPPONENT_SEARCH), "Find Opponent opens the Citadel search")
+	var search := get_tree().current_scene as OpponentSearchScreen
+	if search != null:
+		search.finish_now()
+		_check(search.config == chosen and search.faction_label.text == SetupUi.faction_name(
+			HeroCatalog.faction_of(chosen.opponent_hero)).to_upper(), "search reveals only the drawn faction")
+		search.proceed()
 	_check(await _wait_for_route(Routes.BATTLE), "flow reaches Battle with saved deck")
 	if SceneRouter.current_route == Routes.BATTLE:
 		var launched := get_tree().current_scene
@@ -399,9 +407,9 @@ func _test_navigation() -> void:
 		_check(launched._session.config.player_deck.map(func(id: Variant) -> String: return String(id)) == exact_cards.map(func(id: Variant) -> String: return String(id))
 			and launched._session.config.player_hero == HeroCatalog.KEZHARYN,
 			"E2E: exact saved player deck and selected hero reach BattleSession")
-		_check(launched._session.config.opponent_hero == HeroCatalog.TAZHYRION
+		_check(chosen != null and launched._session.config.opponent_hero == chosen.opponent_hero
 			and launched._session.config.ai_difficulty == AiDifficulty.Level.STRATEGIST,
-			"E2E: chosen opponent and AI difficulty reach BattleSession")
+			"E2E: drawn opponent and AI difficulty reach BattleSession")
 		var battle_snapshot: Dictionary = launched._session.engine.snapshot()
 		get_tree().root.propagate_notification(NOTIFICATION_WM_GO_BACK_REQUEST)
 		await get_tree().process_frame

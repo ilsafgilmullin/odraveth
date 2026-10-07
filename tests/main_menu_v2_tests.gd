@@ -143,7 +143,8 @@ func _test_authoritative_status_and_routes() -> void:
 	var prebattle := tree.current_scene as PrebattleScreen
 	_ok(prebattle != null and prebattle.route_params.is_empty(),
 		"Main Menu enters normal Prebattle without technical battle config")
-	_ok(prebattle.deck_summary.text.contains(deck.name) and not prebattle.start_button.disabled,
+	_ok(prebattle.deck_name_label.text == deck.name and prebattle.deck_summary.text.contains("30/30")
+		and not prebattle.find_button.disabled,
 		"Prebattle receives the same selected saved deck")
 
 

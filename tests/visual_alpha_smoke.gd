@@ -4,6 +4,7 @@ extends Node
 
 const MODULES := [
 	["deck_builder", preload("res://tests/deck_builder_v1_tests.gd")],
+	["prebattle", preload("res://tests/prebattle_v3_tests.gd")],
 ]
 const WATCHDOG_SECONDS := 180.0
 

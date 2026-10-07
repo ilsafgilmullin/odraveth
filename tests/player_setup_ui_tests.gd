@@ -212,17 +212,15 @@ func _test_builder() -> void:
 
 func _test_prebattle() -> void:
 	var scene := _scene(Routes.PREBATTLE) as PrebattleScreen
-	_ok(scene.start_button.disabled and scene.opponent_buttons.size() == 4, "invalid selection blocks Start; four opponent choices")
-	_ok(scene.difficulty.item_count == 3 and scene.toggles.values().all(func(toggle: CheckButton) -> bool: return toggle.button_pressed),
+	_ok(scene.find_button.disabled and scene.find_child("Opponent_*", true, false) == null,
+		"invalid selection blocks НАЙТИ СОПЕРНИКА; no manual opponent choice exists")
+	_ok(scene.difficulty_buttons.size() == 3 and scene.toggles.values().all(func(toggle: CheckButton) -> bool: return toggle.button_pressed),
 		"three difficulties and three default ON toggles")
 	scene.toggles[PlayerSetupData.ANIMATIONS].button_pressed = false
 	scene.toggles[PlayerSetupData.ANIMATIONS].toggled.emit(false)
 	_ok(AppState.profile["prebattle"][PlayerSetupData.ANIMATIONS] == false,
 		"animation preference persisted by UI")
-	scene.opponent_buttons[HeroCatalog.KEZHARYN].pressed.emit()
-	_ok(AppState.profile["prebattle"]["opponent_hero_id"] == String(HeroCatalog.KEZHARYN), "mirror opponent allowed and saved")
-	scene.difficulty.select(1)
-	scene.difficulty.item_selected.emit(1)
+	(scene.difficulty_buttons["TACTICIAN"] as Button).button_pressed = true
 	_ok(AppState.profile["prebattle"]["ai_difficulty"] == "TACTICIAN", "difficulty saved")
 	scene.free()
 
@@ -277,8 +275,8 @@ func _test_sizes() -> void:
 							(editor.deck_list.get_child(editor.deck_list.get_child_count() - 1) as Control).get_global_rect(),
 							deck_scroll.scroll_vertical, deck_scroll.get_v_scroll_bar().max_value])
 			if route == Routes.PREBATTLE:
-				var start := scene.find_child("StartBattleButton", true, false) as Control
+				var start := scene.find_child("FindOpponentButton", true, false) as Control
 				_ok(viewport.encloses(start.get_global_rect()) and start.is_visible_in_tree(),
-					"%s: Start Battle in viewport" % dimensions)
+					"%s: НАЙТИ СОПЕРНИКА in viewport" % dimensions)
 			scene.free()
 	tree.root.size = Vector2i(1920, 1080)

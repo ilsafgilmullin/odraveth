@@ -13,6 +13,9 @@ var opponent_deck: Array = []
 var ai_difficulty: AiDifficulty.Level
 var rng_seed: int = 0
 var presentation_options: Dictionary = {}
+## Presentation-only metadata of the player's saved deck snapshot (Result screen).
+var player_deck_name: String = ""
+var player_deck_id: String = ""
 
 
 static func create(p_hero: StringName, p_deck: Array, o_hero: StringName, o_deck: Array,
@@ -69,6 +72,29 @@ static func _build_deck(hero_id: StringName, card_source: Object) -> Array:
 				counts[definition.id] = count + 1
 		safety += 1
 	return deck
+
+
+## Same snapshot, deck metadata, opponent, difficulty and preferences with a fresh seed.
+func rematch() -> BattleLaunchConfig:
+	var next := BattleLaunchConfig.create(player_hero, player_deck, opponent_hero, opponent_deck,
+		ai_difficulty, 0, presentation_options)
+	next.player_deck_name = player_deck_name
+	next.player_deck_id = player_deck_id
+	return next
+
+
+## Same player snapshot and settings against a new opponent with a fresh seed.
+func with_opponent(hero_id: StringName, card_source: Object) -> BattleLaunchConfig:
+	var next := BattleLaunchConfig.create(player_hero, player_deck, hero_id,
+		technical_opponent_deck(hero_id, card_source), ai_difficulty, 0, presentation_options)
+	next.player_deck_name = player_deck_name
+	next.player_deck_id = player_deck_id
+	return next
+
+
+## Fresh non-repeating seed for match or setup-time draws (opponent selection).
+static func generate_seed() -> int:
+	return _generate_seed()
 
 
 static func _generate_seed() -> int:

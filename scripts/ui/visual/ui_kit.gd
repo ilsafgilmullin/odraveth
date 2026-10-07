@@ -9,6 +9,8 @@ const DISPLAY_FONT_PATH := "res://assets/ui/visual_alpha/fonts/NotoSerif-SemiBol
 const CHECK_ICON := preload("res://assets/ui/visual_alpha/icons/check.svg")
 const CHEVRON_ICON := preload("res://assets/ui/visual_alpha/icons/chevron_down.svg")
 const STATUS_ICON := preload("res://assets/ui/visual_alpha/icons/status_diamond.svg")
+const SWITCH_ON_PATH := "res://assets/ui/visual_alpha/icons/switch_on.svg"
+const SWITCH_OFF_PATH := "res://assets/ui/visual_alpha/icons/switch_off.svg"
 
 
 static func apply_root_theme(control: Control) -> bool:
@@ -116,6 +118,18 @@ static func prepare_switch(control: CheckButton) -> CheckButton:
 	control.add_theme_font_size_override("font_size", VisualTokens.FONT_UI)
 	control.add_theme_color_override("font_color", VisualTokens.COLOR_INK)
 	control.add_theme_color_override("font_pressed_color", VisualTokens.COLOR_STEEL_900)
+	control.add_theme_color_override("font_hover_color", VisualTokens.COLOR_INK)
+	control.add_theme_color_override("font_hover_pressed_color", VisualTokens.COLOR_STEEL_900)
+	control.add_theme_color_override("font_focus_color", VisualTokens.COLOR_INK)
+	var on_icon := load(SWITCH_ON_PATH) as Texture2D
+	var off_icon := load(SWITCH_OFF_PATH) as Texture2D
+	if on_icon != null and off_icon != null:
+		for icon_name: String in ["checked", "checked_disabled", "checked_mirrored", "checked_disabled_mirrored"]:
+			control.add_theme_icon_override(icon_name, on_icon)
+		for icon_name: String in ["unchecked", "unchecked_disabled", "unchecked_mirrored", "unchecked_disabled_mirrored"]:
+			control.add_theme_icon_override(icon_name, off_icon)
+	for state: String in ["normal", "hover", "pressed", "hover_pressed", "focus", "disabled"]:
+		control.add_theme_stylebox_override(state, StyleBoxEmpty.new())
 	return control
 
 

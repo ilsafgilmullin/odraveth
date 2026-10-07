@@ -29,6 +29,12 @@ func all() -> Array:
 		["deck_builder-deck_not_ready", deck_builder_deck_not_ready],
 		["deck_builder-detail", deck_builder_detail],
 		["deck_builder-rename", deck_builder_rename],
+		["prebattle-ready", prebattle_ready],
+		["prebattle-difficulty_toggles", prebattle_difficulty_toggles],
+		["prebattle-no_deck", prebattle_no_deck],
+		["search-activation", search_activation],
+		["search-cycling", search_cycling],
+		["search-found", search_found],
 	]
 
 
@@ -215,6 +221,62 @@ func deck_builder_rename() -> bool:
 	screen.name_edit.text_changed.emit(screen.name_edit.text)
 	screen.name_edit.caret_column = screen.name_edit.text.length()
 	return true
+
+
+func prebattle_ready() -> bool:
+	_clear_overlay()
+	_use_profile(qa_profile())
+	return await runner.open_route(Routes.PREBATTLE)
+
+
+func prebattle_difficulty_toggles() -> bool:
+	if not await prebattle_ready():
+		return false
+	var screen := runner.get_tree().current_scene as PrebattleScreen
+	(screen.difficulty_buttons["STRATEGIST"] as Button).button_pressed = true
+	(screen.toggles[PlayerSetupData.FORECAST] as CheckButton).button_pressed = false
+	return true
+
+
+func prebattle_no_deck() -> bool:
+	_clear_overlay()
+	_use_profile(qa_profile(false))
+	return await runner.open_route(Routes.PREBATTLE)
+
+
+func qa_battle_config(opponent: StringName = HeroCatalog.VHORAZEL, seed_value: int = 20260707) -> BattleLaunchConfig:
+	var config := BattleLaunchConfig.create(HeroCatalog.KEZHARYN,
+		BattleLaunchConfig.technical_opponent_deck(HeroCatalog.KEZHARYN, CardDatabase), opponent,
+		BattleLaunchConfig.technical_opponent_deck(opponent, CardDatabase), AiDifficulty.Level.TACTICIAN, seed_value,
+		{PlayerSetupData.HINTS: true, PlayerSetupData.ANIMATIONS: true, PlayerSetupData.FORECAST: true})
+	config.player_deck_name = "Колода Кежарина"
+	return config
+
+
+func _search_at(time: float) -> bool:
+	_clear_overlay()
+	_use_profile(qa_profile())
+	if not await runner.open_route(Routes.OPPONENT_SEARCH, {BattleLaunchConfig.PARAM_KEY: qa_battle_config()}):
+		return false
+	var screen := runner.get_tree().current_scene as OpponentSearchScreen
+	screen.set_process(false)
+	var t := 0.0
+	while t < time:
+		screen._process(0.05)
+		t += 0.05
+	return true
+
+
+func search_activation() -> bool:
+	return await _search_at(0.55)
+
+
+func search_cycling() -> bool:
+	return await _search_at(2.2)
+
+
+func search_found() -> bool:
+	return await _search_at(4.6)
 
 
 func _clear_overlay() -> void:
