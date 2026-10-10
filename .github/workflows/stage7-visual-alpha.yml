@@ -5,6 +5,9 @@ on:
     branches:
       - claude/odraveth-visual-alpha
       - codex/stage-b-ui-ux-hardening
+  pull_request:
+    branches:
+      - develop
   workflow_dispatch:
 
 permissions:
