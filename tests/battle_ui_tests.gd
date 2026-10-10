@@ -277,8 +277,16 @@ func _test_safe_battle_exit() -> void:
 	_ok(scene.handle_back_request() and not scene._detail_overlay.visible and not scene._exit_dialog.visible,
 		"Back closes card detail before offering battle exit")
 	(scene.find_child("MainMenuButton", true, false) as Button).pressed.emit()
+	_ok(scene._battle_menu_overlay.visible and scene._session.engine.snapshot() == snapshot,
+		"battle Menu opens without mutating the live match")
+	(scene.find_child("BattleRulesButton", true, false) as Button).pressed.emit()
+	_ok(scene._rules_overlay.visible and scene.find_child("RulesContent", true, false) is RulesContent,
+		"battle Menu exposes rules without leaving the match")
+	(scene.find_child("BattleRulesCloseButton", true, false) as Button).pressed.emit()
+	(scene.find_child("MainMenuButton", true, false) as Button).pressed.emit()
+	(scene.find_child("ExitBattleButton", true, false) as Button).pressed.emit()
 	_ok(scene._exit_dialog.visible and scene._session.engine.snapshot() == snapshot,
-		"battle Menu button uses the same safe confirmation")
+		"battle Menu exit action uses the safe confirmation")
 	scene.free()
 
 

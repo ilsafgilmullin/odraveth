@@ -129,19 +129,20 @@ func _test_prebattle_controls() -> void:
 	for key: String in PrebattleScreen.DIFFICULTY_KEYS:
 		labels.append((scene.difficulty_buttons[key] as Button).text)
 	_ok(labels == PackedStringArray(["НОВИЧОК", "ТАКТИК", "СТРАТЕГ"]), "difficulties НОВИЧОК / ТАКТИК / СТРАТЕГ")
-	_ok(scene.toggles.size() == 3 and scene.toggles.values().all(func(toggle: CheckButton) -> bool: return toggle.button_pressed)
+	_ok(scene.toggles.size() == 2 and scene.toggles.values().all(func(toggle: CheckButton) -> bool: return toggle.button_pressed)
 		and (scene.toggles[PlayerSetupData.HINTS] as CheckButton).text == "Подсказки"
 		and (scene.toggles[PlayerSetupData.ANIMATIONS] as CheckButton).text == "Анимации"
-		and (scene.toggles[PlayerSetupData.FORECAST] as CheckButton).text == "Прогноз урона",
-		"Подсказки / Анимации / Прогноз урона default ON")
+		and not scene.toggles.has(PlayerSetupData.FORECAST),
+		"only working Подсказки / Анимации toggles are visible")
 	var on_icon := (scene.toggles[PlayerSetupData.HINTS] as CheckButton).get_theme_icon("checked")
 	var off_icon := (scene.toggles[PlayerSetupData.HINTS] as CheckButton).get_theme_icon("unchecked")
 	_ok(on_icon != null and off_icon != null and on_icon != off_icon and on_icon.resource_path.ends_with("switch_on.svg"),
 		"switches use Visual Alpha knob-position icons instead of default Godot switches")
-	(scene.toggles[PlayerSetupData.FORECAST] as CheckButton).button_pressed = false
+	(scene.toggles[PlayerSetupData.HINTS] as CheckButton).button_pressed = false
 	(scene.difficulty_buttons["STRATEGIST"] as Button).button_pressed = true
-	_ok(AppState.profile["prebattle"][PlayerSetupData.FORECAST] == false
+	_ok(AppState.profile["prebattle"][PlayerSetupData.HINTS] == false
 		and AppState.profile["prebattle"]["ai_difficulty"] == "STRATEGIST", "toggle and difficulty persist locally")
+	_ok(scene.find_child("RulesButton", true, false) is Button, "Rules are accessible before battle")
 	_ok((scene.difficulty_buttons["STRATEGIST"] as Button).icon != null
 		and (scene.difficulty_buttons["NOVICE"] as Button).icon == null, "selected difficulty is not colour-only")
 	_ok(not PresentationAudit.has_developer_words(scene), "no developer placeholder words are visible")

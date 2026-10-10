@@ -140,6 +140,9 @@ func _draw_info() -> void:
 	var s := _info.size
 	if s.x < 40.0 or _display_font == null:
 		return
+	# Hero data must remain readable over both bright and dark arena regions.
+	_info.draw_style_box(UiKit._box(Color(VisualTokens.COLOR_STONE_050, 0.93),
+		Color(VisualTokens.COLOR_STEEL_500, 0.82), 1, VisualTokens.RADIUS_SMALL, 8.0, 6.0), Rect2(Vector2.ZERO, s))
 	var hero: Dictionary = HeroCatalog.HEROES.get(hero_id, {})
 	var fitted_name := BoardPieceView.fit_text(_display_font, String(hero.get("name_ru", "")).to_upper(), s.x, int(s.y * 0.17),
 		int(s.y * 0.12))

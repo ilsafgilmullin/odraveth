@@ -17,6 +17,7 @@ const RESULT := &"result"
 const HISTORY := &"history"
 const PROGRESS := &"progress"
 const SETTINGS := &"settings"
+const RULES := &"rules"
 
 ## Approved UI flow order, docs/PRODUCT_BASELINE.md section 8.
 const APPROVED_FLOW: Array[StringName] = [
@@ -43,6 +44,7 @@ const _SCENE_PATHS := {
 	HISTORY: "res://scenes/history/history_shell.tscn",
 	PROGRESS: "res://scenes/progress/progress.tscn",
 	SETTINGS: "res://scenes/settings/settings.tscn",
+	RULES: "res://scenes/rules/rules.tscn",
 }
 
 const _TITLES := {
@@ -58,6 +60,7 @@ const _TITLES := {
 	HISTORY: "Библиотека Нулмериса",
 	PROGRESS: "Прогресс",
 	SETTINGS: "Настройки",
+	RULES: "Правила игры",
 }
 
 

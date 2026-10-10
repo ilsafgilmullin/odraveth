@@ -95,6 +95,8 @@ var _shard_lbl: Label
 var _detail_overlay: Control
 var _detail_text: RichTextLabel
 var _exit_dialog: ConfirmModal
+var _battle_menu_overlay: Control
+var _rules_overlay: Control
 
 var _pointer := Vector2(-1, -1)
 var _last_rects: Dictionary = {}
@@ -221,6 +223,8 @@ func _build_battle_ui() -> void:
 	_build_choice_overlay()
 	_build_shard_overlay()
 	_build_detail_overlay()
+	_build_battle_menu()
+	_build_rules_overlay()
 	_build_exit_dialog()
 	_layout_hud.call_deferred()
 
@@ -319,7 +323,7 @@ func _build_side_controls() -> void:
 	_menu_btn.name = "MainMenuButton"
 	_menu_btn.focus_mode = Control.FOCUS_NONE
 	_menu_btn.add_theme_font_size_override("font_size", 24)
-	_menu_btn.pressed.connect(_request_exit_battle)
+	_menu_btn.pressed.connect(_open_battle_menu)
 	_hud.add_child(_menu_btn)
 
 
@@ -330,6 +334,8 @@ func _hud_label(node_name: String, font_size: int, color: Color) -> Label:
 	label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	label.add_theme_font_size_override("font_size", font_size)
 	label.add_theme_color_override("font_color", color)
+	label.add_theme_stylebox_override("normal", UiKit._box(Color(VisualTokens.COLOR_STONE_050, 0.92),
+		Color(VisualTokens.COLOR_STEEL_500, 0.8), 1, VisualTokens.RADIUS_SMALL, 10.0, 6.0))
 	if _display_font != null and font_size >= 24:
 		label.add_theme_font_override("font", _display_font)
 	_hud.add_child(label)
@@ -783,6 +789,79 @@ func _build_detail_overlay() -> void:
 	_detail_text = (_detail_overlay as CardDetailOverlay).detail_text
 
 
+func _build_battle_menu() -> void:
+	_battle_menu_overlay = _overlay_root("BattleMenuOverlay")
+	_battle_menu_overlay.z_index = 26
+	var center := CenterContainer.new()
+	center.set_anchors_and_offsets_preset(PRESET_FULL_RECT)
+	_battle_menu_overlay.add_child(center)
+	var panel := UiKit.make_panel(true)
+	panel.custom_minimum_size = Vector2(620, 0)
+	center.add_child(panel)
+	var stack := VBoxContainer.new()
+	stack.add_theme_constant_override("separation", VisualTokens.SPACE_3)
+	panel.add_child(stack)
+	var title := UiKit.make_display_label("МЕНЮ БОЯ")
+	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	title.add_theme_font_size_override("font_size", 44)
+	stack.add_child(title)
+	var rules_button := UiKit.make_button("ПРАВИЛА ИГРЫ", UiKit.ButtonRole.SECONDARY)
+	rules_button.name = "BattleRulesButton"
+	rules_button.pressed.connect(func() -> void:
+		_battle_menu_overlay.visible = false
+		_rules_overlay.visible = true)
+	stack.add_child(rules_button)
+	var continue_button := UiKit.make_button("ПРОДОЛЖИТЬ", UiKit.ButtonRole.PRIMARY)
+	continue_button.name = "ContinueBattleButton"
+	continue_button.pressed.connect(func() -> void: _battle_menu_overlay.visible = false)
+	stack.add_child(continue_button)
+	var exit_button := UiKit.make_button("В ГЛАВНОЕ МЕНЮ", UiKit.ButtonRole.SUBTLE)
+	exit_button.name = "ExitBattleButton"
+	exit_button.pressed.connect(func() -> void:
+		_battle_menu_overlay.visible = false
+		_request_exit_battle())
+	stack.add_child(exit_button)
+
+
+func _build_rules_overlay() -> void:
+	_rules_overlay = _overlay_root("BattleRulesOverlay")
+	_rules_overlay.z_index = 27
+	var margin := MarginContainer.new()
+	margin.set_anchors_and_offsets_preset(PRESET_FULL_RECT)
+	for side: String in ["left", "right"]:
+		margin.add_theme_constant_override("margin_" + side, 180)
+	for side: String in ["top", "bottom"]:
+		margin.add_theme_constant_override("margin_" + side, 70)
+	_rules_overlay.add_child(margin)
+	var panel := UiKit.make_panel(true)
+	margin.add_child(panel)
+	var stack := VBoxContainer.new()
+	stack.add_theme_constant_override("separation", VisualTokens.SPACE_3)
+	panel.add_child(stack)
+	var header := HBoxContainer.new()
+	stack.add_child(header)
+	var title := UiKit.make_display_label("ПРАВИЛА ИГРЫ")
+	title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	title.add_theme_font_size_override("font_size", 42)
+	header.add_child(title)
+	var close := UiKit.make_button("ЗАКРЫТЬ", UiKit.ButtonRole.SECONDARY)
+	close.name = "BattleRulesCloseButton"
+	close.pressed.connect(func() -> void: _rules_overlay.visible = false)
+	header.add_child(close)
+	var scroll := ScrollContainer.new()
+	scroll.name = "BattleRulesScroll"
+	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	UiKit.prepare_scroll(scroll)
+	stack.add_child(scroll)
+	scroll.add_child(RulesContent.new())
+
+
+func _open_battle_menu() -> void:
+	if _battle_menu_overlay != null:
+		_battle_menu_overlay.visible = true
+
+
 func _build_exit_dialog() -> void:
 	_exit_dialog = ConfirmModal.create("ВЫЙТИ ИЗ БОЯ?",
 		"Текущий бой будет завершён без результата. Вернуться в главное меню?", "ВЫЙТИ", "ОСТАТЬСЯ")
@@ -800,6 +879,12 @@ func handle_back_request() -> bool:
 		return false
 	if _detail_overlay != null and _detail_overlay.visible:
 		_detail_overlay.visible = false
+		return true
+	if _rules_overlay != null and _rules_overlay.visible:
+		_rules_overlay.visible = false
+		return true
+	if _battle_menu_overlay != null and _battle_menu_overlay.visible:
+		_battle_menu_overlay.visible = false
 		return true
 	if _exit_dialog != null and _exit_dialog.visible:
 		_exit_dialog.cancel()

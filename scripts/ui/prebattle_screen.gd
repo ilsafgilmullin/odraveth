@@ -1,7 +1,7 @@
 class_name PrebattleScreen
 extends SetupScreen
 ## Stage 7 Prebattle V3. Shows the player's hero and selected deck, difficulty and
-## the three presentation toggles. There is no manual opponent choice: НАЙТИ
+## the two working presentation toggles. There is no manual opponent choice: НАЙТИ
 ## СОПЕРНИКА draws a concrete opponent hero with OpponentSelector, builds the
 ## BattleLaunchConfig and opens the Opponent Search reveal.
 
@@ -15,7 +15,6 @@ const DIFFICULTY_NOTES := {
 const TOGGLE_LABELS := {
 	PlayerSetupData.HINTS: "Подсказки",
 	PlayerSetupData.ANIMATIONS: "Анимации",
-	PlayerSetupData.FORECAST: "Прогноз урона",
 }
 
 var difficulty_buttons: Dictionary = {}
@@ -64,6 +63,12 @@ func _build_content() -> void:
 	note.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	note.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	action_row.add_child(note)
+	var rules_button := UiKit.make_button("ПРАВИЛА ИГРЫ", UiKit.ButtonRole.SECONDARY)
+	rules_button.name = "RulesButton"
+	rules_button.custom_minimum_size = Vector2(300, 92)
+	rules_button.add_theme_font_size_override("font_size", 28)
+	rules_button.pressed.connect(SceneRouter.go_to.bind(Routes.RULES))
+	action_row.add_child(rules_button)
 	find_button = UiKit.make_button("НАЙТИ СОПЕРНИКА", UiKit.ButtonRole.PRIMARY)
 	find_button.name = "FindOpponentButton"
 	find_button.custom_minimum_size = Vector2(460, 92)
@@ -179,7 +184,7 @@ func _build_settings_panel(parent: Control, prefs: Dictionary) -> void:
 	_sync_difficulty(current)
 
 	stack.add_child(_caption("ПОДАЧА БОЯ"))
-	for key: String in [PlayerSetupData.HINTS, PlayerSetupData.ANIMATIONS, PlayerSetupData.FORECAST]:
+	for key: String in [PlayerSetupData.HINTS, PlayerSetupData.ANIMATIONS]:
 		var toggle := CheckButton.new()
 		toggle.name = key
 		toggle.text = TOGGLE_LABELS[key]

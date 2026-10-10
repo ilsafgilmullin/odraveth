@@ -37,16 +37,23 @@ func _ready() -> void:
 	safe.add_child(layout)
 
 	var header := HBoxContainer.new()
+	header.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	header.add_theme_constant_override("separation", VisualTokens.SPACE_4)
 	layout.add_child(header)
 	var back := UiKit.make_button("НАЗАД", UiKit.ButtonRole.SECONDARY)
 	back.name = "BackButton"
+	back.custom_minimum_size.x = 190
 	back.pressed.connect(_go_back)
 	header.add_child(back)
 	var title := UiKit.make_display_label("БИБЛИОТЕКА НУЛМЕРИСА")
 	title.name = "LibraryTitle"
 	title.add_theme_font_size_override("font_size", VisualTokens.FONT_TITLE)
+	title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	header.add_child(title)
+	var header_spacer := Control.new()
+	header_spacer.custom_minimum_size.x = 190
+	header.add_child(header_spacer)
 
 	var body := HBoxContainer.new()
 	body.size_flags_vertical = Control.SIZE_EXPAND_FILL
@@ -54,15 +61,15 @@ func _ready() -> void:
 	layout.add_child(body)
 	var shelf := VBoxContainer.new()
 	shelf.name = "Sections"
-	shelf.custom_minimum_size = Vector2(400, 0)
+	shelf.custom_minimum_size = Vector2(300, 0)
 	shelf.add_theme_constant_override("separation", VisualTokens.SPACE_1)
 	body.add_child(shelf)
 	for section: String in SECTIONS:
 		var button := UiKit.make_button(section, UiKit.ButtonRole.SEGMENT)
 		button.name = "Section_%d" % SECTIONS.find(section)
 		button.alignment = HORIZONTAL_ALIGNMENT_LEFT
-		button.add_theme_font_size_override("font_size", 26)
-		button.custom_minimum_size = Vector2(400, 82)
+		button.add_theme_font_size_override("font_size", 21)
+		button.custom_minimum_size = Vector2(300, 64)
 		if section not in OPEN_SECTIONS:
 			button.icon = null
 			button.tooltip_text = "Страницы запечатаны"
@@ -82,18 +89,23 @@ func _build_book() -> Control:
 	var margin := MarginContainer.new()
 	margin.set_anchors_and_offsets_preset(PRESET_FULL_RECT)
 	for side: String in ["left", "right"]:
-		margin.add_theme_constant_override("margin_" + side, 72)
-	margin.add_theme_constant_override("margin_top", 40)
-	margin.add_theme_constant_override("margin_bottom", 40)
+		margin.add_theme_constant_override("margin_" + side, 48)
+	margin.add_theme_constant_override("margin_top", 30)
+	margin.add_theme_constant_override("margin_bottom", 30)
 	book.add_child(margin)
+	var page_surface := PanelContainer.new()
+	page_surface.name = "PageSurface"
+	page_surface.add_theme_stylebox_override("panel", UiKit._box(Color(VisualTokens.COLOR_STONE_050, 0.94),
+		Color(VisualTokens.COLOR_GOLD_700, 0.72), 1, VisualTokens.RADIUS_MEDIUM, 28.0, 20.0))
+	margin.add_child(page_surface)
 	var stack := VBoxContainer.new()
-	stack.add_theme_constant_override("separation", VisualTokens.SPACE_3)
-	margin.add_child(stack)
+	stack.add_theme_constant_override("separation", VisualTokens.SPACE_2)
+	page_surface.add_child(stack)
 	var book_title := Label.new()
 	book_title.name = "HistoryTitle"
 	book_title.text = "КНИГА НУЛМЕРИСА"
 	book_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	book_title.add_theme_font_size_override("font_size", 26)
+	book_title.add_theme_font_size_override("font_size", 22)
 	book_title.add_theme_color_override("font_color", VisualTokens.COLOR_GOLD_700)
 	if _display_font != null:
 		book_title.add_theme_font_override("font", _display_font)
@@ -101,7 +113,7 @@ func _build_book() -> Control:
 	page_title = Label.new()
 	page_title.name = "PageTitle"
 	page_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	page_title.add_theme_font_size_override("font_size", 44)
+	page_title.add_theme_font_size_override("font_size", 34)
 	page_title.add_theme_color_override("font_color", VisualTokens.COLOR_STEEL_900)
 	if _display_font != null:
 		page_title.add_theme_font_override("font", _display_font)
@@ -148,9 +160,9 @@ func show_section(section: String) -> void:
 	for key: String in section_buttons:
 		var button := section_buttons[key] as Button
 		UiKit.style_button(button, UiKit.ButtonRole.PRIMARY if key == section else UiKit.ButtonRole.SEGMENT)
-		button.add_theme_font_size_override("font_size", 26)
+		button.add_theme_font_size_override("font_size", 21)
 		button.text = key if key in OPEN_SECTIONS else "%s\nзапечатано" % key
-		button.add_theme_font_size_override("font_size", 26 if key in OPEN_SECTIONS else 22)
+		button.add_theme_font_size_override("font_size", 21 if key in OPEN_SECTIONS else 18)
 	page_title.text = section
 	for child: Node in page_body.get_children():
 		page_body.remove_child(child)
@@ -171,7 +183,7 @@ func show_section(section: String) -> void:
 			_sealed_page()
 
 
-func _paragraph(text_value: String, font_size: int = 28, color: Color = VisualTokens.COLOR_INK) -> Label:
+func _paragraph(text_value: String, font_size: int = 22, color: Color = VisualTokens.COLOR_INK) -> Label:
 	var label := Label.new()
 	label.text = text_value
 	label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
@@ -182,7 +194,7 @@ func _paragraph(text_value: String, font_size: int = 28, color: Color = VisualTo
 
 
 func _sealed_note(text_value: String) -> void:
-	_paragraph(text_value, 24, VisualTokens.COLOR_MUTED)
+	_paragraph(text_value, 19, VisualTokens.COLOR_MUTED)
 
 
 func _sealed_page() -> void:
@@ -191,10 +203,10 @@ func _sealed_page() -> void:
 	seal.custom_minimum_size = Vector2(180, 180)
 	seal.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	page_body.add_child(seal)
-	var label := _paragraph("СТРАНИЦЫ ЗАПЕЧАТАНЫ", 34, VisualTokens.COLOR_STEEL_700)
+	var label := _paragraph("СТРАНИЦЫ ЗАПЕЧАТАНЫ", 28, VisualTokens.COLOR_STEEL_700)
 	label.name = "SealedLabel"
 	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	var note := _paragraph("Записи этого раздела ещё не открыты.", 24, VisualTokens.COLOR_MUTED)
+	var note := _paragraph("Записи этого раздела ещё не открыты.", 20, VisualTokens.COLOR_MUTED)
 	note.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 
 
@@ -203,7 +215,7 @@ func _entry_row(faction: Faction.Id) -> VBoxContainer:
 	row.add_theme_constant_override("separation", VisualTokens.SPACE_4)
 	page_body.add_child(row)
 	var emblem := EmblemView.for_faction(faction, Color("f1eadb"))
-	emblem.custom_minimum_size = Vector2(84, 84)
+	emblem.custom_minimum_size = Vector2(64, 64)
 	emblem.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
 	row.add_child(emblem)
 	var text_stack := VBoxContainer.new()
@@ -227,26 +239,26 @@ func _line(parent: Control, text_value: String, font_size: int, color: Color, di
 func _faction_entry(faction: Faction.Id, name_en: String, hero_id: StringName, accent: String) -> void:
 	var stack := _entry_row(faction)
 	var title := SetupUi.faction_name(faction) if faction != Faction.Id.NEUTRAL else "Нейтральные карты"
-	_line(stack, "%s · %s" % [title.to_upper(), name_en], 32, NulmerisEmblems.faction_color(faction).darkened(0.3), true)
+	_line(stack, "%s · %s" % [title.to_upper(), name_en], 25, NulmerisEmblems.faction_color(faction).darkened(0.3), true)
 	if hero_id != &"":
-		_line(stack, "Герой: %s" % HeroCatalog.HEROES[hero_id]["name_ru"], 24, VisualTokens.COLOR_STEEL_700)
+		_line(stack, "Герой: %s" % HeroCatalog.HEROES[hero_id]["name_ru"], 20, VisualTokens.COLOR_STEEL_700)
 	else:
-		_line(stack, "Не фракция героя: карты, доступные любой колоде.", 24, VisualTokens.COLOR_STEEL_700)
-	_line(stack, "Цвет: %s" % accent, 22, VisualTokens.COLOR_MUTED)
+		_line(stack, "Не фракция героя: карты, доступные любой колоде.", 20, VisualTokens.COLOR_STEEL_700)
+	_line(stack, "Цвет: %s" % accent, 18, VisualTokens.COLOR_MUTED)
 
 
 func _hero_entry(hero_id: StringName) -> void:
 	var data: Dictionary = HeroCatalog.HEROES[hero_id]
 	var stack := _entry_row(HeroCatalog.faction_of(hero_id))
-	_line(stack, "%s · %s" % [String(data["name_ru"]).to_upper(), data["name_en"]], 32, VisualTokens.COLOR_STEEL_900, true)
-	_line(stack, "Фракция: %s" % SetupUi.faction_name(HeroCatalog.faction_of(hero_id)), 24,
+	_line(stack, "%s · %s" % [String(data["name_ru"]).to_upper(), data["name_en"]], 25, VisualTokens.COLOR_STEEL_900, true)
+	_line(stack, "Фракция: %s" % SetupUi.faction_name(HeroCatalog.faction_of(hero_id)), 20,
 		HeroPresentation.faction_accent(hero_id).darkened(0.3))
-	_line(stack, "Способность «%s» · %d энергии" % [data["power_ru"], HeroPresentation.power_cost(hero_id)], 24,
+	_line(stack, "Способность «%s» · %d энергии" % [data["power_ru"], HeroPresentation.power_cost(hero_id)], 20,
 		VisualTokens.COLOR_STEEL_700)
-	_line(stack, HeroPresentation.power_description(hero_id), 22, VisualTokens.COLOR_INK)
+	_line(stack, HeroPresentation.power_description(hero_id), 18, VisualTokens.COLOR_INK)
 	var style := HeroPresentation.playstyle(hero_id)
 	if not style.is_empty():
-		_line(stack, "Стиль: %s" % style, 22, VisualTokens.COLOR_MUTED)
+		_line(stack, "Стиль: %s" % style, 18, VisualTokens.COLOR_MUTED)
 
 
 func handle_back_request() -> bool:

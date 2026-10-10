@@ -12,7 +12,6 @@ const NAV_LABELS := [
 	["DecksButton", "КОЛОДЫ"],
 	["HeroesButton", "ГЕРОИ"],
 	["HistoryButton", "ИСТОРИЯ"],
-	["ProgressButton", "ПРОГРЕСС"],
 	["SettingsButton", "НАСТРОЙКИ"],
 ]
 const ROUTE_TIMEOUT_FRAMES := 120
@@ -98,6 +97,7 @@ func _test_responsive_composition() -> void:
 
 		_ok(menu.wordmark.get_theme_font_size("font_size") >= 62,
 			"%dx%d wordmark remains readable" % [viewport_size.x, viewport_size.y])
+		_ok(not menu.progress_button.visible, "%dx%d undefined Progress is hidden" % [viewport_size.x, viewport_size.y])
 		_ok(menu.status_panel.size.y >= 100.0
 			and menu.hero_status.size.x > 0.0 and menu.deck_status.size.x > 0.0,
 			"%dx%d tertiary setup status fits" % [viewport_size.x, viewport_size.y])

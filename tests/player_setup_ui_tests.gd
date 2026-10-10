@@ -214,8 +214,9 @@ func _test_prebattle() -> void:
 	var scene := _scene(Routes.PREBATTLE) as PrebattleScreen
 	_ok(scene.find_button.disabled and scene.find_child("Opponent_*", true, false) == null,
 		"invalid selection blocks НАЙТИ СОПЕРНИКА; no manual opponent choice exists")
-	_ok(scene.difficulty_buttons.size() == 3 and scene.toggles.values().all(func(toggle: CheckButton) -> bool: return toggle.button_pressed),
-		"three difficulties and three default ON toggles")
+	_ok(scene.difficulty_buttons.size() == 3 and scene.toggles.size() == 2
+		and scene.toggles.values().all(func(toggle: CheckButton) -> bool: return toggle.button_pressed),
+		"three difficulties and two working default ON toggles")
 	scene.toggles[PlayerSetupData.ANIMATIONS].button_pressed = false
 	scene.toggles[PlayerSetupData.ANIMATIONS].toggled.emit(false)
 	_ok(AppState.profile["prebattle"][PlayerSetupData.ANIMATIONS] == false,

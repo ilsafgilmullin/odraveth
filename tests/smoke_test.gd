@@ -39,7 +39,6 @@ const MAIN_MENU_BUTTONS := [
 	["DecksButton", "КОЛОДЫ", Routes.DECK_BUILDER],
 	["HeroesButton", "ГЕРОИ", Routes.HERO_SELECT],
 	["HistoryButton", "ИСТОРИЯ", Routes.HISTORY],
-	["ProgressButton", "ПРОГРЕСС", Routes.PROGRESS],
 	["SettingsButton", "НАСТРОЙКИ", Routes.SETTINGS],
 ]
 const ROUTE_TIMEOUT_FRAMES := 120
@@ -344,7 +343,7 @@ func _test_navigation() -> void:
 	for entry: Array in MAIN_MENU_BUTTONS:
 		var button := menu.find_child(entry[0]) as Button
 		captions.append(button.text if button != null else "<missing %s>" % entry[0])
-	_check(captions == ["ВОЙТИ В НУЛМЕРИС", "КОЛЛЕКЦИЯ", "КОЛОДЫ", "ГЕРОИ", "ИСТОРИЯ", "ПРОГРЕСС", "НАСТРОЙКИ"],
+	_check(captions == ["ВОЙТИ В НУЛМЕРИС", "КОЛЛЕКЦИЯ", "КОЛОДЫ", "ГЕРОИ", "ИСТОРИЯ", "НАСТРОЙКИ"],
 		"main menu buttons in approved order: %s" % ", ".join(captions))
 
 	for entry: Array in MAIN_MENU_BUTTONS:

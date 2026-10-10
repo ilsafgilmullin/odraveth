@@ -43,6 +43,10 @@ func _ready() -> void:
 	if display_font != null:
 		title.add_theme_font_override("font", display_font)
 	header.add_child(title)
+	# Balance the Back button so the screen title is geometrically centred.
+	var header_spacer := Control.new()
+	header_spacer.custom_minimum_size = Vector2(180, 72)
+	header.add_child(header_spacer)
 	message = Label.new()
 	message.name = "StatusMessage"
 	message.custom_minimum_size.y = 40

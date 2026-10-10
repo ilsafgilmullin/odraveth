@@ -30,16 +30,23 @@ func _ready() -> void:
 	layout.add_theme_constant_override("separation", VisualTokens.SPACE_4)
 	safe.add_child(layout)
 	var header := HBoxContainer.new()
+	header.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	header.add_theme_constant_override("separation", VisualTokens.SPACE_4)
 	layout.add_child(header)
 	var back := UiKit.make_button("НАЗАД", UiKit.ButtonRole.SECONDARY)
 	back.name = "BackButton"
+	back.custom_minimum_size.x = 190
 	back.pressed.connect(_go_back)
 	header.add_child(back)
 	var title := UiKit.make_display_label(Routes.title(route_id).to_upper())
 	title.name = "TitleLabel"
 	title.add_theme_font_size_override("font_size", VisualTokens.FONT_TITLE)
+	title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	header.add_child(title)
+	var header_spacer := Control.new()
+	header_spacer.custom_minimum_size.x = 190
+	header.add_child(header_spacer)
 	var center := CenterContainer.new()
 	center.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	layout.add_child(center)

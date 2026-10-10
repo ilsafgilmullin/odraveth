@@ -47,6 +47,8 @@ func all() -> Array:
 		["battle-opponent_turn", battle_opponent_turn],
 		["battle-history", battle_history],
 		["battle-detail", battle_detail],
+		["battle-menu", battle_menu],
+		["battle-rules", battle_rules],
 		["result-victory", result_victory],
 		["result-defeat", result_defeat],
 		["result-draw", result_draw],
@@ -59,7 +61,7 @@ func all() -> Array:
 		["boot-failed", boot_failed],
 		["symbols-svg", symbols_svg],
 		["settings", settings_shell],
-		["progress", progress_shell],
+		["rules", rules_shell],
 	]
 
 
@@ -259,7 +261,7 @@ func prebattle_difficulty_toggles() -> bool:
 		return false
 	var screen := runner.get_tree().current_scene as PrebattleScreen
 	(screen.difficulty_buttons["STRATEGIST"] as Button).button_pressed = true
-	(screen.toggles[PlayerSetupData.FORECAST] as CheckButton).button_pressed = false
+	(screen.toggles[PlayerSetupData.HINTS] as CheckButton).button_pressed = false
 	return true
 
 
@@ -554,6 +556,24 @@ func _library(section: String) -> bool:
 	return true
 
 
+func battle_menu() -> bool:
+	var pair := await _fixture_battle()
+	if pair.is_empty():
+		return false
+	pair[0]._refresh_ui()
+	pair[0]._open_battle_menu()
+	return pair[0]._battle_menu_overlay.visible
+
+
+func battle_rules() -> bool:
+	var pair := await _fixture_battle()
+	if pair.is_empty():
+		return false
+	pair[0]._refresh_ui()
+	pair[0]._rules_overlay.visible = true
+	return true
+
+
 func library_factions() -> bool:
 	return await _library("ФРАКЦИИ")
 
@@ -634,9 +654,9 @@ func settings_shell() -> bool:
 	return await runner.open_route(Routes.SETTINGS)
 
 
-func progress_shell() -> bool:
+func rules_shell() -> bool:
 	_clear_overlay()
-	return await runner.open_route(Routes.PROGRESS)
+	return await runner.open_route(Routes.RULES)
 
 
 ## Synchronous QA ticks never advance tweens; drop transient effects before a shot.

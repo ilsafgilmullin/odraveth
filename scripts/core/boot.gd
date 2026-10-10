@@ -33,6 +33,7 @@ var note_label: Label
 var retry_button: Button
 var gates: BootGatesView
 var wordmark: BrandWordmark
+var feedback_panel: PanelContainer
 var fast := false
 ## False only for QA screenshots that pose a frame without running the steps.
 var autostart := true
@@ -78,12 +79,22 @@ func _build() -> void:
 	wordmark.modulate = Color(1, 1, 1, 0)
 	wordmark.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	col.add_child(wordmark)
+	feedback_panel = PanelContainer.new()
+	feedback_panel.name = "FeedbackPanel"
+	feedback_panel.custom_minimum_size = Vector2(860, 0)
+	feedback_panel.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	feedback_panel.add_theme_stylebox_override("panel", UiKit._box(Color(VisualTokens.COLOR_STONE_050, 0.94),
+		VisualTokens.COLOR_GOLD_500, 2, VisualTokens.RADIUS_LARGE, 30.0, 18.0))
+	col.add_child(feedback_panel)
+	var feedback := VBoxContainer.new()
+	feedback.add_theme_constant_override("separation", VisualTokens.SPACE_2)
+	feedback_panel.add_child(feedback)
 	status_label = Label.new()
 	status_label.name = "Status"
 	status_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	status_label.add_theme_font_size_override("font_size", 30)
 	status_label.add_theme_color_override("font_color", VisualTokens.COLOR_STEEL_900)
-	col.add_child(status_label)
+	feedback.add_child(status_label)
 	note_label = Label.new()
 	note_label.name = "Note"
 	note_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -91,13 +102,13 @@ func _build() -> void:
 	note_label.add_theme_font_size_override("font_size", 24)
 	note_label.add_theme_color_override("font_color", VisualTokens.COLOR_MUTED)
 	note_label.visible = false
-	col.add_child(note_label)
+	feedback.add_child(note_label)
 	retry_button = UiKit.make_button("ПОВТОРИТЬ", UiKit.ButtonRole.PRIMARY)
 	retry_button.name = "RetryButton"
 	retry_button.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	retry_button.visible = false
 	retry_button.pressed.connect(retry)
-	col.add_child(retry_button)
+	feedback.add_child(retry_button)
 	var spacer := Control.new()
 	spacer.custom_minimum_size = Vector2(0, 24)
 	col.add_child(spacer)
@@ -123,6 +134,7 @@ func run() -> void:
 	note_label.visible = false
 	retry_button.visible = false
 	gates.failed = false
+	feedback_panel.visible = true
 	var done := 0.0
 	for step: Array in STEPS:
 		var id: StringName = step[0]
@@ -192,6 +204,7 @@ func _reveal() -> void:
 	state = State.REVEAL
 	status_label.text = ""
 	note_label.visible = false
+	feedback_panel.visible = false
 	if fast:
 		gates.opening = 1.0
 		wordmark.modulate = Color.WHITE

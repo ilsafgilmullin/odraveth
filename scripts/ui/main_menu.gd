@@ -21,6 +21,8 @@ extends Control
 
 func _ready() -> void:
 	UiKit.apply_root_theme(self)
+	# Q-15 is still open: do not advertise an undefined progression system.
+	progress_button.visible = false
 	_style_brand()
 	_style_navigation()
 	_connect_navigation()
@@ -49,7 +51,7 @@ func _style_navigation() -> void:
 	UiKit.style_button(enter_button, UiKit.ButtonRole.PRIMARY)
 	for button: Button in [collection_button, decks_button, heroes_button]:
 		UiKit.style_button(button, UiKit.ButtonRole.SECONDARY)
-	for button: Button in [history_button, progress_button, settings_button]:
+	for button: Button in [history_button, settings_button]:
 		UiKit.style_button(button, UiKit.ButtonRole.SUBTLE)
 	# The navigation sits on a carved stone panel so it never floats over the terrace.
 	var menu := enter_button.get_parent() as Control
@@ -84,7 +86,6 @@ func _connect_navigation() -> void:
 		decks_button: Routes.DECK_BUILDER,
 		heroes_button: Routes.HERO_SELECT,
 		history_button: Routes.HISTORY,
-		progress_button: Routes.PROGRESS,
 		settings_button: Routes.SETTINGS,
 	}
 	for button: Button in routes_by_button:

@@ -122,7 +122,8 @@ func _test_settings_progress_shell() -> void:
 	SceneRouter.reset_to(Routes.SETTINGS)
 	await _wait(Routes.SETTINGS)
 	var settings := _tree.current_scene as CitadelShellScreen
-	_ok(settings != null and settings.toggles.size() == 3, "Settings shows the three persisted battle switches")
+	_ok(settings != null and settings.toggles.size() == 2
+		and not settings.toggles.has(PlayerSetupData.FORECAST), "Settings shows only the two working battle switches")
 	if settings != null:
 		var animations := settings.toggles[PlayerSetupData.ANIMATIONS] as CheckButton
 		var before := animations.button_pressed
@@ -136,3 +137,9 @@ func _test_settings_progress_shell() -> void:
 	var progress := _tree.current_scene
 	_ok(progress.find_child("SealedLabel", true, false) != null and not PresentationAudit.has_developer_words(progress),
 		"Progress is a sealed shell: no XP, rewards or currency (Q-15 open)")
+	SceneRouter.reset_to(Routes.RULES)
+	await _wait(Routes.RULES)
+	var rules := _tree.current_scene
+	_ok(rules.find_child("RulesContent", true, false) is RulesContent
+		and rules.find_child("RulesScroll", true, false) is ScrollContainer,
+		"Rules screen contains a scrollable player-facing baseline summary")
