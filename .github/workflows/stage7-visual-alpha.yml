@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - claude/odraveth-visual-alpha
+      - codex/stage-b-ui-ux-hardening
   workflow_dispatch:
 
 permissions:
