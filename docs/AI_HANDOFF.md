@@ -41,11 +41,13 @@ Codex и Claude не коммитят одновременно прямо в `de
 
 ## Текущая интеграционная база
 
-- Этап: Stage A — P1 readability and product honesty.
-- Удалённый базовый commit: `60a571bae66efb7cd849e902470d3025992b7497`.
+- Завершённый кодовый этап: Stage A — P1 readability and product honesty.
+- Последний проверенный кодовый commit: `60a571bae66efb7cd849e902470d3025992b7497`.
 - Контрольный локальный commit с тем же деревом: `aa3247b36d937d18a177f9e6cc319fb29adcb7fa`.
-- Дерево файлов: `4cf4c84247d4bb9fcf5422a9b324d6c284cc444c`.
 - Результат последнего полного gate: `2986/2986 PASS`.
+- Утверждённый narrative baseline: `e1b74b8a6054e3f6208ac93de3eca32c52e493f8`.
+- Дерево после narrative baseline: `dc7aa537104053400f599f3ca11636f65dda8b61`.
+- Следующий этап: Stage B — P2 UI/UX hardening и повторный визуальный гейт.
 - APK на Stage A не собирался.
 
 После каждого принятого изменения этот раздел должен обновляться новым SHA,
