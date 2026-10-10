@@ -57,6 +57,8 @@ func all() -> Array:
 		["boot-mid", boot_mid],
 		["boot-reveal", boot_reveal],
 		["boot-failed", boot_failed],
+		["settings", settings_shell],
+		["progress", progress_shell],
 	]
 
 
@@ -346,6 +348,7 @@ func battle_early() -> bool:
 		if scene._ui_state == scene.UIState.PLAYER_IDLE:
 			break
 		scene._tick_events(100.0)
+	await _settle_effects(scene)
 	return scene._ui_state == scene.UIState.PLAYER_IDLE
 
 
@@ -596,6 +599,17 @@ func boot_reveal() -> bool:
 
 func boot_failed() -> bool:
 	return _boot(0.33, "", 0.0, true)
+
+
+func settings_shell() -> bool:
+	_clear_overlay()
+	_use_profile(qa_profile())
+	return await runner.open_route(Routes.SETTINGS)
+
+
+func progress_shell() -> bool:
+	_clear_overlay()
+	return await runner.open_route(Routes.PROGRESS)
 
 
 ## Synchronous QA ticks never advance tweens; drop transient effects before a shot.

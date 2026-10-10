@@ -19,6 +19,7 @@ func run() -> void:
 	await _test_result_outcomes()
 	await _test_result_actions()
 	await _test_library()
+	await _test_settings_progress_shell()
 
 
 func _ok(condition: bool, label: String) -> void:
@@ -115,3 +116,23 @@ func _test_library() -> void:
 		_ok(library.find_child("SealedLabel", true, false) != null, "%s is a sealed page, not invented lore" % section)
 	_ok(not PresentationAudit.has_developer_words(library), "Library has no developer words")
 	_ok(library.handle_back_request() and await _wait(Routes.MAIN_MENU), "Back leaves the Library")
+
+
+func _test_settings_progress_shell() -> void:
+	SceneRouter.reset_to(Routes.SETTINGS)
+	await _wait(Routes.SETTINGS)
+	var settings := _tree.current_scene as CitadelShellScreen
+	_ok(settings != null and settings.toggles.size() == 3, "Settings shows the three persisted battle switches")
+	if settings != null:
+		var animations := settings.toggles[PlayerSetupData.ANIMATIONS] as CheckButton
+		var before := animations.button_pressed
+		animations.button_pressed = not before
+		_ok(bool(PlayerSetupData.normalized(AppState.profile)["prebattle"][PlayerSetupData.ANIMATIONS]) == (not before),
+			"a Settings switch persists the same profile field as Prebattle")
+		animations.button_pressed = before
+		_ok(not PresentationAudit.has_developer_words(settings), "Settings has no developer words")
+	SceneRouter.reset_to(Routes.PROGRESS)
+	await _wait(Routes.PROGRESS)
+	var progress := _tree.current_scene
+	_ok(progress.find_child("SealedLabel", true, false) != null and not PresentationAudit.has_developer_words(progress),
+		"Progress is a sealed shell: no XP, rewards or currency (Q-15 open)")
