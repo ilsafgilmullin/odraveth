@@ -24,25 +24,3 @@ const RARITY_NAMES := {
 
 static func faction_name(id: Faction.Id) -> String:
 	return FACTION_NAMES.get(id, "")
-
-
-static func card_caption(card: CardDefinition) -> String:
-	var stats := ""
-	if card.card_type == CardEnums.Type.CREATURE:
-		stats = "  %d/%d" % [card.attack, card.health]
-		if card.armor > 0:
-			stats += "  Б:%d" % card.armor
-	elif card.card_type == CardEnums.Type.ARTIFACT:
-		stats = "  Заряды:%d" % card.charges
-	return "[%d] %s\n%s · %s · %s%s" % [card.cost, card.name_ru, faction_name(card.faction),
-		RARITY_NAMES[card.rarity], TYPE_NAMES[card.card_type], stats]
-
-
-static func card_tile(card: CardDefinition) -> Button:
-	var button := Button.new()
-	button.name = "Card_%s" % card.id
-	button.text = card_caption(card)
-	button.custom_minimum_size = Vector2(210, 142)
-	button.clip_text = true
-	button.add_theme_color_override("font_color", ACCENTS.get(card.faction, Color.WHITE))
-	return button

@@ -11,8 +11,10 @@ const HERO_SELECT := &"hero_select"
 const COLLECTION := &"collection"
 const DECK_BUILDER := &"deck_builder"
 const PREBATTLE := &"prebattle"
+const OPPONENT_SEARCH := &"opponent_search"
 const BATTLE := &"battle"
 const RESULT := &"result"
+const HISTORY := &"history"
 const PROGRESS := &"progress"
 const SETTINGS := &"settings"
 
@@ -35,8 +37,10 @@ const _SCENE_PATHS := {
 	COLLECTION: "res://scenes/collection/collection.tscn",
 	DECK_BUILDER: "res://scenes/deck_builder/deck_builder.tscn",
 	PREBATTLE: "res://scenes/prebattle/prebattle.tscn",
+	OPPONENT_SEARCH: "res://scenes/prebattle/opponent_search.tscn",
 	BATTLE: "res://scenes/battle/battle.tscn",
 	RESULT: "res://scenes/result/result.tscn",
+	HISTORY: "res://scenes/history/history_shell.tscn",
 	PROGRESS: "res://scenes/progress/progress.tscn",
 	SETTINGS: "res://scenes/settings/settings.tscn",
 }
@@ -48,8 +52,10 @@ const _TITLES := {
 	COLLECTION: "Коллекция",
 	DECK_BUILDER: "Редактор колоды",
 	PREBATTLE: "Подготовка к бою",
+	OPPONENT_SEARCH: "Поиск соперника",
 	BATTLE: "Боевой экран",
 	RESULT: "Результат боя",
+	HISTORY: "Библиотека Нулмериса",
 	PROGRESS: "Прогресс",
 	SETTINGS: "Настройки",
 }

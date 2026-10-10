@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
+  <title>Khevaruun: interlocking geometric shield plates (candidate)</title>
+  <defs><mask id="cut"><rect width="512" height="512" fill="white"/>
+    <path d="M256.0 84.0 L340.0 128.0 L340.0 284.0 L256.0 428.0 L172.0 284.0 L172.0 128.0 Z" fill="black" stroke="black" stroke-width="18" stroke-linejoin="round"/>
+  </mask>
+  <mask id="ribs"><rect width="512" height="512" fill="white"/>
+    <polyline points="188.0,196.0 256.0,248.0 324.0,196.0" fill="none" stroke="black" stroke-width="12.0" stroke-linejoin="miter"/>
+    <polyline points="188.0,260.0 256.0,312.0 324.0,260.0" fill="none" stroke="black" stroke-width="8.0" stroke-linejoin="miter"/>
+  </mask></defs>
+  <path d="M164.0 141.8 L229.5 176.2 L229.5 297.8 L164.0 410.2 L98.5 297.8 L98.5 176.2 Z M348.0 141.8 L413.5 176.2 L413.5 297.8 L348.0 410.2 L282.5 297.8 L282.5 176.2 Z" fill="#222b2e" mask="url(#cut)"/>
+  <path d="M256.0 84.0 L340.0 128.0 L340.0 284.0 L256.0 428.0 L172.0 284.0 L172.0 128.0 Z" fill="#222b2e" mask="url(#ribs)"/>
+</svg>

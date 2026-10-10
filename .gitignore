@@ -6,6 +6,7 @@
 /android/
 
 # --- Build / export output ---
+tests/visual_qa/output*/
 /build/
 /builds/
 /export/
@@ -31,6 +32,7 @@ export_credentials.cfg
 
 # --- Local tooling ---
 # Local Godot binaries downloaded for checks.
+/.tools/
 Godot_v*
 *.tmp
 *.log
