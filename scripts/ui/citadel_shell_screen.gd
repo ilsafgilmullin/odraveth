@@ -21,7 +21,7 @@ func apply_route_params(params: Dictionary) -> void:
 func _ready() -> void:
 	UiKit.apply_root_theme(self)
 	_display_font = load(UiKit.DISPLAY_FONT_PATH) as Font
-	add_child(CitadelBackdrop.create(CitadelBackdrop.Mood.HALL))
+	add_child(CitadelBackdrop.create(CitadelBackdrop.Mood.HALL, &"hall"))
 	var safe := SafeAreaContainer.new()
 	safe.name = "SafeArea"
 	safe.set_anchors_and_offsets_preset(PRESET_FULL_RECT)

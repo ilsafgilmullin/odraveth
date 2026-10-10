@@ -197,8 +197,11 @@ static func _draw_khevaruun(ci: CanvasItem, c: Vector2, r: float, primary: Color
 	if cut.a > 0.0:
 		_outline(ci, front, cut, maxf(3.0, r * 0.09))
 	ci.draw_colored_polygon(front, primary)
-	ci.draw_line(c + Vector2(-r * 0.30, -r * 0.18), c + Vector2(r * 0.30, -r * 0.18), Color(secondary, 0.9), maxf(1.5, r * 0.05))
-	ci.draw_line(c + Vector2(0, -r * 0.62), c + Vector2(0, r * 0.62), Color(secondary, 0.55), maxf(1.0, r * 0.03))
+	# Chevron plate seams (interlocking plates), deliberately not a cross.
+	ci.draw_polyline(PackedVector2Array([c + Vector2(-r * 0.34, -r * 0.30), c + Vector2(0, -r * 0.04), c + Vector2(r * 0.34, -r * 0.30)]),
+		Color(secondary, 0.9), maxf(1.5, r * 0.05), true)
+	ci.draw_polyline(PackedVector2Array([c + Vector2(-r * 0.34, r * 0.02), c + Vector2(0, r * 0.28), c + Vector2(r * 0.34, r * 0.02)]),
+		Color(secondary, 0.55), maxf(1.0, r * 0.03), true)
 
 
 static func _draw_neutral(ci: CanvasItem, c: Vector2, r: float, primary: Color, secondary: Color) -> void:

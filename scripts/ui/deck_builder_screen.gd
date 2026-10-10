@@ -41,6 +41,7 @@ func _route_id() -> StringName:
 
 func _build_content() -> void:
 	var backdrop := CollectionArchiveBackdrop.new()
+	backdrop.art_slot = &"deck_hall"
 	backdrop.name = "ArchiveBackdrop"
 	backdrop.set_anchors_and_offsets_preset(PRESET_FULL_RECT)
 	add_child(backdrop)

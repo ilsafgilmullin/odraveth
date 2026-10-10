@@ -22,7 +22,7 @@ func configure(id: StringName) -> void:
 
 
 func is_temporary_asset() -> bool:
-	return IS_TEMPORARY_ASSET
+	return not ArtAssets.has(ArtAssets.hero_slot(hero_id))
 
 
 func _ready() -> void:
@@ -41,6 +41,16 @@ func _draw() -> void:
 	var rect := Rect2(Vector2(inset, inset), s - Vector2(inset, inset) * 2.0)
 	var stone := Color("cfc6b6")
 	draw_rect(rect, stone)
+	# Approved production portrait (crop-safe alpha PNG) replaces the silhouette.
+	var art: Texture2D = null
+	if hero_id != &"":
+		art = ArtAssets.texture(ArtAssets.hero_slot(hero_id))
+	if art != null:
+		_gradient_niche_backlight(rect)
+		ArtAssets.draw_cover(self, art, rect)
+		draw_rect(rect, VisualTokens.COLOR_STEEL_700, false, 2.0)
+		draw_rect(Rect2(rect.position, Vector2(rect.size.x, maxf(4.0, rect.size.y * 0.018))), accent)
+		return
 
 	var area := rect.grow(-maxf(4.0, rect.size.x * 0.05))
 	if area.size.y < area.size.x * 0.62:
@@ -124,3 +134,10 @@ func _draw_silhouette(rect: Rect2, tone: Color, glow: Color) -> void:
 		Vector2(cx + shoulder * 0.86, shoulder_y + head_r * 0.6),
 	])
 	draw_polyline(mantle, Color(glow, 0.45), maxf(1.5, w * 0.008), true)
+
+
+func _gradient_niche_backlight(rect: Rect2) -> void:
+	var glow := NulmerisEmblems.faction_secondary(faction)
+	draw_polygon(PackedVector2Array([rect.position, Vector2(rect.end.x, rect.position.y), rect.end,
+		Vector2(rect.position.x, rect.end.y)]), PackedColorArray([VisualTokens.COLOR_STONE_050.lerp(glow, 0.5),
+		VisualTokens.COLOR_STONE_050.lerp(glow, 0.5), accent.darkened(0.35), accent.darkened(0.35)]))

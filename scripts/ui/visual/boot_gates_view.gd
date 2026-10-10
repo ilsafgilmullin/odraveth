@@ -25,6 +25,10 @@ func _draw() -> void:
 	var arch_w := minf(s.x * 0.44, s.y * 0.74)
 	var arch_h := s.y * 0.63
 	var arch := Rect2(Vector2((s.x - arch_w) * 0.5, s.y * 0.06), Vector2(arch_w, arch_h))
+	var art := ArtAssets.texture(&"gates")
+	if art != null:
+		_draw_art(s, arch, art)
+		return
 	# Pale wall with coursed stone joints.
 	draw_rect(Rect2(Vector2.ZERO, s), Color("e4ddd0"))
 	for row in int(s.y / 48.0) + 1:
@@ -95,6 +99,23 @@ func _draw() -> void:
 		draw_arc(seal_center, seal_r * 1.12, 0, TAU, 96, Color(VisualTokens.COLOR_STEEL_900, 0.15 * fade), 1.5, true)
 	# Threshold step.
 	draw_rect(Rect2(arch.position.x - radius * 0.2, arch.end.y, arch_w + radius * 0.4, s.y * 0.025), Color("c9bea9"))
+
+
+## Production gates: environment painting, optional separate leaves that part with
+## `opening`, and the live Seal progress line drawn on top (never baked in the art).
+func _draw_art(s: Vector2, arch: Rect2, art: Texture2D) -> void:
+	var full := Rect2(Vector2.ZERO, s)
+	ArtAssets.draw_cover(self, art, full)
+	for side: float in [-1.0, 1.0]:
+		var leaf := ArtAssets.texture(&"gates_left" if side < 0.0 else &"gates_right")
+		if leaf != null:
+			ArtAssets.draw_cover(self, leaf, Rect2(Vector2(side * arch.size.x * 0.5 * opening, 0), s))
+	if opening < 0.3:
+		var radius := arch.size.x * 0.5
+		var seal_center := Vector2(arch.get_center().x, arch.position.y + radius + (arch.end.y - arch.position.y - radius) * 0.18)
+		var fade := 1.0 - opening / 0.3
+		var light := Color(VisualTokens.COLOR_STEEL_500, 0.6) if failed else Color(VisualTokens.COLOR_MAGIC_300, 0.95 * fade)
+		draw_arc(seal_center, radius * 0.47, -PI * 0.5, -PI * 0.5 + TAU * clampf(progress, 0.0, 1.0), 96, light, 5.0, true)
 
 
 ## Y of the arch intrados above [param x] (the doors never draw past it).

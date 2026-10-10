@@ -38,7 +38,7 @@ func _route_id() -> StringName:
 
 
 func _build_content() -> void:
-	var backdrop := CitadelBackdrop.create(CitadelBackdrop.Mood.HALL)
+	var backdrop := CitadelBackdrop.create(CitadelBackdrop.Mood.HALL, &"staging_hall")
 	add_child(backdrop)
 	move_child(backdrop, 0)
 	message.visible = false

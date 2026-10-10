@@ -12,7 +12,8 @@ var _redraw_accum := 0.0
 
 func _ready() -> void:
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
-	set_process(motion_enabled)
+	# Production art (ArtAssets slot «guardian_terrace») replaces the procedural terrace.
+	set_process(motion_enabled and not ArtAssets.has(&"guardian_terrace"))
 	resized.connect(queue_redraw)
 	queue_redraw()
 
@@ -33,6 +34,10 @@ func _gradient(rect: Rect2, top: Color, bottom: Color) -> void:
 func _draw() -> void:
 	var s := size
 	if s.x <= 1.0 or s.y <= 1.0:
+		return
+	var art := ArtAssets.texture(&"guardian_terrace")
+	if art != null:
+		ArtAssets.draw_cover(self, art, Rect2(Vector2.ZERO, s))
 		return
 	var horizon := s.y * 0.62
 	# High bright sky with a warm band near the horizon.

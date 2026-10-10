@@ -2,13 +2,24 @@ class_name CollectionArchiveBackdrop
 extends Control
 ## Cheap static Archive of Nulmeris environment framing. Cards remain the visual priority.
 
+## ArtAssets slot: «archive» for Collection, «deck_hall» for Deck Builder.
+var art_slot: StringName = &"archive"
+
+
 func _ready() -> void:
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
+	resized.connect(queue_redraw)
 	queue_redraw()
 
 
 func _draw() -> void:
 	var s := size
+	var art := ArtAssets.texture(art_slot)
+	if art != null:
+		ArtAssets.draw_cover(self, art, Rect2(Vector2.ZERO, s))
+		# Calm veil so the card grid stays the primary content.
+		draw_rect(Rect2(Vector2.ZERO, s), Color(0.93, 0.91, 0.87, 0.55))
+		return
 	draw_rect(Rect2(Vector2.ZERO, s), Color("e8e2d7"))
 	# Quiet peripheral archive bands/shelves; central browsing field stays calm.
 	var side := minf(150.0, s.x * 0.075)

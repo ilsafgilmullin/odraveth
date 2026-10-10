@@ -14,7 +14,7 @@ var _redraw_accum := 0.0
 
 func _ready() -> void:
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
-	set_process(motion_enabled)
+	set_process(motion_enabled and not ArtAssets.has(&"guardian"))
 	resized.connect(queue_redraw)
 	queue_redraw()
 
@@ -28,7 +28,7 @@ func _process(delta: float) -> void:
 
 
 func is_temporary_asset() -> bool:
-	return IS_TEMPORARY_ASSET
+	return not ArtAssets.has(&"guardian")
 
 
 ## Figure box keeps a fixed aspect so the Guardian is never stretched.
@@ -51,6 +51,11 @@ func _poly(box: Rect2, points: Array, color: Color) -> void:
 
 func _draw() -> void:
 	if size.x < 40.0 or size.y < 60.0:
+		return
+	# Production Guardian (alpha PNG) replaces the procedural figure entirely.
+	var art := ArtAssets.texture(&"guardian")
+	if art != null:
+		ArtAssets.draw_fit(self, art, Rect2(Vector2(0, size.y * 0.02), Vector2(size.x, size.y * 0.86)), Vector2(0.5, 1.0))
 		return
 	var box := _box()
 	var breath := sin(_elapsed * 0.8) * 0.003

@@ -34,14 +34,19 @@ func _draw() -> void:
 	for i in 6:
 		draw_circle(c, r * (1.18 - float(i) * 0.03), Color(light, 0.018 * glow))
 
-	# Outer stone ring with bevel bands.
-	draw_arc(c, r * 0.90, 0.0, TAU, 96, Color("8e8475"), r * 0.20, true)
-	draw_arc(c, r * 0.995, 0.0, TAU, 96, Color("b9ae9b"), r * 0.025, true)
-	draw_arc(c, r * 0.805, 0.0, TAU, 96, Color("5f574c"), r * 0.02, true)
-	for i in 24:
-		var a := TAU * float(i) / 24.0
-		var d := Vector2(cos(a), sin(a))
-		draw_line(c + d * r * 0.81, c + d * r * 0.99, Color(0.32, 0.29, 0.25, 0.35), maxf(1.0, r * 0.006))
+	# Production ring layers (alpha PNG) replace the procedural rings when present.
+	var outer_art := ArtAssets.texture(&"convergence_ring_outer")
+	var inner_art := ArtAssets.texture(&"convergence_ring_inner")
+	if outer_art != null:
+		draw_set_transform(c, outer_angle, Vector2.ONE)
+		draw_texture_rect(outer_art, Rect2(-Vector2(r, r), Vector2(r, r) * 2.0), false)
+		draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
+	if inner_art != null:
+		draw_set_transform(c, inner_angle, Vector2.ONE)
+		draw_texture_rect(inner_art, Rect2(-Vector2(r, r) * 0.74, Vector2(r, r) * 1.48), false)
+		draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
+	if outer_art == null:
+		_draw_outer_ring(c, r)
 
 	# Faction seal sockets.
 	for faction: Faction.Id in SEAL_ORDER:
@@ -57,6 +62,9 @@ func _draw() -> void:
 		var second := NulmerisEmblems.faction_secondary(faction) if active else Color("a69c8c")
 		NulmerisEmblems.draw_faction(self, faction, p, socket * 0.78, tone, second, Color("d8cfbf") if not active else Color("efe8da"))
 
+	if inner_art != null:
+		_draw_window(c, r, light)
+		return
 	# Steel ring with notches (rotates).
 	draw_arc(c, r * 0.70, 0.0, TAU, 96, VisualTokens.COLOR_STEEL_700, r * 0.07, true)
 	for i in 36:
@@ -80,7 +88,21 @@ func _draw() -> void:
 		var t := Vector2(-d.y, d.x)
 		draw_line(c + d * r * 0.56 + t * r * 0.02, c + d * r * 0.56 - t * r * 0.02, VisualTokens.COLOR_GOLD_300, maxf(1.5, r * 0.008))
 
-	# Luminous central window.
+	_draw_window(c, r, light)
+
+
+func _draw_outer_ring(c: Vector2, r: float) -> void:
+	draw_arc(c, r * 0.90, 0.0, TAU, 96, Color("8e8475"), r * 0.20, true)
+	draw_arc(c, r * 0.995, 0.0, TAU, 96, Color("b9ae9b"), r * 0.025, true)
+	draw_arc(c, r * 0.805, 0.0, TAU, 96, Color("5f574c"), r * 0.02, true)
+	for i in 24:
+		var a := TAU * float(i) / 24.0
+		var d := Vector2(cos(a), sin(a))
+		draw_line(c + d * r * 0.81, c + d * r * 0.99, Color(0.32, 0.29, 0.25, 0.35), maxf(1.0, r * 0.006))
+
+
+## Luminous central window: the live faction reveal stays procedural on top of any art.
+func _draw_window(c: Vector2, r: float, light: Color) -> void:
 	var window_r := r * 0.50
 	draw_circle(c, window_r, Color("1c2427"))
 	for i in 8:

@@ -50,6 +50,7 @@ Source of truth по продукту: [`docs/PRODUCT_BASELINE.md`](docs/PRODUCT
 | [docs/AI_DESIGN.md](docs/AI_DESIGN.md) | Stage 3 AI boundary, scoring, deterministic loop и QA |
 | [docs/BATTLE_UI.md](docs/BATTLE_UI.md) | Battle flow, состояния UI, презентация AI и Result |
 | [docs/BATTLE_V2.md](docs/BATTLE_V2.md) | Stage 7 Battle V2 и Mulligan V1: компоновка, взаимодействие, анимации |
+| [docs/ART_DELIVERABLES.md](docs/ART_DELIVERABLES.md) | Production-арт: слоты ArtAssets, канон персонажей, 40 карт, статусы |
 | [docs/DECKS_AND_COLLECTION.md](docs/DECKS_AND_COLLECTION.md) | Пользовательские колоды, коллекция, сохранения и Prebattle |
 | [`docs/DEVELOPMENT.md`](docs/DEVELOPMENT.md) | Установка Godot, запуск, проверки, соглашения |
 | [`docs/DECISIONS.md`](docs/DECISIONS.md) | Журнал технических решений |

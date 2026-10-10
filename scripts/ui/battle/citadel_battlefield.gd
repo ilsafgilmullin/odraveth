@@ -22,8 +22,9 @@ func _ready() -> void:
 	_ambient.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	_ambient.draw.connect(_draw_ambient)
 	add_child(_ambient)
-	set_process(ambient_enabled)
-	ambient_changed.connect(func(enabled: bool) -> void: set_process(enabled))
+	var has_art := ArtAssets.has(&"arena")
+	set_process(ambient_enabled and not has_art)
+	ambient_changed.connect(func(enabled: bool) -> void: set_process(enabled and not ArtAssets.has(&"arena")))
 
 
 func _process(delta: float) -> void:
@@ -50,6 +51,15 @@ func _draw() -> void:
 	if s.x < 32.0 or s.y < 32.0:
 		return
 	var field := _field()
+	var art := ArtAssets.texture(&"arena")
+	if art != null:
+		# Production battlefield: periphery from the painting, a calm readable slab in the centre.
+		ArtAssets.draw_cover(self, art, Rect2(Vector2.ZERO, s))
+		draw_rect(field.grow(8.0), Color(0.93, 0.90, 0.85, 0.55))
+		draw_rect(field, Color(VisualTokens.COLOR_GOLD_700, 0.40), false, 2.0)
+		var mid := center_line_y if center_line_y > 0.0 else field.get_center().y
+		draw_line(Vector2(field.position.x + 20.0, mid), Vector2(field.end.x - 20.0, mid), Color(VisualTokens.COLOR_GOLD_700, 0.45), 2.0)
+		return
 	# Sky and distant cliffs behind the Citadel terrace.
 	_gradient(Rect2(0, 0, s.x, s.y * 0.55), Color("d7e7ea"), Color("e6ece6"))
 	for side: float in [0.0, 1.0]:
@@ -127,7 +137,7 @@ func _draw_arch(rect: Rect2) -> void:
 
 
 func _draw_ambient() -> void:
-	if not ambient_enabled:
+	if not ambient_enabled or size.x < 32.0 or size.y < 32.0 or ArtAssets.has(&"arena"):
 		return
 	var field := _field()
 	for side: float in [0.0, 1.0]:

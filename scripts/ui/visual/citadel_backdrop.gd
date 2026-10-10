@@ -9,12 +9,15 @@ var mood: Mood = Mood.HALL
 var accent := VisualTokens.COLOR_MAGIC_500
 ## 0..1 darkening overlay for modal moments (Result, Mulligan).
 var dim := 0.0
+## Optional ArtAssets slot drawn instead of the procedural environment when present.
+var art_slot: StringName = &""
 
 
-static func create(value: Mood) -> CitadelBackdrop:
+static func create(value: Mood, slot: StringName = &"") -> CitadelBackdrop:
 	var view := CitadelBackdrop.new()
 	view.name = "CitadelBackdrop"
 	view.mood = value
+	view.art_slot = slot
 	view.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	return view
 
@@ -29,7 +32,12 @@ func _draw() -> void:
 	var s := size
 	if s.x < 16.0 or s.y < 16.0:
 		return
-	if mood == Mood.CHAMBER:
+	var art: Texture2D = null
+	if art_slot != &"":
+		art = ArtAssets.texture(art_slot)
+	if art != null:
+		ArtAssets.draw_cover(self, art, Rect2(Vector2.ZERO, s))
+	elif mood == Mood.CHAMBER:
 		_draw_chamber(s)
 	else:
 		_draw_hall(s)

@@ -57,6 +57,7 @@ func all() -> Array:
 		["boot-mid", boot_mid],
 		["boot-reveal", boot_reveal],
 		["boot-failed", boot_failed],
+		["symbols-svg", symbols_svg],
 		["settings", settings_shell],
 		["progress", progress_shell],
 	]
@@ -599,6 +600,32 @@ func boot_reveal() -> bool:
 
 func boot_failed() -> bool:
 	return _boot(0.33, "", 0.0, true)
+
+
+## The candidate SVG files themselves (O-mark, Seal, four factions), monochrome and
+## large/small, to check the silhouettes read without colour.
+func symbols_svg() -> bool:
+	_clear_overlay()
+	var root := _overlay_root(Color("efe9dd"))
+	var col := VBoxContainer.new()
+	col.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	col.alignment = BoxContainer.ALIGNMENT_CENTER
+	root.add_child(col)
+	for size_px: int in [240, 72]:
+		var row := HBoxContainer.new()
+		row.alignment = BoxContainer.ALIGNMENT_CENTER
+		row.add_theme_constant_override("separation", 40)
+		col.add_child(row)
+		for path: String in ["res://assets/ui/brand/odraveth_o_mark.svg", "res://assets/ui/world/seal_of_nulmeris.svg",
+				"res://assets/ui/factions/ashravael.svg", "res://assets/ui/factions/nerqathen.svg",
+				"res://assets/ui/factions/dumoryss.svg", "res://assets/ui/factions/khevaruun.svg"]:
+			var rect := TextureRect.new()
+			rect.texture = load(path) as Texture2D
+			rect.custom_minimum_size = Vector2(size_px, size_px)
+			rect.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+			rect.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+			row.add_child(rect)
+	return true
 
 
 func settings_shell() -> bool:

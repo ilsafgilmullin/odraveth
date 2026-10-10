@@ -23,6 +23,13 @@ var _button_group := ButtonGroup.new()
 
 func _ready() -> void:
 	UiKit.apply_root_theme(self)
+	# Production Hero Hall art goes behind everything when present; otherwise the
+	# existing Visual Alpha scene background stays as it is.
+	if ArtAssets.has(&"hero_hall"):
+		var hall := CitadelBackdrop.create(CitadelBackdrop.Mood.HALL, &"hero_hall")
+		hall.name = "HeroHallArt"
+		add_child(hall)
+		move_child(hall, 1 if get_child_count() > 1 and get_child(0) is ColorRect else 0)
 	_button_group.allow_unpress = false
 	UiKit.style_button(back_button, UiKit.ButtonRole.SECONDARY)
 	UiKit.style_button(confirm_button, UiKit.ButtonRole.PRIMARY)

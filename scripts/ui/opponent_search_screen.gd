@@ -41,7 +41,7 @@ func apply_route_params(params: Dictionary) -> void:
 
 func _ready() -> void:
 	UiKit.apply_root_theme(self)
-	var backdrop := CitadelBackdrop.create(CitadelBackdrop.Mood.CHAMBER)
+	var backdrop := CitadelBackdrop.create(CitadelBackdrop.Mood.CHAMBER, &"convergence")
 	add_child(backdrop)
 	var cfg: Variant = route_params.get(BattleLaunchConfig.PARAM_KEY)
 	config = cfg as BattleLaunchConfig if cfg is BattleLaunchConfig else null

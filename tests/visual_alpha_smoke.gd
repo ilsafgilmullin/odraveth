@@ -8,6 +8,7 @@ const MODULES := [
 	["battle", preload("res://tests/battle_v2_tests.gd")],
 	["result_library", preload("res://tests/result_library_tests.gd")],
 	["boot_brand", preload("res://tests/boot_brand_tests.gd")],
+	["art_assets", preload("res://tests/art_assets_tests.gd")],
 ]
 const WATCHDOG_SECONDS := 180.0
 

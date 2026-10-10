@@ -26,7 +26,7 @@ var _display_font: Font
 func _ready() -> void:
 	UiKit.apply_root_theme(self)
 	_display_font = load(UiKit.DISPLAY_FONT_PATH) as Font
-	add_child(CitadelBackdrop.create(CitadelBackdrop.Mood.HALL))
+	add_child(CitadelBackdrop.create(CitadelBackdrop.Mood.HALL, &"library"))
 	var safe := SafeAreaContainer.new()
 	safe.name = "SafeArea"
 	safe.set_anchors_and_offsets_preset(PRESET_FULL_RECT)
@@ -123,6 +123,11 @@ func _build_book() -> Control:
 func _draw_book(book: Control) -> void:
 	var s := book.size
 	if s.x < 40.0:
+		return
+	# Production Book of Nulmeris (alpha PNG); the page text stays live Godot UI on top.
+	var art := ArtAssets.texture(&"book")
+	if art != null:
+		ArtAssets.draw_cover(book, art, Rect2(Vector2.ZERO, s))
 		return
 	var cover := Rect2(Vector2.ZERO, s)
 	book.draw_rect(cover, Color("6b5a43"))
