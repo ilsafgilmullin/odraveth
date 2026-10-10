@@ -1,6 +1,7 @@
 extends RefCounted
 ## QA-only screenshot scenarios. Each returns true when its state was prepared.
 
+const MatchFixture := preload("res://tests/engine/match_fixture.gd")
 const GALLERY_IDS: Array[StringName] = [
 	&"dumoryss_echo_leech", &"ashravael_warfiend", &"nerqathen_soulmonger", &"neutral_mireglass_wanderer",
 	&"khevaruun_wallforged", &"nerqathen_second_burial", &"ashravael_furnace_sigil", &"neutral_vantrel_duskling",
@@ -35,6 +36,17 @@ func all() -> Array:
 		["search-activation", search_activation],
 		["search-cycling", search_cycling],
 		["search-found", search_found],
+		["mulligan-first", mulligan_first],
+		["mulligan-second", mulligan_second],
+		["mulligan-replace", mulligan_replace],
+		["battle-early", battle_early],
+		["battle-hand10", battle_hand10],
+		["battle-board", battle_board],
+		["battle-targeting", battle_targeting],
+		["battle-artifact_shards", battle_artifact_shards],
+		["battle-opponent_turn", battle_opponent_turn],
+		["battle-history", battle_history],
+		["battle-detail", battle_detail],
 	]
 
 
@@ -277,6 +289,236 @@ func search_cycling() -> bool:
 
 func search_found() -> bool:
 	return await _search_at(4.6)
+
+
+## Opens the real Battle route; [param first] picks a seed where the player goes first/second.
+func _open_battle(first: bool, player_hero: StringName = HeroCatalog.KEZHARYN) -> Control:
+	_clear_overlay()
+	_use_profile(qa_profile())
+	for seed_value in range(20260707, 20260787):
+		var config := qa_battle_config(HeroCatalog.VHORAZEL, seed_value)
+		if player_hero != HeroCatalog.KEZHARYN:
+			config.player_hero = player_hero
+			config.player_deck = BattleLaunchConfig.technical_opponent_deck(player_hero, CardDatabase)
+		var probe := BattleSession.new(config)
+		probe.start()
+		if (int(probe.get_observation().get("first_player", -1)) == 0) != first:
+			continue
+		if not await runner.open_route(Routes.BATTLE, {BattleLaunchConfig.PARAM_KEY: config}):
+			return null
+		return runner.get_tree().current_scene as Control
+	return null
+
+
+func mulligan_first() -> bool:
+	return await _open_battle(true) != null
+
+
+func mulligan_second() -> bool:
+	return await _open_battle(false) != null
+
+
+func mulligan_replace() -> bool:
+	var scene := await _open_battle(false)
+	if scene == null:
+		return false
+	for index: int in [0, 2]:
+		(scene._mulligan_box.get_child(index) as MulliganCardSlot).card_view.pressed.emit()
+	return true
+
+
+func battle_early() -> bool:
+	var scene := await _open_battle(true)
+	if scene == null:
+		return false
+	scene._mulligan_btn.pressed.emit()
+	for _i in 40:
+		if scene._ui_state == scene.UIState.PLAYER_IDLE:
+			break
+		scene._tick_events(100.0)
+	return scene._ui_state == scene.UIState.PLAYER_IDLE
+
+
+## Real Battle scene with a fixture position (white-box set-up for screenshots only).
+func _fixture_battle(player_hero: StringName = HeroCatalog.KEZHARYN) -> Array:
+	var scene := await _open_battle(true, player_hero)
+	if scene == null:
+		return []
+	var fixture := MatchFixture.new(CardDatabase)
+	scene._session.engine = fixture.scenario(player_hero, HeroCatalog.VHORAZEL)
+	scene._session._last_event_seq = 0
+	scene._mulligan_overlay.visible = false
+	scene._hand_box.visible = true
+	scene._hand_seen = true
+	scene._set_state(scene.UIState.PLAYER_IDLE)
+	fixture.engine.state.turn_number = 7
+	for side in fixture.engine.state.players:
+		side.energy_max = 7
+		side.energy_current = 5
+	return [scene, fixture]
+
+
+func _cards_of(faction: Faction.Id, card_type: CardEnums.Type) -> Array[StringName]:
+	var ids: Array[StringName] = []
+	for card: CardDefinition in CardDatabase.get_all_cards():
+		if card.faction == faction and card.card_type == card_type:
+			ids.append(card.id)
+	return ids
+
+
+func _fill_board(fixture: RefCounted, owner: int, count: int, faction: Faction.Id) -> Array[int]:
+	var pool := _cards_of(faction, CardEnums.Type.CREATURE)
+	pool.append_array(_cards_of(Faction.Id.NEUTRAL, CardEnums.Type.CREATURE))
+	var ids: Array[int] = []
+	for i in count:
+		ids.append(fixture.board(owner, pool[i % pool.size()], i % 3 != 2))
+	return ids
+
+
+func _fill_hand(fixture: RefCounted, count: int) -> void:
+	var pool: Array[StringName] = []
+	for card_id: Variant in BattleLaunchConfig.technical_opponent_deck(HeroCatalog.KEZHARYN, CardDatabase):
+		if StringName(str(card_id)) not in pool:
+			pool.append(StringName(str(card_id)))
+	for i in count:
+		fixture.hand(0, pool[(i * 3) % pool.size()])
+
+
+func battle_hand10() -> bool:
+	var pair := await _fixture_battle()
+	if pair.is_empty():
+		return false
+	_fill_board(pair[1], 0, 2, Faction.Id.ASHRAVAEL)
+	_fill_board(pair[1], 1, 2, Faction.Id.NERQATHEN)
+	_fill_hand(pair[1], 10)
+	pair[0]._refresh_ui()
+	return true
+
+
+func battle_board() -> bool:
+	var pair := await _fixture_battle()
+	if pair.is_empty():
+		return false
+	var fixture: RefCounted = pair[1]
+	var own := _fill_board(fixture, 0, 7, Faction.Id.ASHRAVAEL)
+	var enemy := _fill_board(fixture, 1, 7, Faction.Id.NERQATHEN)
+	fixture.creature(own[1]).health = maxi(1, fixture.creature(own[1]).health - 1)
+	fixture.creature(enemy[3]).armor = 2
+	fixture.player(0).hero_health = 23
+	fixture.player(1).hero_health = 17
+	_fill_hand(fixture, 5)
+	pair[0]._refresh_ui()
+	return true
+
+
+func battle_targeting() -> bool:
+	var pair := await _fixture_battle()
+	if pair.is_empty():
+		return false
+	var scene: Control = pair[0]
+	var own := _fill_board(pair[1], 0, 4, Faction.Id.ASHRAVAEL)
+	var enemy := _fill_board(pair[1], 1, 4, Faction.Id.NERQATHEN)
+	_fill_hand(pair[1], 4)
+	scene._refresh_ui()
+	await runner.settle(4)
+	scene._on_own_creature_tapped(own[0])
+	var target: Control = scene._find_piece(scene._valid_targets[0] if not scene._valid_targets.is_empty() else enemy[1])
+	if target != null:
+		scene._pointer = scene._effects.get_global_transform().affine_inverse() * target.get_global_rect().get_center()
+		scene._effects.queue_redraw()
+	return scene._ui_state == scene.UIState.ATTACKER_SELECTED
+
+
+func battle_artifact_shards() -> bool:
+	var pair := await _fixture_battle(HeroCatalog.VHORAZEL)
+	if pair.is_empty():
+		return false
+	var fixture: RefCounted = pair[1]
+	var artifacts := _cards_of(Faction.Id.NERQATHEN, CardEnums.Type.ARTIFACT)
+	artifacts.append_array(_cards_of(Faction.Id.NEUTRAL, CardEnums.Type.ARTIFACT))
+	if not artifacts.is_empty():
+		fixture.artifact(0, artifacts[0])
+		fixture.artifact(1, artifacts[artifacts.size() - 1])
+	fixture.player(0).soul_shards = 4
+	fixture.player(1).soul_shards = 2
+	_fill_board(fixture, 0, 3, Faction.Id.NERQATHEN)
+	_fill_board(fixture, 1, 3, Faction.Id.NERQATHEN)
+	fixture.hand(0, &"nerqathen_soulmonger")
+	_fill_hand(fixture, 3)
+	pair[0]._refresh_ui()
+	return true
+
+
+func battle_opponent_turn() -> bool:
+	var pair := await _fixture_battle()
+	if pair.is_empty():
+		return false
+	var scene: Control = pair[0]
+	var fixture: RefCounted = pair[1]
+	_fill_board(fixture, 0, 3, Faction.Id.ASHRAVAEL)
+	_fill_board(fixture, 1, 2, Faction.Id.NERQATHEN)
+	for card_id: StringName in _cards_of(Faction.Id.NERQATHEN, CardEnums.Type.CREATURE).slice(0, 3):
+		fixture.hand(1, card_id)
+	_fill_hand(fixture, 5)
+	scene._refresh_ui()
+	scene._on_end_turn_pressed()
+	for _i in 200:
+		if scene._ui_state == scene.UIState.AI_TURN and scene._play_preview.visible:
+			break
+		if scene._ui_state == scene.UIState.PLAYER_IDLE:
+			break
+		scene._tick_events(100.0)
+	scene.set_process(false)
+	await _settle_effects(scene)
+	return scene._ui_state == scene.UIState.AI_TURN
+
+
+func battle_history() -> bool:
+	var pair := await _fixture_battle()
+	if pair.is_empty():
+		return false
+	var scene: Control = pair[0]
+	var fixture: RefCounted = pair[1]
+	var own := _fill_board(fixture, 0, 3, Faction.Id.ASHRAVAEL)
+	var enemy := _fill_board(fixture, 1, 2, Faction.Id.NERQATHEN)
+	fixture.hand(1, &"neutral_vantrel_duskling")
+	_fill_hand(fixture, 4)
+	scene._refresh_ui()
+	scene._on_own_creature_tapped(own[0])
+	scene._on_enemy_creature_tapped(enemy[0])
+	for _i in 30:
+		if scene._ui_state != scene.UIState.RESOLVING:
+			break
+		scene._tick_events(100.0)
+	scene._on_end_turn_pressed()
+	for _i in 300:
+		if scene._ui_state == scene.UIState.PLAYER_IDLE:
+			break
+		scene._tick_events(100.0)
+	await _settle_effects(scene)
+	scene._history_btn.pressed.emit()
+	return scene._history_panel.visible
+
+
+func battle_detail() -> bool:
+	var pair := await _fixture_battle()
+	if pair.is_empty():
+		return false
+	var scene: Control = pair[0]
+	_fill_board(pair[1], 0, 3, Faction.Id.ASHRAVAEL)
+	_fill_hand(pair[1], 6)
+	scene._refresh_ui()
+	var first := scene._hand_box.get_child(0) as BattleCardView
+	scene._show_hand_detail(first.instance_id)
+	return scene._detail_overlay.visible
+
+
+## Synchronous QA ticks never advance tweens; drop transient effects before a shot.
+func _settle_effects(scene: Control) -> void:
+	await runner.settle(2)
+	for child: Node in scene._effects.get_children():
+		child.queue_free()
+	scene._event_banner.visible = false
 
 
 func _clear_overlay() -> void:

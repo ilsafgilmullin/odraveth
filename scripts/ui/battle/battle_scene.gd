@@ -271,7 +271,7 @@ func _build_side_controls() -> void:
 	_end_turn_btn = UiKit.make_button("ЗАВЕРШИТЬ ХОД", UiKit.ButtonRole.PRIMARY)
 	_end_turn_btn.name = "EndTurnButton"
 	_end_turn_btn.focus_mode = Control.FOCUS_NONE
-	_end_turn_btn.add_theme_font_size_override("font_size", 26)
+	_end_turn_btn.add_theme_font_size_override("font_size", 25)
 	_end_turn_btn.pressed.connect(_on_end_turn_pressed)
 	_hud.add_child(_end_turn_btn)
 	_end_turn_normal_box = _end_turn_btn.get_theme_stylebox("normal")
@@ -380,8 +380,8 @@ func _layout_hud() -> void:
 	var s := _hud.size
 	if s.x < 200.0 or s.y < 200.0:
 		return
-	var left_w := clampf(s.x * 0.18, 330.0, 440.0)
-	var right_w := clampf(s.x * 0.14, 260.0, 340.0)
+	var left_w := clampf(s.x * 0.21, 380.0, 500.0)
+	var right_w := clampf(s.x * 0.15, 290.0, 360.0)
 	_field_rect = Rect2(left_w, s.y * 0.15, s.x - left_w - right_w, s.y * 0.56)
 	_center_y = _field_rect.get_center().y
 	var width_fit := (_field_rect.size.x - 32.0 - PIECE_GAP * 6.0) / (BoardPieceView.BASE_SIZE.x * 7.0)
@@ -396,17 +396,25 @@ func _layout_hud() -> void:
 			(child as Control).custom_minimum_size = piece
 
 	var cluster_h := clampf(s.y * 0.19, 180.0, 250.0)
+	var column_w := left_w - 16.0
+	var chip_h := 52.0
 	_opp_hero.position = Vector2.ZERO
-	_opp_hero.size = Vector2(left_w - 16.0, cluster_h)
+	_opp_hero.size = Vector2(column_w, cluster_h)
+	_opp_hero.artifact_rect = Rect2(0, cluster_h + 8.0, column_w, chip_h)
 	_plr_hero.position = Vector2(0, s.y - cluster_h)
-	_plr_hero.size = Vector2(left_w - 16.0, cluster_h)
-	_hero_power_btn.size = Vector2(150, 168)
-	_hero_power_btn.position = Vector2(6, s.y - cluster_h - 184.0)
+	_plr_hero.size = Vector2(column_w, cluster_h)
+	_plr_hero.artifact_rect = Rect2(0, -chip_h - 8.0, column_w, chip_h)
+	_opp_hero._layout()
+	_plr_hero._layout()
+	var power_top := s.y - cluster_h - chip_h - 16.0 - 178.0
+	_hero_power_btn.size = Vector2(210, 170)
+	_hero_power_btn.position = Vector2(0, power_top)
 	_hero_power_btn.pivot_offset = _hero_power_btn.size * 0.5
-	_impulse_btn.size = Vector2(left_w - 190.0, 64)
-	_impulse_btn.position = Vector2(170, s.y - cluster_h - 120.0)
-	var preview_top := cluster_h + 18.0
-	var preview_room := maxf(120.0, _hero_power_btn.position.y - 18.0 - preview_top)
+	_impulse_btn.size = Vector2(maxf(150.0, column_w - 222.0), 64)
+	_impulse_btn.position = Vector2(222, power_top + 50.0)
+	_impulse_btn.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	var preview_top := cluster_h + chip_h + 24.0
+	var preview_room := maxf(120.0, power_top - 12.0 - preview_top)
 	var preview_scale := clampf(minf(preview_room / FullCardView.BASE_SIZE.y, (left_w - 32.0) / FullCardView.BASE_SIZE.x), 0.4, 0.9)
 	_play_preview.size = FullCardView.BASE_SIZE
 	_play_preview.scale = Vector2.ONE * preview_scale
@@ -459,7 +467,7 @@ func _layout_hand(fresh: Array[int] = []) -> void:
 		return
 	var hand_scale := 1.08 if n <= 5 else 1.0
 	var card := BattleCardView.BASE_SIZE * hand_scale
-	var avail := _field_rect.size.x - 24.0
+	var avail := _field_rect.size.x - 72.0
 	var step := card.x + HAND_GAP
 	if n > 1:
 		step = minf(card.x + HAND_GAP, (avail - card.x) / float(n - 1))
@@ -484,7 +492,7 @@ func _layout_hand(fresh: Array[int] = []) -> void:
 			view.z_index = 9
 		view.custom_minimum_size = card
 		view.size = card
-		var running: Variant = view.get_meta("tween", null)
+		var running: Variant = view.get_meta("tween") if view.has_meta("tween") else null
 		if running is Tween and (running as Tween).is_valid():
 			(running as Tween).kill()
 		if _animations and view.instance_id in fresh:
@@ -612,13 +620,24 @@ func _build_mulligan_overlay() -> void:
 	col.alignment = BoxContainer.ALIGNMENT_CENTER
 	col.add_theme_constant_override("separation", VisualTokens.SPACE_3)
 	margin.add_child(col)
-	col.add_child(_overlay_title("СТАРТОВАЯ РУКА", 60))
+	col.add_child(_overlay_title("СТАРТОВАЯ РУКА", 56))
 	_mulligan_info = _overlay_text(30, VisualTokens.COLOR_STONE_100)
 	_mulligan_info.name = "MulliganInfo"
 	col.add_child(_mulligan_info)
-	var rules := _overlay_text(24, VisualTokens.COLOR_STONE_300)
+	_mulligan_impulse = PanelContainer.new()
+	_mulligan_impulse.name = "ImpulseNote"
+	_mulligan_impulse.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	_mulligan_impulse.add_theme_stylebox_override("panel", UiKit._box(Color(VisualTokens.COLOR_STEEL_900, 0.55),
+		VisualTokens.COLOR_GOLD_500, 1, 18, 20.0, 6.0))
+	var impulse_label := Label.new()
+	impulse_label.text = "«Осколок импульса»: +1 энергия до конца хода, один раз за матч. В замене не участвует."
+	impulse_label.add_theme_font_size_override("font_size", 22)
+	impulse_label.add_theme_color_override("font_color", VisualTokens.COLOR_GOLD_300)
+	_mulligan_impulse.add_child(impulse_label)
+	col.add_child(_mulligan_impulse)
+	var rules := _overlay_text(22, VisualTokens.COLOR_STONE_300)
 	rules.name = "MulliganRules"
-	rules.text = "Нажмите на карту, чтобы отметить её для замены. Можно заменить любые карты, все или ни одной. Заменённые карты не вернутся в эту же руку."
+	rules.text = "Нажмите на карту, чтобы отметить её для замены: любые, все или ни одной. Заменённые карты не вернутся в эту руку."
 	col.add_child(rules)
 	var row := HBoxContainer.new()
 	row.name = "MulliganRow"
@@ -635,21 +654,13 @@ func _build_mulligan_overlay() -> void:
 	footer.alignment = BoxContainer.ALIGNMENT_CENTER
 	footer.add_theme_constant_override("separation", VisualTokens.SPACE_5)
 	col.add_child(footer)
-	_mulligan_impulse = UiKit.make_panel(false)
-	_mulligan_impulse.name = "ImpulseNote"
-	var impulse_label := Label.new()
-	impulse_label.text = "«ОСКОЛОК ИМПУЛЬСА» · +1 энергия до конца хода, один раз за матч · в замене не участвует"
-	impulse_label.add_theme_font_size_override("font_size", 22)
-	impulse_label.add_theme_color_override("font_color", VisualTokens.COLOR_STEEL_900)
-	_mulligan_impulse.add_child(impulse_label)
-	footer.add_child(_mulligan_impulse)
 	_mulligan_count = _overlay_text(28, VisualTokens.COLOR_STONE_050)
 	_mulligan_count.name = "MulliganCount"
 	_mulligan_count.autowrap_mode = TextServer.AUTOWRAP_OFF
 	footer.add_child(_mulligan_count)
 	_mulligan_btn = UiKit.make_button("ПОДТВЕРДИТЬ РУКУ", UiKit.ButtonRole.PRIMARY)
 	_mulligan_btn.name = "ConfirmHandButton"
-	_mulligan_btn.custom_minimum_size = Vector2(420, 88)
+	_mulligan_btn.custom_minimum_size = Vector2(440, 88)
 	_mulligan_btn.pressed.connect(_submit_mulligan)
 	footer.add_child(_mulligan_btn)
 
@@ -1120,7 +1131,7 @@ func _refresh_controls(obs: Dictionary, legal: Dictionary) -> void:
 	_impulse_btn.visible = impulse
 	_impulse_btn.disabled = not (can_act and impulse)
 	_turn_lbl.text = "ХОД %d" % int(obs.get("turn_number", 0))
-	_turn_owner_lbl.text = "ВАШ ХОД" if own_turn else "ХОД СОПЕРНИКА"
+	_turn_owner_lbl.text = "ВАШ ХОД" if own_turn else ""
 	_card_actions.visible = _ui_state == UIState.CARD_SELECTED and _selected_card_id != 0
 	_play_btn.visible = _card_actions.visible and _valid_targets.is_empty()
 	_status_lbl.text = _instruction_text()
@@ -1523,9 +1534,11 @@ func _present_event(evt: Dictionary) -> bool:
 			if not own:
 				_show_play_preview(StringName(str(evt.get("card_id", ""))))
 		MatchEvent.ATTACK_DECLARED:
-			_animate_attack(int(evt.get("attacker_id", 0)), int(evt.get("target_id", 0)))
+			# Deferred: board containers re-sort after the refresh that precedes this beat.
+			_animate_attack.call_deferred(int(evt.get("attacker_id", 0)), int(evt.get("target_id", 0)))
 		MatchEvent.DAMAGE_DEALT:
-			_float_damage(int(evt.get("target_id", 0)), int(evt.get("to_health", 0)), int(evt.get("to_armor", 0)))
+			_float_damage.call_deferred(int(evt.get("target_id", 0)), int(evt.get("to_health", 0)),
+				int(evt.get("to_armor", 0)))
 		MatchEvent.HERO_POWER_USED:
 			_pulse(_hero_power_btn if own else _opp_hero.portrait_button)
 		MatchEvent.ARTIFACT_PLAYED:

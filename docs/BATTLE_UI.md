@@ -10,7 +10,7 @@ UIState: MULLIGAN → PLAYER_IDLE ↔ CARD_SELECTED / ATTACKER_SELECTED / HERO_P
 
 `AiTurnRunner.after_command` вызывает BattleSession после каждой принятой команды; сессия возвращает ordered `[{command, events, observation_after_command}]`. Observation — независимый публичный словарь **с точки зрения игрока**: нет opponent hand, порядков колод, RNG, MatchState. Весь ход AI вычисляется синхронно, но UI сохраняет observation до него и показывает каждый шаг/событие перед следующим. Время анимации не влияет на RNG или правила.
 
-Card Detail — общий с Collection/Deck Builder read-only overlay по отдельной `i` рядом с картой в руке и mulligan. Показаны русское имя, текущая стоимость, фракция, редкость, тип, stats, rules text и keywords; нажатие карты по-прежнему играет/выбирает её. Декоративный арт не используется.
+Card Detail — общий с Collection/Deck Builder read-only overlay; в Stage 7 открывается удержанием карты, касанием недоступной карты или «Описание» (см. BATTLE_V2.md). Показаны русское имя, текущая стоимость, фракция, редкость, тип, stats, rules text и keywords; нажатие карты по-прежнему играет/выбирает её. Декоративный арт не используется.
 
 Result получает outcome, героев, AI difficulty, карты обеих сторон и `turn_number` движка. «Повторить бой» создаёт новый seed и сессию при тех же героях/колодах/сложности. «Выбор противника» ведёт в PREBATTLE, «Сменить колоду» — DECK_BUILDER, «Главное меню» очищает history. Rematch хранит snapshot колоды, противника, сложности и UI предпочтений; новый матч получает fresh seed, даже если запись колоды позже изменена.
 

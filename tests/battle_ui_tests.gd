@@ -177,6 +177,7 @@ func _test_shard_and_choice() -> void:
 	var soulmonger: int = f.hand(0, &"nerqathen_soulmonger")
 	scene._refresh_ui()
 	scene._on_hand_card_tapped(soulmonger)
+	scene._on_hand_card_tapped(soulmonger)
 	_ok(scene._ui_state == scene.UIState.SOUL_SHARD_CHOICE and scene._shard_overlay.visible,
 		"Soulmonger opens soul-shard choice modal")
 	scene._shard_adjust(3)
@@ -189,6 +190,7 @@ func _test_shard_and_choice() -> void:
 	f = case.fixture
 	var cartographer: int = f.hand(0, &"neutral_threnic_cartographer")
 	scene._refresh_ui()
+	scene._on_hand_card_tapped(cartographer)
 	scene._on_hand_card_tapped(cartographer)
 	_drain(scene)
 	_ok(scene._ui_state == scene.UIState.CHOICE_MODAL and scene._choice_overlay.visible,
@@ -306,7 +308,7 @@ func _test_responsive_structure() -> void:
 		_ok(pieces_ok and scene._plr_board.get_child(6).get_global_rect().end.x <= safe.get_global_rect().end.x
 			and scene._opp_board.get_child(6).get_global_rect().end.x <= safe.get_global_rect().end.x,
 			"%s: 7+7 board pieces stay readable inside the safe width" % label)
-		var hand_ok := scene._hand_box.get_child_count() == 10 and scene.find_child("HandScroll", true, false) == null
+		var hand_ok: bool = scene._hand_box.get_child_count() == 10 and scene.find_child("HandScroll", true, false) == null
 		var board_bottom: float = scene._plr_board.get_global_rect().end.y
 		for card: Control in scene._hand_box.get_children():
 			var rect := card.get_global_rect()

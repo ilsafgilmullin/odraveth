@@ -15,6 +15,9 @@ var portrait: HeroPortraitPlaceholder
 var artifact_button: Button
 var target_state: TargetState = TargetState.NONE
 var view: Dictionary = {}
+## Where the artifact chip sits, in cluster-local coordinates (may lie outside the
+## cluster so a long artifact name gets the full column width).
+var artifact_rect := Rect2()
 
 var _overlay: Control
 var _info: Control
@@ -89,8 +92,8 @@ func portrait_center() -> Vector2:
 
 func _layout() -> void:
 	var h := size.y
-	var pw := h * 0.86
-	portrait_button.position = Vector2(0, (h - h) * 0.5)
+	var pw := h * 0.74
+	portrait_button.position = Vector2.ZERO
 	portrait_button.size = Vector2(pw, h)
 	portrait.position = Vector2.ZERO
 	portrait.size = Vector2(pw, h * 0.88)
@@ -98,8 +101,12 @@ func _layout() -> void:
 	_overlay.size = portrait_button.size
 	_info.position = Vector2(pw + 14.0, 0)
 	_info.size = Vector2(maxf(10.0, size.x - pw - 14.0), h)
-	artifact_button.size = Vector2(minf(300.0, _info.size.x), h * 0.26)
-	artifact_button.position = Vector2(_info.position.x, h - artifact_button.size.y)
+	if artifact_rect.size.x > 10.0:
+		artifact_button.position = artifact_rect.position
+		artifact_button.size = artifact_rect.size
+	else:
+		artifact_button.size = Vector2(minf(300.0, _info.size.x), h * 0.26)
+		artifact_button.position = Vector2(_info.position.x, h - artifact_button.size.y)
 	_overlay.queue_redraw()
 	_info.queue_redraw()
 	artifact_button.queue_redraw()
@@ -134,9 +141,11 @@ func _draw_info() -> void:
 	if s.x < 40.0 or _display_font == null:
 		return
 	var hero: Dictionary = HeroCatalog.HEROES.get(hero_id, {})
+	var fitted_name := BoardPieceView.fit_text(_display_font, String(hero.get("name_ru", "")).to_upper(), s.x, int(s.y * 0.17),
+		int(s.y * 0.12))
 	var name_size := int(s.y * 0.17)
-	_info.draw_string(_display_font, Vector2(0, name_size), String(hero.get("name_ru", "")).to_upper(), HORIZONTAL_ALIGNMENT_LEFT,
-		s.x, name_size, VisualTokens.COLOR_STEEL_900)
+	_info.draw_string(_display_font, Vector2(0, name_size), fitted_name[0], HORIZONTAL_ALIGNMENT_LEFT, -1, int(fitted_name[1]),
+		VisualTokens.COLOR_STEEL_900)
 	var faction := HeroCatalog.faction_of(hero_id) if HeroCatalog.has_hero(hero_id) else Faction.Id.NEUTRAL
 	var small := int(s.y * 0.105)
 	_info.draw_string(_body_font, Vector2(0, name_size + small * 1.25), SetupUi.faction_name(faction).to_upper(),
@@ -145,9 +154,9 @@ func _draw_info() -> void:
 	var energy := int(view.get("energy_current", 0))
 	var energy_max := int(view.get("energy_max", 0))
 	var pip_y := name_size + small * 2.6
-	var pip := s.y * 0.06
+	var shown := maxi(1, maxi(energy_max, energy))
+	var pip := minf(s.y * 0.06, (s.x - small * 3.2) / (float(shown) * 1.75 + 1.0))
 	var x := pip
-	var shown := maxi(energy_max, energy)
 	for i in shown:
 		var c := Vector2(x, pip_y)
 		var poly := PackedVector2Array([c + Vector2(0, -pip), c + Vector2(pip * 0.75, 0), c + Vector2(0, pip), c + Vector2(-pip * 0.75, 0)])
@@ -170,6 +179,9 @@ func _draw_info() -> void:
 	var cx := 0.0
 	for chip: String in chips:
 		var w := _body_font.get_string_size(chip, HORIZONTAL_ALIGNMENT_LEFT, -1, small).x + 16.0
+		if cx > 0.0 and cx + w > s.x:
+			cx = 0.0
+			chip_y += small * 1.7
 		var rect := Rect2(cx, chip_y - small * 0.95, w, small * 1.45)
 		_info.draw_rect(rect, Color(VisualTokens.COLOR_STONE_050, 0.85))
 		_info.draw_rect(rect, Color(VisualTokens.COLOR_STEEL_500, 0.8), false, 1.0)
@@ -177,7 +189,10 @@ func _draw_info() -> void:
 			VisualTokens.COLOR_STEEL_900)
 		cx += w + 8.0
 	if not is_player:
-		_draw_hand_backs(Vector2(cx + 10.0, chip_y - small * 1.05), int(view.get("hand_count", 0)), small * 1.6)
+		var backs := Vector2(cx + 10.0, chip_y - small * 1.05)
+		if backs.x + small * 4.0 > s.x:
+			backs = Vector2(0, chip_y + small * 0.8)
+		_draw_hand_backs(backs, int(view.get("hand_count", 0)), small * 1.6)
 
 
 func _draw_hand_backs(origin: Vector2, count: int, card_h: float) -> void:
