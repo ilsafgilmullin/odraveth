@@ -6,6 +6,7 @@
 /android/
 
 # --- Build / export output ---
+tests/visual_qa/output*/
 /build/
 /builds/
 /export/
