@@ -53,6 +53,10 @@ func all() -> Array:
 		["library-factions", library_factions],
 		["library-heroes", library_heroes],
 		["library-sealed", library_sealed],
+		["boot-first", boot_first],
+		["boot-mid", boot_mid],
+		["boot-reveal", boot_reveal],
+		["boot-failed", boot_failed],
 	]
 
 
@@ -556,6 +560,42 @@ func library_heroes() -> bool:
 
 func library_sealed() -> bool:
 	return await _library("ХРОНИКИ")
+
+
+## Boot frames are posed on an overlay so the capture run keeps its own route.
+func _boot(progress: float, status_text: String, opening: float = 0.0, failed: bool = false) -> bool:
+	_clear_overlay()
+	var root := _overlay_root()
+	var boot := (load("res://scenes/boot/boot.tscn") as PackedScene).instantiate() as BootScreen
+	boot.autostart = false
+	boot.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	root.add_child(boot)
+	boot.progress = progress
+	boot.fast = true
+	boot.status_label.text = status_text
+	boot.gates.opening = opening
+	boot.gates.failed = failed
+	if opening > 0.5:
+		boot.wordmark.modulate = Color.WHITE
+	if failed:
+		boot._fail(&"cards", ERR_FILE_NOT_FOUND)
+	return true
+
+
+func boot_first() -> bool:
+	return _boot(0.0, "Пробуждение Цитадели…")
+
+
+func boot_mid() -> bool:
+	return _boot(0.55, "Загрузка карт Нулмериса…")
+
+
+func boot_reveal() -> bool:
+	return _boot(1.0, "", 0.85)
+
+
+func boot_failed() -> bool:
+	return _boot(0.33, "", 0.0, true)
 
 
 ## Synchronous QA ticks never advance tweens; drop transient effects before a shot.

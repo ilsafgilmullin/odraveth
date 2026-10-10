@@ -34,8 +34,15 @@ func _style_brand() -> void:
 	if display_font != null:
 		wordmark.add_theme_font_override("font", display_font)
 		subtitle.add_theme_font_override("font", display_font)
-	wordmark.add_theme_color_override("font_color", VisualTokens.COLOR_STEEL_900)
 	subtitle.add_theme_color_override("font_color", VisualTokens.COLOR_GOLD_700)
+	subtitle.text = "МИР НУЛМЕРИСА"
+	var caption := find_child("GuardianCaption", true, false) as Label
+	if caption != null:
+		caption.text = "ХРАНИТЕЛЬ НУЛМЕРИСА"
+		caption.add_theme_font_size_override("font_size", 24)
+		caption.add_theme_color_override("font_color", VisualTokens.COLOR_STEEL_700)
+		if display_font != null:
+			caption.add_theme_font_override("font", display_font)
 
 
 func _style_navigation() -> void:
@@ -44,7 +51,31 @@ func _style_navigation() -> void:
 		UiKit.style_button(button, UiKit.ButtonRole.SECONDARY)
 	for button: Button in [history_button, progress_button, settings_button]:
 		UiKit.style_button(button, UiKit.ButtonRole.SUBTLE)
-	status_panel.modulate.a = 0.88
+	# The navigation sits on a carved stone panel so it never floats over the terrace.
+	var menu := enter_button.get_parent() as Control
+	var holder := menu.get_parent()
+	var index := menu.get_index()
+	var panel := UiKit.make_panel(true)
+	panel.name = "MenuPanel"
+	panel.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	holder.remove_child(menu)
+	panel.add_child(menu)
+	holder.add_child(panel)
+	holder.move_child(panel, index)
+	# Keep scene ownership so owned lookups (tests, tools) still find the buttons.
+	panel.owner = self
+	menu.owner = self
+	for child: Node in menu.get_children():
+		child.owner = self
+	var box := panel.get_theme_stylebox("panel").duplicate() as StyleBoxFlat
+	if box != null:
+		box.content_margin_left = 22.0
+		box.content_margin_right = 22.0
+		box.content_margin_top = 16.0
+		box.content_margin_bottom = 16.0
+		panel.add_theme_stylebox_override("panel", box)
+	(menu as VBoxContainer).add_theme_constant_override("separation", VisualTokens.SPACE_1)
+	(menu as VBoxContainer).alignment = BoxContainer.ALIGNMENT_CENTER
 
 
 func _connect_navigation() -> void:

@@ -1,9 +1,10 @@
-[gd_scene load_steps=5 format=3]
+[gd_scene load_steps=6 format=3]
 
 [ext_resource type="Script" path="res://scripts/ui/main_menu.gd" id="1_menu"]
 [ext_resource type="Script" path="res://scripts/ui/safe_area_container.gd" id="2_safe"]
 [ext_resource type="Script" path="res://scripts/ui/main_menu_backdrop.gd" id="3_backdrop"]
 [ext_resource type="Script" path="res://scripts/ui/guardian_placeholder.gd" id="4_guardian"]
+[ext_resource type="Script" path="res://scripts/ui/visual/brand_wordmark.gd" id="5_wordmark"]
 
 [node name="MainMenu" type="Control"]
 layout_mode = 3
@@ -59,10 +60,10 @@ script = ExtResource("4_guardian")
 
 [node name="GuardianCaption" type="Label" parent="SafeArea/Composition/GuardianRegion"]
 layout_mode = 1
-anchor_left = 0.03
-anchor_top = 0.87
-anchor_right = 0.97
-anchor_bottom = 0.97
+anchor_left = 0.0
+anchor_top = 0.9
+anchor_right = 1.0
+anchor_bottom = 0.98
 grow_horizontal = 2
 grow_vertical = 2
 theme_override_colors/font_color = Color(0.133333, 0.168627, 0.180392, 0.86)
@@ -92,6 +93,7 @@ layout_mode = 2
 theme_override_font_sizes/font_size = 76
 text = "ODRAVETH"
 horizontal_alignment = 1
+script = ExtResource("5_wordmark")
 
 [node name="BrandSubtitle" type="Label" parent="SafeArea/Composition/RightRegion/BrandArea"]
 unique_name_in_owner = true

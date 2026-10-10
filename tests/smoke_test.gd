@@ -107,7 +107,10 @@ func _run() -> void:
 	await CollectionV1Tests.new(_check, get_tree()).run()
 	for module: Array in VisualAlphaSmoke.MODULES:
 		_section("Stage 7 Visual Alpha: %s" % module[0])
-		await module[1].new(_check, get_tree()).run()
+		var instance: RefCounted = module[1].new(_check, get_tree())
+		if instance.has_method("set_expect_errors"):
+			instance.set_expect_errors(_expect_errors)
+		await instance.run()
 	_test_save_manager()
 	_test_card_database()
 	_section("Player setup data and persistence")
