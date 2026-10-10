@@ -16,6 +16,12 @@ const CardDatabaseScript := preload("res://scripts/cards/card_database.gd")
 const BattleUiTests := preload("res://tests/battle_ui_tests.gd")
 const PlayerSetupTests := preload("res://tests/player_setup_tests.gd")
 const PlayerSetupUiTests := preload("res://tests/player_setup_ui_tests.gd")
+const VisualFoundationTests := preload("res://tests/visual_foundation_tests.gd")
+const MainMenuV2Tests := preload("res://tests/main_menu_v2_tests.gd")
+const HeroSelectV1Tests := preload("res://tests/hero_select_v1_tests.gd")
+const CardVisualSystemTests := preload("res://tests/card_visual_system_tests.gd")
+const CollectionV1Tests := preload("res://tests/collection_v1_tests.gd")
+const VisualAlphaSmoke := preload("res://tests/visual_alpha_smoke.gd")
 const ENGINE_TEST_MODULES := [
 	["MatchEngine core rules", preload("res://tests/engine/engine_core_tests.gd")],
 	["Hero abilities", preload("res://tests/engine/hero_power_tests.gd")],
@@ -28,12 +34,13 @@ const ENGINE_TEST_MODULES := [
 ]
 const EXPECTED_AUTOLOADS: Array[String] = ["EventBus", "SceneRouter", "AppState", "CardDatabase"]
 const MAIN_MENU_BUTTONS := [
-	["PlayButton", "Играть", Routes.DECK_BUILDER],
-	["CollectionButton", "Коллекция", Routes.COLLECTION],
-	["DecksButton", "Колоды", Routes.DECK_BUILDER],
-	["HeroesButton", "Герои", Routes.HERO_SELECT],
-	["ProgressButton", "Прогресс", Routes.PROGRESS],
-	["SettingsButton", "Настройки", Routes.SETTINGS],
+	["PlayButton", "ВОЙТИ В НУЛМЕРИС", Routes.DECK_BUILDER],
+	["CollectionButton", "КОЛЛЕКЦИЯ", Routes.COLLECTION],
+	["DecksButton", "КОЛОДЫ", Routes.DECK_BUILDER],
+	["HeroesButton", "ГЕРОИ", Routes.HERO_SELECT],
+	["HistoryButton", "ИСТОРИЯ", Routes.HISTORY],
+	["ProgressButton", "ПРОГРЕСС", Routes.PROGRESS],
+	["SettingsButton", "НАСТРОЙКИ", Routes.SETTINGS],
 ]
 const ROUTE_TIMEOUT_FRAMES := 120
 const WATCHDOG_SECONDS := 60.0
@@ -88,6 +95,22 @@ func _run() -> void:
 	_test_routes()
 	_test_game_rules()
 	_test_cyrillic_font()
+	_section("Stage 7A visual foundation and reusable UI kit")
+	await VisualFoundationTests.new(_check, get_tree()).run()
+	_section("Stage 7B Main Menu V2")
+	await MainMenuV2Tests.new(_check, get_tree()).run()
+	_section("Stage 7C Hero Select V1")
+	await HeroSelectV1Tests.new(_check, get_tree()).run()
+	_section("Stage 7D Card Visual System V1 + Card Detail V1")
+	await CardVisualSystemTests.new(_check, get_tree()).run()
+	_section("Stage 7E Collection V1")
+	await CollectionV1Tests.new(_check, get_tree()).run()
+	for module: Array in VisualAlphaSmoke.MODULES:
+		_section("Stage 7 Visual Alpha: %s" % module[0])
+		var instance: RefCounted = module[1].new(_check, get_tree())
+		if instance.has_method("set_expect_errors"):
+			instance.set_expect_errors(_expect_errors)
+		await instance.run()
 	_test_save_manager()
 	_test_card_database()
 	_section("Player setup data and persistence")
@@ -321,7 +344,7 @@ func _test_navigation() -> void:
 	for entry: Array in MAIN_MENU_BUTTONS:
 		var button := menu.find_child(entry[0]) as Button
 		captions.append(button.text if button != null else "<missing %s>" % entry[0])
-	_check(captions == ["Играть", "Коллекция", "Колоды", "Герои", "Прогресс", "Настройки"],
+	_check(captions == ["ВОЙТИ В НУЛМЕРИС", "КОЛЛЕКЦИЯ", "КОЛОДЫ", "ГЕРОИ", "ИСТОРИЯ", "ПРОГРЕСС", "НАСТРОЙКИ"],
 		"main menu buttons in approved order: %s" % ", ".join(captions))
 
 	for entry: Array in MAIN_MENU_BUTTONS:
@@ -362,13 +385,21 @@ func _test_navigation() -> void:
 	_find_button("PlayButton").pressed.emit()
 	_check(await _wait_for_route(Routes.PREBATTLE), "Play with selected ready deck opens Prebattle")
 	var prebattle := get_tree().current_scene as PrebattleScreen
-	_check(not prebattle.start_button.disabled and prebattle.deck_summary.text.contains("30/30"),
+	_check(not prebattle.find_button.disabled and prebattle.deck_summary.text.contains("30/30"),
 		"Prebattle shows selected ready deck")
-	prebattle.opponent_buttons[HeroCatalog.TAZHYRION].pressed.emit()
-	prebattle.difficulty.select(2)
-	prebattle.difficulty.item_selected.emit(2)
-	_check(prebattle.start_button.text == "НАЧАТЬ БОЙ", "prebattle offers 'Начать бой'")
-	prebattle.start_button.pressed.emit()
+	(prebattle.difficulty_buttons["STRATEGIST"] as Button).button_pressed = true
+	_check(prebattle.find_button.text == "НАЙТИ СОПЕРНИКА" and prebattle.find_child("Opponent_*", true, false) == null,
+		"prebattle offers 'НАЙТИ СОПЕРНИКА' without manual opponent selection")
+	prebattle.find_button.pressed.emit()
+	var chosen: BattleLaunchConfig = prebattle.last_config
+	_check(chosen != null and HeroCatalog.has_hero(chosen.opponent_hero), "Find Opponent draws a concrete opponent hero")
+	_check(await _wait_for_route(Routes.OPPONENT_SEARCH), "Find Opponent opens the Citadel search")
+	var search := get_tree().current_scene as OpponentSearchScreen
+	if search != null:
+		search.finish_now()
+		_check(search.config == chosen and search.faction_label.text == SetupUi.faction_name(
+			HeroCatalog.faction_of(chosen.opponent_hero)).to_upper(), "search reveals only the drawn faction")
+		search.proceed()
 	_check(await _wait_for_route(Routes.BATTLE), "flow reaches Battle with saved deck")
 	if SceneRouter.current_route == Routes.BATTLE:
 		var launched := get_tree().current_scene
@@ -379,9 +410,9 @@ func _test_navigation() -> void:
 		_check(launched._session.config.player_deck.map(func(id: Variant) -> String: return String(id)) == exact_cards.map(func(id: Variant) -> String: return String(id))
 			and launched._session.config.player_hero == HeroCatalog.KEZHARYN,
 			"E2E: exact saved player deck and selected hero reach BattleSession")
-		_check(launched._session.config.opponent_hero == HeroCatalog.TAZHYRION
+		_check(chosen != null and launched._session.config.opponent_hero == chosen.opponent_hero
 			and launched._session.config.ai_difficulty == AiDifficulty.Level.STRATEGIST,
-			"E2E: chosen opponent and AI difficulty reach BattleSession")
+			"E2E: drawn opponent and AI difficulty reach BattleSession")
 		var battle_snapshot: Dictionary = launched._session.engine.snapshot()
 		get_tree().root.propagate_notification(NOTIFICATION_WM_GO_BACK_REQUEST)
 		await get_tree().process_frame
@@ -402,9 +433,12 @@ func _test_navigation() -> void:
 		_check(await _wait_for_route(Routes.RESULT), "real Battle result route opens")
 		var result_scene := get_tree().current_scene
 		var stats := result_scene.find_child("ResultStats", true, false) as Label
+		var player_side := result_scene.find_child("PlayerSide", true, false) as Control
+		var opponent_side := result_scene.find_child("OpponentSide", true, false) as Control
 		_check(stats != null and stats.text.contains("Ходов: 3") and stats.text.contains("2 (вы) / 1 (ИИ)")
-			and stats.text.contains("Стратег")
-			and stats.text.contains(player_name) and stats.text.contains(opponent_name),
+			and player_side != null and (player_side.find_child("HeroName", true, false) as Label).text == player_name.to_upper()
+			and opponent_side != null and (opponent_side.find_child("HeroName", true, false) as Label).text == opponent_name.to_upper()
+			and (opponent_side.find_child("SideDetail", true, false) as Label).text.contains("Стратег"),
 			"Result displays both heroes, authoritative turns and difficulty (%s)" % (stats.text if stats != null else "missing"))
 		_check(_find_button("OpponentButton") != null and _find_button("DeckButton") != null
 			and _find_button("RematchButton") != null and _find_button("MainMenuButton") != null,
@@ -422,7 +456,7 @@ func _test_navigation() -> void:
 		SceneRouter.replace_with(Routes.RESULT, return_params)
 		await _wait_for_route(Routes.RESULT)
 		_find_button("OpponentButton").pressed.emit()
-		_check(await _wait_for_route(Routes.PREBATTLE), "Result opponent action uses persisted Prebattle")
+		_check(await _wait_for_route(Routes.OPPONENT_SEARCH), "Result НОВЫЙ СОПЕРНИК draws again through Opponent Search")
 		SceneRouter.replace_with(Routes.RESULT, return_params)
 		await _wait_for_route(Routes.RESULT)
 		_find_button("DeckButton").pressed.emit()
@@ -439,7 +473,7 @@ func _test_navigation() -> void:
 			continue
 		finish.pressed.emit()
 		_check(await _wait_for_route(Routes.RESULT), "battle leads to result (%s)" % key)
-		var message := get_tree().current_scene.find_child("MessageLabel") as Label
+		var message := get_tree().current_scene.find_child("MessageLabel", true, false) as Label
 		_check(message != null and message.visible and message.text == MatchOutcome.title(outcome),
 			"result shows '%s'" % MatchOutcome.title(outcome))
 
@@ -460,7 +494,7 @@ func _test_navigation() -> void:
 
 	var result_without_params := SceneRouter.go_to(Routes.RESULT)
 	_check(result_without_params == OK and await _wait_for_route(Routes.RESULT)
-		and (get_tree().current_scene.find_child("MessageLabel") as Label).text == "Результат неизвестен",
+		and (get_tree().current_scene.find_child("MessageLabel", true, false) as Label).text == "Результат неизвестен",
 		"result without outcome does not crash")
 	_expect_errors(false)
 	EventBus.route_changed.disconnect(_on_route_changed)

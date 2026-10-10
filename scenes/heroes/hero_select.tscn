@@ -1,10 +1,167 @@
-[gd_scene format=3]
+[gd_scene load_steps=3 format=3]
 
 [ext_resource type="Script" path="res://scripts/ui/hero_select_screen.gd" id="1_script"]
+[ext_resource type="Script" path="res://scripts/ui/safe_area_container.gd" id="2_safe"]
 
 [node name="HeroSelect" type="Control"]
 layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
 script = ExtResource("1_script")
+
+[node name="Background" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+color = Color(0.92549, 0.905882, 0.862745, 1)
+
+[node name="SafeArea" type="MarginContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("2_safe")
+
+[node name="Layout" type="VBoxContainer" parent="SafeArea"]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="Header" type="HBoxContainer" parent="SafeArea/Layout"]
+custom_minimum_size = Vector2(0, 74)
+layout_mode = 2
+theme_override_constants/separation = 20
+
+[node name="BackButton" type="Button" parent="SafeArea/Layout/Header"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(180, 64)
+layout_mode = 2
+text = "НАЗАД"
+
+[node name="TitleBlock" type="VBoxContainer" parent="SafeArea/Layout/Header"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 0
+
+[node name="TitleLabel" type="Label" parent="SafeArea/Layout/Header/TitleBlock"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.133333, 0.168627, 0.180392, 1)
+theme_override_font_sizes/font_size = 52
+text = "ВЫБОР ГЕРОЯ"
+horizontal_alignment = 1
+
+[node name="Subtitle" type="Label" parent="SafeArea/Layout/Header/TitleBlock"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.407843, 0.447059, 0.462745, 1)
+theme_override_font_sizes/font_size = 22
+text = "Выберите героя, который поведёт вашу колоду в бой"
+horizontal_alignment = 1
+
+[node name="HeaderBalance" type="Control" parent="SafeArea/Layout/Header"]
+custom_minimum_size = Vector2(180, 64)
+layout_mode = 2
+mouse_filter = 2
+
+[node name="HeroCards" type="HBoxContainer" parent="SafeArea/Layout"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 318)
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_constants/separation = 12
+
+[node name="HeroInfoPanel" type="PanelContainer" parent="SafeArea/Layout"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 218)
+layout_mode = 2
+
+[node name="InfoLayout" type="HBoxContainer" parent="SafeArea/Layout/HeroInfoPanel"]
+layout_mode = 2
+theme_override_constants/separation = 24
+
+[node name="InfoContent" type="VBoxContainer" parent="SafeArea/Layout/HeroInfoPanel/InfoLayout"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 5
+
+[node name="IdentityRow" type="HBoxContainer" parent="SafeArea/Layout/HeroInfoPanel/InfoLayout/InfoContent"]
+layout_mode = 2
+theme_override_constants/separation = 18
+
+[node name="SelectedHeroName" type="Label" parent="SafeArea/Layout/HeroInfoPanel/InfoLayout/InfoContent/IdentityRow"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.133333, 0.168627, 0.180392, 1)
+theme_override_font_sizes/font_size = 34
+text = "ВЫБЕРИТЕ ГЕРОЯ"
+
+[node name="SelectedFaction" type="Label" parent="SafeArea/Layout/HeroInfoPanel/InfoLayout/InfoContent/IdentityRow"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_font_sizes/font_size = 24
+vertical_alignment = 1
+
+[node name="PowerCost" type="Label" parent="SafeArea/Layout/HeroInfoPanel/InfoLayout/InfoContent/IdentityRow"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.407843, 0.447059, 0.462745, 1)
+theme_override_font_sizes/font_size = 23
+vertical_alignment = 1
+
+[node name="PowerName" type="Label" parent="SafeArea/Layout/HeroInfoPanel/InfoLayout/InfoContent"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.313725, 0.247059, 0.12549, 1)
+theme_override_font_sizes/font_size = 29
+text = "СПОСОБНОСТЬ ГЕРОЯ"
+
+[node name="PowerDescription" type="Label" parent="SafeArea/Layout/HeroInfoPanel/InfoLayout/InfoContent"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 84)
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_colors/font_color = Color(0.12549, 0.152941, 0.164706, 1)
+theme_override_font_sizes/font_size = 27
+text = "Коснитесь портрета героя, чтобы открыть полное описание способности."
+autowrap_mode = 2
+clip_text = false
+vertical_alignment = 1
+
+[node name="Playstyle" type="Label" parent="SafeArea/Layout/HeroInfoPanel/InfoLayout/InfoContent"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.407843, 0.447059, 0.462745, 1)
+theme_override_font_sizes/font_size = 22
+
+[node name="ActionColumn" type="VBoxContainer" parent="SafeArea/Layout/HeroInfoPanel/InfoLayout"]
+custom_minimum_size = Vector2(300, 0)
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="ActionSpacer" type="Control" parent="SafeArea/Layout/HeroInfoPanel/InfoLayout/ActionColumn"]
+layout_mode = 2
+size_flags_vertical = 3
+mouse_filter = 2
+
+[node name="StatusMessage" type="Label" parent="SafeArea/Layout/HeroInfoPanel/InfoLayout/ActionColumn"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.501961, 0.203922, 0.180392, 1)
+theme_override_font_sizes/font_size = 20
+horizontal_alignment = 1
+autowrap_mode = 2
+
+[node name="ConfirmHeroButton" type="Button" parent="SafeArea/Layout/HeroInfoPanel/InfoLayout/ActionColumn"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(300, 76)
+layout_mode = 2
+text = "ПОДТВЕРДИТЬ"

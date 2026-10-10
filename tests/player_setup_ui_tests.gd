@@ -40,11 +40,15 @@ func run() -> void:
 func _test_hero() -> void:
 	var scene := _scene(Routes.HERO_SELECT) as HeroSelectScreen
 	_ok(scene.hero_buttons.size() == 4 and scene.hero_buttons.has(HeroCatalog.TAZHYRION), "Hero Select displays exactly four heroes")
-	scene.hero_buttons[HeroCatalog.SYRRAVETH].pressed.emit()
-	_ok(scene.pending_hero == HeroCatalog.SYRRAVETH and scene.hero_buttons[HeroCatalog.SYRRAVETH].text.contains("ВЫБРАН"),
-		"tap marks selected hero by text")
-	_ok(scene.hero_buttons[HeroCatalog.KEZHARYN].text.contains("Кровавый приказ")
-		and scene.hero_buttons[HeroCatalog.TAZHYRION].text.contains("Закалка"), "power names from HeroCatalog")
+	var persisted_before: String = AppState.profile["selected_hero_id"]
+	(scene.hero_buttons[HeroCatalog.SYRRAVETH] as HeroSelectCard).pressed.emit()
+	var selected_card := scene.hero_buttons[HeroCatalog.SYRRAVETH] as HeroSelectCard
+	_ok(scene.pending_hero == HeroCatalog.SYRRAVETH and selected_card.selected_marker.visible
+		and selected_card.button_pressed, "tap marks selected hero explicitly")
+	_ok(AppState.profile["selected_hero_id"] == persisted_before, "hero tap is preview-only before confirmation")
+	_ok(scene.power_name_label.text == String(HeroCatalog.HEROES[HeroCatalog.SYRRAVETH]["power_ru"]).to_upper()
+		and scene.power_description_label.text == HeroPresentation.power_description(HeroCatalog.SYRRAVETH),
+		"selected hero power name and full description come from authoritative presentation path")
 	scene.free()
 
 
@@ -66,27 +70,32 @@ func _select_deck_metadata(scene: DeckBuilderScreen, deck_id: String) -> void:
 
 func _test_collection() -> void:
 	var scene := _scene(Routes.COLLECTION) as CollectionScreen
-	_ok(scene.card_grid.get_child_count() == 40, "all 40 starter cards visible")
-	_select_id(scene.filter_bar.faction, Faction.Id.NEUTRAL)
+	_ok(scene.card_grid.get_child_count() == 40 and scene.visible_card_ids.size() == 40,
+		"all 40 starter cards visible through FullCard grid")
+	_select_id(scene.faction_filter, Faction.Id.NEUTRAL)
 	_ok(scene.card_grid.get_child_count() == 8
-		and scene.filter_bar.faction.get_item_text(scene.filter_bar.faction.selected) == "Нейтральные", "Neutral filter and official label")
-	_select_id(scene.filter_bar.faction, CardFilterBar.ALL)
+		and scene.faction_filter.get_item_text(scene.faction_filter.selected) == "НЕЙТРАЛЬНЫЕ",
+		"Neutral filter and official label")
+	_select_id(scene.faction_filter, CollectionFilterState.ALL)
 	var card: CardDefinition = CardDatabase.get_all_cards()[0]
-	scene.filter_bar.search.text = card.name_ru.to_lower()
-	scene.filter_bar.search.text_changed.emit(scene.filter_bar.search.text)
-	_ok(scene.card_grid.get_child_count() >= 1 and scene.filter_bar.matches(card), "case-insensitive RU name search")
-	scene.filter_bar.search.text = card.name_en.to_upper()
-	scene.filter_bar.search.text_changed.emit(scene.filter_bar.search.text)
-	_ok(scene.card_grid.get_child_count() >= 1 and scene.filter_bar.matches(card), "case-insensitive EN name search")
-	scene.filter_bar.search.text = ""
-	scene.filter_bar.search.text_changed.emit("")
-	_select_id(scene.filter_bar.card_type, card.card_type)
-	_select_id(scene.filter_bar.rarity, card.rarity)
-	_select_id(scene.filter_bar.cost, card.cost)
-	_select_id(scene.filter_bar.faction, card.faction)
-	_ok(scene.filter_bar.matches(card) and scene.card_grid.get_child_count() >= 1, "type, rarity, cost and faction combined")
-	_select_id(scene.filter_bar.cost, 10 if card.cost != 10 else 0)
-	_ok(not scene.filter_bar.matches(card), "cost filter excludes other costs")
+	scene.search.text = card.name_ru.to_lower()
+	scene.search.text_changed.emit(scene.search.text)
+	_ok(scene.card_grid.get_child_count() >= 1 and scene.filter_state.matches(card), "case-insensitive RU name search")
+	scene.search.text = card.name_en.to_upper()
+	scene.search.text_changed.emit(scene.search.text)
+	_ok(scene.card_grid.get_child_count() >= 1 and scene.filter_state.matches(card), "case-insensitive EN name search")
+	scene.search.text = ""
+	scene.search.text_changed.emit("")
+	_select_id(scene.type_filter, card.card_type)
+	_select_id(scene.rarity_filter, card.rarity)
+	_select_id(scene.cost_filter, card.cost if card.cost >= 2 and card.cost <= 6
+		else CollectionFilterState.COST_0_1 if card.cost <= 1 else CollectionFilterState.COST_7_PLUS)
+	_select_id(scene.faction_filter, card.faction)
+	_ok(scene.filter_state.matches(card) and scene.card_grid.get_child_count() >= 1,
+		"type, rarity, cost and faction combined")
+	_select_id(scene.faction_filter, Faction.Id.NEUTRAL if card.faction != Faction.Id.NEUTRAL else Faction.Id.ASHRAVAEL)
+	_ok(not scene.filter_state.matches(card), "faction filter excludes other factions")
+	scene.reset_button.pressed.emit()
 	scene.detail.show_card(card)
 	_ok(scene.detail.visible and scene.detail.detail_text.text.contains(card.name_en)
 		and scene.detail.detail_text.text.contains(card.rules_text_ru), "read-only detail shows English name and approved rules")
@@ -203,17 +212,15 @@ func _test_builder() -> void:
 
 func _test_prebattle() -> void:
 	var scene := _scene(Routes.PREBATTLE) as PrebattleScreen
-	_ok(scene.start_button.disabled and scene.opponent_buttons.size() == 4, "invalid selection blocks Start; four opponent choices")
-	_ok(scene.difficulty.item_count == 3 and scene.toggles.values().all(func(toggle: CheckButton) -> bool: return toggle.button_pressed),
+	_ok(scene.find_button.disabled and scene.find_child("Opponent_*", true, false) == null,
+		"invalid selection blocks НАЙТИ СОПЕРНИКА; no manual opponent choice exists")
+	_ok(scene.difficulty_buttons.size() == 3 and scene.toggles.values().all(func(toggle: CheckButton) -> bool: return toggle.button_pressed),
 		"three difficulties and three default ON toggles")
 	scene.toggles[PlayerSetupData.ANIMATIONS].button_pressed = false
 	scene.toggles[PlayerSetupData.ANIMATIONS].toggled.emit(false)
 	_ok(AppState.profile["prebattle"][PlayerSetupData.ANIMATIONS] == false,
 		"animation preference persisted by UI")
-	scene.opponent_buttons[HeroCatalog.KEZHARYN].pressed.emit()
-	_ok(AppState.profile["prebattle"]["opponent_hero_id"] == String(HeroCatalog.KEZHARYN), "mirror opponent allowed and saved")
-	scene.difficulty.select(1)
-	scene.difficulty.item_selected.emit(1)
+	(scene.difficulty_buttons["TACTICIAN"] as Button).button_pressed = true
 	_ok(AppState.profile["prebattle"]["ai_difficulty"] == "TACTICIAN", "difficulty saved")
 	scene.free()
 
@@ -243,10 +250,16 @@ func _test_sizes() -> void:
 				var panel := scene.find_child("DeckPanel", true, false) as Control
 				var grid_scroll := scene.find_child("AvailableScroll", true, false) as Control
 				var deck_scroll := scene.find_child("DeckScroll", true, false) as ScrollContainer
-				_ok(grid_scroll.get_global_rect().end.x <= panel.get_global_rect().position.x + 2
+				_ok(grid_scroll.is_visible_in_tree() and not panel.is_visible_in_tree()
+					and viewport.encloses(grid_scroll.get_global_rect()) and grid_scroll.size.y > 0,
+					"%s: КАРТЫ tab owns the full body without a cramped split view (%s)" % [dimensions,
+						grid_scroll.get_global_rect()])
+				editor.show_tab(DeckBuilderScreen.Tab.DECK)
+				await tree.process_frame
+				_ok(panel.is_visible_in_tree() and not grid_scroll.is_visible_in_tree()
 					and viewport.encloses(panel.get_global_rect()) and deck_scroll.size.y > 0,
-					"%s: editor grid and scrollable deck panel do not overlap (%s, %s)" % [dimensions,
-						grid_scroll.get_global_rect(), panel.get_global_rect()])
+					"%s: КОЛОДА tab shows a scrollable deck panel inside the viewport (%s)" % [dimensions,
+						panel.get_global_rect()])
 				_ok(editor.grid.columns >= 2 and viewport.encloses((scene.find_child("SaveDeckButton", true, false) as Control).get_global_rect()),
 					"%s: deck actions visible" % dimensions)
 				editor.draft.card_ids.assign(BattleLaunchConfig.technical_opponent_deck(HeroCatalog.KEZHARYN, CardDatabase))
@@ -262,8 +275,8 @@ func _test_sizes() -> void:
 							(editor.deck_list.get_child(editor.deck_list.get_child_count() - 1) as Control).get_global_rect(),
 							deck_scroll.scroll_vertical, deck_scroll.get_v_scroll_bar().max_value])
 			if route == Routes.PREBATTLE:
-				var start := scene.find_child("StartBattleButton", true, false) as Control
+				var start := scene.find_child("FindOpponentButton", true, false) as Control
 				_ok(viewport.encloses(start.get_global_rect()) and start.is_visible_in_tree(),
-					"%s: Start Battle in viewport" % dimensions)
+					"%s: НАЙТИ СОПЕРНИКА in viewport" % dimensions)
 			scene.free()
 	tree.root.size = Vector2i(1920, 1080)

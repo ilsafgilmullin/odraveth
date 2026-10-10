@@ -1,6 +1,13 @@
 [gd_scene format=3]
 
-[ext_resource type="PackedScene" path="res://scenes/common/placeholder_screen.tscn" id="1_base"]
+[ext_resource type="Script" path="res://scripts/ui/citadel_shell_screen.gd" id="1_shell"]
 
-[node name="Progress" instance=ExtResource("1_base")]
+[node name="Progress" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_shell")
 route_id = &"progress"

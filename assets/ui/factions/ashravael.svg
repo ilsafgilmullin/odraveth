@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
+  <title>Ashravael: broken blade through an angular flame crown (candidate)</title>
+  <defs><mask id="cut"><rect width="512" height="512" fill="white"/>
+    <path d="M256.0 56.0 L280.0 108.0 L276.0 228.0 L236.0 250.0 L232.0 108.0 Z M285.0 276.0 L245.0 298.0 L247.0 382.0 L283.0 382.0 Z" fill="black" stroke="black" stroke-width="16" stroke-linejoin="round"/>
+  </mask></defs>
+  <path d="M124.0 288.0 L84.0 196.0 L144.0 236.0 L156.0 128.0 L200.0 212.0 L220.0 156.0 L256.0 208.0 L292.0 156.0 L312.0 212.0 L356.0 128.0 L368.0 236.0 L428.0 196.0 L388.0 288.0 L336.0 316.0 L256.0 296.0 L176.0 316.0 Z" fill="#222b2e" mask="url(#cut)"/>
+  <path d="M256.0 56.0 L280.0 108.0 L276.0 228.0 L236.0 250.0 L232.0 108.0 Z" fill="#222b2e"/>
+  <path d="M285.0 276.0 L245.0 298.0 L247.0 382.0 L283.0 382.0 Z" fill="#222b2e"/>
+  <path d="M197.0 382.0 L333.0 382.0 L325.0 400.0 L205.0 400.0 Z" fill="#222b2e"/>
+  <path d="M255.0 400.0 L275.0 400.0 L275.0 442.0 L255.0 442.0 Z" fill="#222b2e"/>
+  <path d="M265.0 438.0 L281.0 454.0 L265.0 470.0 L249.0 454.0 Z" fill="#222b2e"/>
+</svg>

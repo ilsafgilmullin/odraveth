@@ -21,20 +21,27 @@ func _ready() -> void:
 	content.set_anchors_and_offsets_preset(PRESET_FULL_RECT)
 	content.add_theme_constant_override("separation", 12)
 	safe.add_child(content)
+	UiKit.apply_root_theme(self)
 	var header := HBoxContainer.new()
+	header.name = "Header"
+	header.add_theme_constant_override("separation", VisualTokens.SPACE_4)
 	content.add_child(header)
-	var back := Button.new()
+	var back := UiKit.make_button("НАЗАД", UiKit.ButtonRole.SECONDARY)
 	back.name = "BackButton"
-	back.text = "Назад"
 	back.custom_minimum_size = Vector2(180, 72)
 	back.pressed.connect(_request_back)
 	header.add_child(back)
 	var title := Label.new()
 	title.name = "ScreenTitle"
-	title.text = Routes.title(StringName(route_params.get("route", _route_id())))
+	title.text = Routes.title(StringName(route_params.get("route", _route_id()))).to_upper()
 	title.size_flags_horizontal = SIZE_EXPAND_FILL
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	title.add_theme_font_size_override("font_size", 46)
+	title.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	title.add_theme_font_size_override("font_size", VisualTokens.FONT_TITLE)
+	title.add_theme_color_override("font_color", VisualTokens.COLOR_STEEL_900)
+	var display_font := load(UiKit.DISPLAY_FONT_PATH) as Font
+	if display_font != null:
+		title.add_theme_font_override("font", display_font)
 	header.add_child(title)
 	message = Label.new()
 	message.name = "StatusMessage"
@@ -63,6 +70,9 @@ func handle_back_request() -> bool:
 		detail_overlay.visible = false
 		return true
 	for child: Node in get_children():
+		if child is ConfirmModal and (child as ConfirmModal).visible:
+			(child as ConfirmModal).cancel()
+			return true
 		if child is ConfirmationDialog and child.visible:
 			(child as ConfirmationDialog).hide()
 			return true

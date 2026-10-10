@@ -12,8 +12,10 @@ config_version=5
 
 config/name="ODRAVETH"
 config/description="Офлайн карточная стратегическая игра. Мир Нулмерис."
-config/icon="res://assets/ui/qa_icon.svg"
+config/icon="res://assets/ui/brand/app_icon.svg"
 run/main_scene="res://scenes/boot/boot.tscn"
+boot_splash/bg_color=Color(0.894118, 0.866667, 0.815686, 1)
+boot_splash/show_image=false
 config/quit_on_go_back=false
 config/features=PackedStringArray("4.7", "GL Compatibility")
 
