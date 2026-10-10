@@ -103,17 +103,45 @@ func _test_library() -> void:
 	var library := _tree.current_scene as HistoryShell
 	_ok(library != null and (library.find_child("HistoryTitle", true, false) as Label).text == "КНИГА НУЛМЕРИСА"
 		and library.section_buttons.size() == 8, "Library shows «КНИГА НУЛМЕРИСА» with eight sections")
+	_ok(library.OPEN_SECTIONS.size() == 7 and "АВТОРЫ" not in library.OPEN_SECTIONS,
+		"seven canon sections are open; unapproved credits stay sealed")
 	library.show_section("ГЕРОИ")
+	await _tree.process_frame
 	var texts := PresentationAudit.visible_texts(library)
 	var heroes_ok := true
 	for hero_id: StringName in PlayerSetupData.HERO_IDS:
 		heroes_ok = heroes_ok and ("%s · %s" % [String(HeroCatalog.HEROES[hero_id]["name_ru"]).to_upper(),
 			HeroCatalog.HEROES[hero_id]["name_en"]]) in texts
 	_ok(heroes_ok, "ГЕРОИ lists the four approved heroes")
-	for section: String in ["ЦИТАДЕЛЬ НУЛМЕРИСА", "ЛИЧНОСТИ", "МЕСТА", "ХРОНИКИ", "АВТОРЫ"]:
+	var canon_markers := {
+		"МИР НУЛМЕРИСА": "КНИГА ВЫБИРАЕТ БУДУЩЕЕ",
+		"ЦИТАДЕЛЬ НУЛМЕРИСА": "СЕРДЦЕ КОНВЕРГЕНЦИИ",
+		"ЛИЧНОСТИ": "ОДРАВЕТ · ПАМЯТЬ СТЁРТЫХ МИРОВ",
+		"МЕСТА": "ГОРЫ ПЕЧАТЕЙ",
+		"ХРОНИКИ": "VII · ЧЕТЫРЕ ПОБЕДИТЕЛЯ",
+	}
+	for section: String in canon_markers:
 		library.show_section(section)
 		await _tree.process_frame
-		_ok(library.find_child("SealedLabel", true, false) != null, "%s is a sealed page, not invented lore" % section)
+		texts = PresentationAudit.visible_texts(library)
+		_ok(library.find_child("SealedLabel", true, false) == null and canon_markers[section] in texts,
+			"%s shows its approved narrative entry" % section)
+	library.show_section("АВТОРЫ")
+	await _tree.process_frame
+	_ok(library.find_child("SealedLabel", true, false) != null,
+		"АВТОРЫ stays sealed because credits are not approved")
+	for size: Vector2i in [Vector2i(1600, 900), Vector2i(1920, 1080), Vector2i(2400, 1080), Vector2i(2800, 1752)]:
+		_tree.root.size = size
+		library.show_section("ХРОНИКИ")
+		await _tree.process_frame
+		await _tree.process_frame
+		var view := library.get_viewport_rect().grow(1.0)
+		var shelf := library.find_child("Sections", true, false) as Control
+		var book := library.find_child("Book", true, false) as Control
+		var page_scroll := library.find_child("PageScroll", true, false) as ScrollContainer
+		_ok(view.encloses(shelf.get_global_rect()) and view.encloses(book.get_global_rect())
+			and view.encloses(page_scroll.get_global_rect()) and page_scroll.get_v_scroll_bar().max_value > 0.0,
+			"%dx%d: Library navigation and scrollable Chronicle stay inside viewport" % [size.x, size.y])
 	_ok(not PresentationAudit.has_developer_words(library), "Library has no developer words")
 	_ok(library.handle_back_request() and await _wait(Routes.MAIN_MENU), "Back leaves the Library")
 

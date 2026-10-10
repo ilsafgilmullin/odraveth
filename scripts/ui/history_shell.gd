@@ -1,13 +1,14 @@
 class_name HistoryShell
 extends Control
-## Stage 7 «БИБЛИОТЕКА НУЛМЕРИСА»: the central «КНИГА НУЛМЕРИСА» with its eight
-## sections. Only approved facts are shown (factions and heroes from
-## PRODUCT_BASELINE §3–4); sections without approved text are sealed pages, never
-## invented lore. No progression, rewards or unlocks (Q-15 stays open).
+## «БИБЛИОТЕКА НУЛМЕРИСА»: the central «КНИГА НУЛМЕРИСА» with its eight
+## sections. Player-facing entries use only PRODUCT_BASELINE and the approved
+## NARRATIVE_CANON. Sections without approved content stay sealed. The Library is
+## reference content, not a progression or reward system (Q-15 stays open).
 
 const SECTIONS: Array[String] = ["МИР НУЛМЕРИСА", "ЦИТАДЕЛЬ НУЛМЕРИСА", "ФРАКЦИИ", "ГЕРОИ", "ЛИЧНОСТИ", "МЕСТА",
 	"ХРОНИКИ", "АВТОРЫ"]
-const OPEN_SECTIONS: Array[String] = ["МИР НУЛМЕРИСА", "ФРАКЦИИ", "ГЕРОИ"]
+const OPEN_SECTIONS: Array[String] = ["МИР НУЛМЕРИСА", "ЦИТАДЕЛЬ НУЛМЕРИСА", "ФРАКЦИИ", "ГЕРОИ",
+	"ЛИЧНОСТИ", "МЕСТА", "ХРОНИКИ"]
 const FACTION_ROWS := [
 	[Faction.Id.ASHRAVAEL, "Ashravael", HeroCatalog.KEZHARYN, "красный, огненный"],
 	[Faction.Id.NERQATHEN, "Nerqathen", HeroCatalog.VHORAZEL, "холодный бирюзовый"],
@@ -68,7 +69,7 @@ func _ready() -> void:
 		var button := UiKit.make_button(section, UiKit.ButtonRole.SEGMENT)
 		button.name = "Section_%d" % SECTIONS.find(section)
 		button.alignment = HORIZONTAL_ALIGNMENT_LEFT
-		button.add_theme_font_size_override("font_size", 21)
+		button.add_theme_font_size_override("font_size", 22)
 		button.custom_minimum_size = Vector2(300, 64)
 		if section not in OPEN_SECTIONS:
 			button.icon = null
@@ -105,7 +106,7 @@ func _build_book() -> Control:
 	book_title.name = "HistoryTitle"
 	book_title.text = "КНИГА НУЛМЕРИСА"
 	book_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	book_title.add_theme_font_size_override("font_size", 22)
+	book_title.add_theme_font_size_override("font_size", 24)
 	book_title.add_theme_color_override("font_color", VisualTokens.COLOR_GOLD_700)
 	if _display_font != null:
 		book_title.add_theme_font_override("font", _display_font)
@@ -160,30 +161,62 @@ func show_section(section: String) -> void:
 	for key: String in section_buttons:
 		var button := section_buttons[key] as Button
 		UiKit.style_button(button, UiKit.ButtonRole.PRIMARY if key == section else UiKit.ButtonRole.SEGMENT)
-		button.add_theme_font_size_override("font_size", 21)
+		button.add_theme_font_size_override("font_size", 22)
 		button.text = key if key in OPEN_SECTIONS else "%s\nзапечатано" % key
-		button.add_theme_font_size_override("font_size", 21 if key in OPEN_SECTIONS else 18)
+		button.add_theme_font_size_override("font_size", 22 if key in OPEN_SECTIONS else 20)
 	page_title.text = section
 	for child: Node in page_body.get_children():
 		page_body.remove_child(child)
 		child.queue_free()
 	match section:
 		"МИР НУЛМЕРИСА":
-			_paragraph("Нулмерис (NULMERYS) — мир игры ODRAVETH.")
-			_paragraph("В мире известны четыре фракции и их герои — их страницы уже открыты в этой книге.")
-			_sealed_note("Остальные записи о мире пока запечатаны.")
+			_heading("КНИГА ВЫБИРАЕТ БУДУЩЕЕ")
+			_paragraph("Нулмерис — мир, чью историю Книга не только хранит, но и переписывает.")
+			_paragraph("Когда миру угрожает гибель, начинается Конвергенция. Герои разыгрывают возможные исходы: один путь становится реальностью, остальные стираются.")
+			_quote("Каждая победа создаёт одну реальность и стирает все остальные.")
+			_paragraph("После завершения цикла герои забывают его. Но память исчезнувших миров не пропала бесследно.")
+		"ЦИТАДЕЛЬ НУЛМЕРИСА":
+			_heading("СЕРДЦЕ КОНВЕРГЕНЦИИ")
+			_paragraph("Цитадель — начальная и связующая точка истории. Здесь Хранитель оберегает Книгу, призывает героев и открывает очередной цикл.")
+			_paragraph("Первые испытания проходят в её залах, но Цитадель — не единственное поле боя. За её пределами возвращаются земли, стёртые прежними версиями истории.")
+			_heading("ПРОТИВОРЕЧИВЫЕ СТРАНИЦЫ")
+			_paragraph("После побед в Книге появляются записи с несовместимыми исходами одних и тех же событий. Именно эти противоречия впервые выдают существование прежних циклов.")
 		"ФРАКЦИИ":
+			_paragraph("Четыре пути спасения Нулмериса разумны — и каждый становится опасным, если довести его до крайности.")
 			for row: Array in FACTION_ROWS:
 				_faction_entry(row[0], row[1], row[2], row[3])
 			_faction_entry(Faction.Id.NEUTRAL, "Neutral", &"", "серебряно-каменный")
 		"ГЕРОИ":
+			_paragraph("Первая четвёрка — стартовые герои нынешнего цикла, но не единственные герои своих фракций. Каждый уже однажды побеждал и забыл цену своей победы.")
 			for hero_id: StringName in [HeroCatalog.KEZHARYN, HeroCatalog.VHORAZEL, HeroCatalog.SYRRAVETH, HeroCatalog.TAZHYRION]:
 				_hero_entry(hero_id)
+		"ЛИЧНОСТИ":
+			_heading("ОДРАВЕТ · ПАМЯТЬ СТЁРТЫХ МИРОВ")
+			_paragraph("Одравет — сознание, возникшее внутри Книги из памяти отвергнутых вариантов Нулмериса. Он не заменяет героев: он ведёт их через возможные истории и сохраняет память между циклами.")
+			_quote("Ты помнишь миры, которых никогда не было.")
+			_heading("ХРАНИТЕЛЬ · СТРАЖ КНИГИ")
+			_paragraph("Хранитель запускает Конвергенцию, чтобы не допустить окончательной гибели мира. Первые циклы спасали Нулмерис, но ни одна выбранная реальность не оставалась устойчивой.")
+			_paragraph("Он скрывает от героев их прежние победы, однако допускает пробуждение Одравета, надеясь найти решение, которого сама Книга выбрать не способна.")
+		"МЕСТА":
+			_paragraph("Книга ещё не закрепила истинные названия возвращённых земель. Пока страницы различают их по памяти и природе.")
+			_place_entry("ВОЗВРАЩЁННЫЕ ЛЕСА", "Земли Ашравайля возникают за пределами Цитадели. Герои помнят их по-разному — первое доказательство того, что стёртые места способны вернуться.")
+			_place_entry("БОЛОТА ОТРАЖЕНИЙ", "В отражениях видны альтернативные исходы. Здесь Сирравет первой различает присутствие Одравета и находит скрытую страницу Книги.")
+			_place_entry("ГОРЫ ПЕЧАТЕЙ", "В глубине гор Тажирион обнаруживает механизмы, которые сам создал в забытом цикле, чтобы запечатать Книгу.")
+			_place_entry("БЕЗМОЛВНЫЕ ЗЕМЛИ", "Здесь Вхоразель находит имена исчезнувших людей и узнаёт одно из них, не понимая почему.")
+		"ХРОНИКИ":
+			_paragraph("Первая большая арка раскрывает тайну постепенно — от первого противоречия до признания Хранителя.")
+			_chronicle_entry("I · СТРАНИЦА БЕЗ ИМЕНИ", "Книга показывает следы прошлых побед, хотя Хранитель называет происходящее первым испытанием.")
+			_chronicle_entry("II · ЦИТАДЕЛЬ", "Герои входят в Конвергенцию. После боёв появляются несовместимые записи об одних событиях.")
+			_chronicle_entry("III · ЛЕС", "Стёртая область возвращается в мир, а воспоминания героев о ней не совпадают.")
+			_chronicle_entry("IV · БОЛОТА", "Сирравет замечает Одравета. Отражения показывают исходы, которых не должно существовать.")
+			_chronicle_entry("V · ГОРЫ", "Тажирион находит созданные им печати и первое материальное доказательство прежней победы.")
+			_chronicle_entry("VI · БЕЗМОЛВНЫЕ ЗЕМЛИ", "Вхоразель узнаёт имя человека, стёртого вместе с одной из версий мира.")
+			_chronicle_entry("VII · ЧЕТЫРЕ ПОБЕДИТЕЛЯ", "Хранитель признаёт: каждый герой уже побеждал, а пробуждение Одравета возвращает отвергнутые варианты Нулмериса.")
 		_:
 			_sealed_page()
 
 
-func _paragraph(text_value: String, font_size: int = 22, color: Color = VisualTokens.COLOR_INK) -> Label:
+func _paragraph(text_value: String, font_size: int = 24, color: Color = VisualTokens.COLOR_INK) -> Label:
 	var label := Label.new()
 	label.text = text_value
 	label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
@@ -194,7 +227,28 @@ func _paragraph(text_value: String, font_size: int = 22, color: Color = VisualTo
 
 
 func _sealed_note(text_value: String) -> void:
-	_paragraph(text_value, 19, VisualTokens.COLOR_MUTED)
+	_paragraph(text_value, 21, VisualTokens.COLOR_MUTED)
+
+
+func _heading(text_value: String) -> void:
+	var label := _paragraph(text_value, 26, VisualTokens.COLOR_STEEL_900)
+	if _display_font != null:
+		label.add_theme_font_override("font", _display_font)
+
+
+func _quote(text_value: String) -> void:
+	var label := _paragraph("«%s»" % text_value, 26, VisualTokens.COLOR_GOLD_700)
+	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+
+
+func _place_entry(title: String, body: String) -> void:
+	_heading(title)
+	_paragraph(body, 22, VisualTokens.COLOR_STEEL_700)
+
+
+func _chronicle_entry(title: String, body: String) -> void:
+	_heading(title)
+	_paragraph(body, 22, VisualTokens.COLOR_STEEL_700)
 
 
 func _sealed_page() -> void:
@@ -206,7 +260,7 @@ func _sealed_page() -> void:
 	var label := _paragraph("СТРАНИЦЫ ЗАПЕЧАТАНЫ", 28, VisualTokens.COLOR_STEEL_700)
 	label.name = "SealedLabel"
 	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	var note := _paragraph("Записи этого раздела ещё не открыты.", 20, VisualTokens.COLOR_MUTED)
+	var note := _paragraph("Записи этого раздела ещё не открыты.", 22, VisualTokens.COLOR_MUTED)
 	note.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 
 
@@ -239,26 +293,26 @@ func _line(parent: Control, text_value: String, font_size: int, color: Color, di
 func _faction_entry(faction: Faction.Id, name_en: String, hero_id: StringName, accent: String) -> void:
 	var stack := _entry_row(faction)
 	var title := SetupUi.faction_name(faction) if faction != Faction.Id.NEUTRAL else "Нейтральные карты"
-	_line(stack, "%s · %s" % [title.to_upper(), name_en], 25, NulmerisEmblems.faction_color(faction).darkened(0.3), true)
+	_line(stack, "%s · %s" % [title.to_upper(), name_en], 26, NulmerisEmblems.faction_color(faction).darkened(0.3), true)
 	if hero_id != &"":
-		_line(stack, "Герой: %s" % HeroCatalog.HEROES[hero_id]["name_ru"], 20, VisualTokens.COLOR_STEEL_700)
+		_line(stack, "Герой: %s" % HeroCatalog.HEROES[hero_id]["name_ru"], 22, VisualTokens.COLOR_STEEL_700)
 	else:
-		_line(stack, "Не фракция героя: карты, доступные любой колоде.", 20, VisualTokens.COLOR_STEEL_700)
-	_line(stack, "Цвет: %s" % accent, 18, VisualTokens.COLOR_MUTED)
+		_line(stack, "Не фракция героя: карты, доступные любой колоде.", 22, VisualTokens.COLOR_STEEL_700)
+	_line(stack, "Цвет: %s" % accent, 20, VisualTokens.COLOR_MUTED)
 
 
 func _hero_entry(hero_id: StringName) -> void:
 	var data: Dictionary = HeroCatalog.HEROES[hero_id]
 	var stack := _entry_row(HeroCatalog.faction_of(hero_id))
-	_line(stack, "%s · %s" % [String(data["name_ru"]).to_upper(), data["name_en"]], 25, VisualTokens.COLOR_STEEL_900, true)
-	_line(stack, "Фракция: %s" % SetupUi.faction_name(HeroCatalog.faction_of(hero_id)), 20,
+	_line(stack, "%s · %s" % [String(data["name_ru"]).to_upper(), data["name_en"]], 26, VisualTokens.COLOR_STEEL_900, true)
+	_line(stack, "Фракция: %s" % SetupUi.faction_name(HeroCatalog.faction_of(hero_id)), 22,
 		HeroPresentation.faction_accent(hero_id).darkened(0.3))
-	_line(stack, "Способность «%s» · %d энергии" % [data["power_ru"], HeroPresentation.power_cost(hero_id)], 20,
+	_line(stack, "Способность «%s» · %d энергии" % [data["power_ru"], HeroPresentation.power_cost(hero_id)], 22,
 		VisualTokens.COLOR_STEEL_700)
-	_line(stack, HeroPresentation.power_description(hero_id), 18, VisualTokens.COLOR_INK)
+	_line(stack, HeroPresentation.power_description(hero_id), 20, VisualTokens.COLOR_INK)
 	var style := HeroPresentation.playstyle(hero_id)
 	if not style.is_empty():
-		_line(stack, "Стиль: %s" % style, 18, VisualTokens.COLOR_MUTED)
+		_line(stack, "Стиль: %s" % style, 20, VisualTokens.COLOR_MUTED)
 
 
 func handle_back_request() -> bool:

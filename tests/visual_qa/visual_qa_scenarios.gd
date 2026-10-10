@@ -52,8 +52,13 @@ func all() -> Array:
 		["result-victory", result_victory],
 		["result-defeat", result_defeat],
 		["result-draw", result_draw],
+		["library-world", library_world],
+		["library-citadel", library_citadel],
 		["library-factions", library_factions],
 		["library-heroes", library_heroes],
+		["library-personalities", library_personalities],
+		["library-places", library_places],
+		["library-chronicles", library_chronicles],
 		["library-sealed", library_sealed],
 		["boot-first", boot_first],
 		["boot-mid", boot_mid],
@@ -578,12 +583,32 @@ func library_factions() -> bool:
 	return await _library("ФРАКЦИИ")
 
 
+func library_world() -> bool:
+	return await _library("МИР НУЛМЕРИСА")
+
+
+func library_citadel() -> bool:
+	return await _library("ЦИТАДЕЛЬ НУЛМЕРИСА")
+
+
 func library_heroes() -> bool:
 	return await _library("ГЕРОИ")
 
 
-func library_sealed() -> bool:
+func library_personalities() -> bool:
+	return await _library("ЛИЧНОСТИ")
+
+
+func library_places() -> bool:
+	return await _library("МЕСТА")
+
+
+func library_chronicles() -> bool:
 	return await _library("ХРОНИКИ")
+
+
+func library_sealed() -> bool:
+	return await _library("АВТОРЫ")
 
 
 ## Boot frames are posed on an overlay so the capture run keeps its own route.

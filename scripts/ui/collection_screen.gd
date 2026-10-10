@@ -122,7 +122,7 @@ func _build_toolbar() -> void:
 	var archive_label := Label.new()
 	archive_label.name = "ArchiveLabel"
 	archive_label.text = "АРХИВ НУЛМЕРИСА"
-	archive_label.add_theme_font_size_override("font_size", 24)
+	archive_label.add_theme_font_size_override("font_size", 26)
 	archive_label.add_theme_color_override("font_color", VisualTokens.COLOR_GOLD_700)
 	toolbar.add_child(archive_label)
 
@@ -146,7 +146,7 @@ func _build_toolbar() -> void:
 	active_summary.name = "ActiveFilterSummary"
 	active_summary.custom_minimum_size.x = 210
 	active_summary.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	active_summary.add_theme_font_size_override("font_size", 22)
+	active_summary.add_theme_font_size_override("font_size", 24)
 	active_summary.add_theme_color_override("font_color", VisualTokens.COLOR_MUTED)
 	toolbar.add_child(active_summary)
 
@@ -155,7 +155,7 @@ func _build_toolbar() -> void:
 	_result_count_label.custom_minimum_size.x = 150
 	_result_count_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 	_result_count_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	_result_count_label.add_theme_font_size_override("font_size", 22)
+	_result_count_label.add_theme_font_size_override("font_size", 24)
 	_result_count_label.add_theme_color_override("font_color", VisualTokens.COLOR_STEEL_700)
 	toolbar.add_child(_result_count_label)
 
@@ -222,7 +222,7 @@ func _build_filter_panel() -> void:
 	filter_flow.add_child(reset_wrap)
 	var reset_label := Label.new()
 	reset_label.text = "ФИЛЬТРЫ"
-	reset_label.add_theme_font_size_override("font_size", 18)
+	reset_label.add_theme_font_size_override("font_size", 20)
 	reset_label.add_theme_color_override("font_color", VisualTokens.COLOR_MUTED)
 	reset_wrap.add_child(reset_label)
 	reset_button = UiKit.make_button("СБРОСИТЬ", UiKit.ButtonRole.SUBTLE)
@@ -238,7 +238,7 @@ func _make_filter_select(node_name: String, label_text: String) -> OptionButton:
 	filter_flow.add_child(wrap)
 	var label := Label.new()
 	label.text = label_text
-	label.add_theme_font_size_override("font_size", 18)
+	label.add_theme_font_size_override("font_size", 20)
 	label.add_theme_color_override("font_color", VisualTokens.COLOR_MUTED)
 	wrap.add_child(label)
 	var select := OptionButton.new()

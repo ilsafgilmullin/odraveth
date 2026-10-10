@@ -8,11 +8,11 @@ Three panels over the Visual Alpha Citadel hall backdrop:
 
 - **ВАШ ГЕРОЙ** — temporary portrait, name, faction symbol, hero power and cost, **СМЕНИТЬ ГЕРОЯ**;
 - **ВАША КОЛОДА** — name of the selected ready deck, `30/30` with **✓ ГОТОВА**, cost curve, composition, **СМЕНИТЬ КОЛОДУ** (or **СОБРАТЬ КОЛОДУ** when no ready deck exists);
-- **СЛОЖНОСТЬ** — segmented **НОВИЧОК / ТАКТИК / СТРАТЕГ** (selected = filled + check icon) with the approved principle of each level, and **ПОДАЧА БОЯ** — switches **Подсказки / Анимации / Прогноз урона**.
+- **СЛОЖНОСТЬ** — segmented **НОВИЧОК / ТАКТИК / СТРАТЕГ** (selected = filled + check icon) with the approved principle of each level, and **ПОДАЧА БОЯ** — working switches **Подсказки / Анимации**. The saved damage-forecast hook is intentionally hidden until an authoritative forecast API exists.
 
 Main action: **НАЙТИ СОПЕРНИКА** (disabled without a ready selected deck). There is no manual opponent selection.
 
-Switches use Visual Alpha icons (`switch_on.svg` / `switch_off.svg`): knob position and a check mark carry the state, not colour alone. All three toggles persist locally, default ON, and only change presentation (`BattleLaunchConfig.presentation_options`); MatchEngine, AI and RNG never read them.
+Switches use Visual Alpha icons (`switch_on.svg` / `switch_off.svg`): knob position and a check mark carry the state, not colour alone. Both visible toggles persist locally, default ON, and only change presentation (`BattleLaunchConfig.presentation_options`); MatchEngine, AI and RNG never read them. The legacy forecast preference remains compatible in save/config data but has no visible control or battle calculation.
 
 ## Random opponent
 
