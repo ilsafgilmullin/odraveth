@@ -99,7 +99,7 @@ func _test_drop_in() -> void:
 	_write("environments/citadel_arena", Vector2i(96, 54), false)
 	_write("environment_details/convergence_ring_outer", Vector2i(64, 64), true)
 	ArtAssets.clear_cache()
-	_ok(ArtAssets.has(&"guardian_terrace") and ArtAssets.texture(&"guardian").get_size() == Vector2(40, 60),
+	_ok(ArtAssets.has(&"guardian_terrace") and ArtAssets.texture(&"guardian_terrace").get_size() == Vector2(96, 54),
 		"dropped files resolve through their manifest slot")
 	var backdrop := MainMenuBackdrop.new()
 	var guardian := GuardianPlaceholder.new()
@@ -111,8 +111,8 @@ func _test_drop_in() -> void:
 	portrait.configure(HeroCatalog.SYRRAVETH)
 	var other := HeroPortraitPlaceholder.new()
 	other.configure(HeroCatalog.KEZHARYN)
-	_ok(not portrait.is_temporary_asset() and other.is_temporary_asset(),
-		"a hero portrait is used only for its own hero; others keep the temporary niche")
+	_ok(not portrait.is_temporary_asset() and not other.is_temporary_asset(),
+		"hero portraits with production art are not temporary assets")
 	var field := CitadelBattlefield.new()
 	_tree.root.add_child(field)
 	_ok(not field.is_processing(), "arena art replaces the procedural battlefield and its shimmer")

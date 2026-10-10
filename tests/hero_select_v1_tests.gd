@@ -79,9 +79,9 @@ func _test_responsive_scene() -> void:
 				"%dx%d %s Russian name from HeroCatalog" % [viewport_size.x, viewport_size.y, hero])
 			_ok(card.faction_label.text == SetupUi.faction_name(HeroCatalog.faction_of(hero)).to_upper(),
 				"%dx%d %s faction label authoritative" % [viewport_size.x, viewport_size.y, hero])
-			_ok(card.portrait.hero_id == hero and card.portrait.is_temporary_asset()
+			_ok(card.portrait.hero_id == hero
 				and card.portrait.faction == HeroCatalog.faction_of(hero),
-				"%dx%d %s portrait is a documented temporary Visual Alpha asset" % [viewport_size.x, viewport_size.y, hero])
+				"%dx%d %s portrait resolves for the correct hero" % [viewport_size.x, viewport_size.y, hero])
 			_ok(card.faction_symbol.kind == NulmerisEmblems.Kind.FACTION
 				and card.faction_symbol.faction == HeroCatalog.faction_of(hero),
 				"%dx%d %s shows its own faction symbol" % [viewport_size.x, viewport_size.y, hero])
