@@ -69,6 +69,10 @@ func _drain(scene: Control) -> void:
 		scene._tick_events(100.0)
 
 
+func _hand_card(scene: Control, iid: int) -> BattleCardView:
+	return scene._hand_box.get_node_or_null("HandCard_%d" % iid) as BattleCardView
+
+
 func _test_launch_and_mulligan() -> void:
 	var scene := _new_scene()
 	_ok(scene._ui_state == scene.UIState.MULLIGAN and scene._mulligan_overlay.visible,
@@ -90,19 +94,23 @@ func _test_card_play_and_detail() -> void:
 	var card: int = f.hand(0, &"neutral_vantrel_duskling")
 	var unavailable: int = f.hand(0, &"ashravael_gorebrand")
 	scene._refresh_ui()
-	var hand_btn := scene._hand_box.get_child(0).get_child(0) as Button
-	var info_btn := scene._hand_box.get_child(1).get_child(1) as Button
-	_ok(not hand_btn.disabled and (scene._hand_box.get_child(1).get_child(0) as Button).disabled,
+	var hand_view := _hand_card(scene, card)
+	var unavailable_view := _hand_card(scene, unavailable)
+	_ok(hand_view != null and unavailable_view != null and not hand_view.disabled and unavailable_view.disabled,
 		"playable card enabled, mandatory-target card unavailable")
-	info_btn.pressed.emit()
+	unavailable_view.detail_requested.emit(unavailable)
 	_ok(scene._detail_overlay.visible and scene._detail_text.text.contains("Стоимость:")
 		and scene._detail_text.text.contains("Фракция:") and scene._detail_text.text.contains("Редкость:")
 		and scene._detail_text.text.contains("Тип:"), "disabled card still exposes complete detail")
 	(scene.find_child("CardDetailCloseButton", true, false) as Button).pressed.emit()
 	_ok(not scene._detail_overlay.visible and f.player(0).hand.size() == 2, "detail closes without mutating match")
 	scene._on_hand_card_tapped(card)
+	_ok(scene._ui_state == scene.UIState.CARD_SELECTED and f.player(0).hand.size() == 2
+		and _hand_card(scene, card).selected and scene._play_btn.is_visible_in_tree(),
+		"first tap selects (lifts) a targetless card without playing it")
+	scene._on_hand_card_tapped(card)
 	_ok(f.player(0).hand.size() == 1 and f.player(0).board.size() == 1,
-		"targetless hand card plays via UI action")
+		"second tap plays the targetless card via UI action")
 	_ok(scene._ui_state == scene.UIState.RESOLVING, "accepted play locks input during event resolution")
 	scene._on_hand_card_tapped(unavailable)
 	_ok(f.player(0).hand.size() == 1, "locked/disabled card cannot execute twice")
@@ -273,7 +281,7 @@ func _test_safe_battle_exit() -> void:
 
 
 func _test_responsive_structure() -> void:
-	for dimensions: Vector2i in [Vector2i(1920, 1080), Vector2i(2400, 1080)]:
+	for dimensions: Vector2i in [Vector2i(1920, 1080), Vector2i(1600, 900), Vector2i(2400, 1080), Vector2i(2800, 1752)]:
 		_tree.root.size = dimensions
 		var case := _scenario()
 		var scene: Control = case.scene
@@ -285,32 +293,42 @@ func _test_responsive_structure() -> void:
 			f.hand(0, &"neutral_vantrel_duskling")
 		scene._refresh_ui()
 		await _tree.process_frame
-		var safe := scene.get_child(0) as Control
-		var scroll := scene._hand_box.get_parent() as ScrollContainer
-		var viewport := Rect2(Vector2.ZERO, Vector2(dimensions))
-		_ok(scene._plr_board.get_child_count() == 7 and scene._opp_board.get_child_count() == 7,
-			"%s: seven creatures fit in each board" % dimensions)
-		scroll.ensure_control_visible(scene._hand_box.get_child(9))
 		await _tree.process_frame
-		var last_card := scene._hand_box.get_child(9) as Control
-		_ok(scene._hand_box.get_child_count() == 10 and scroll.horizontal_scroll_mode == ScrollContainer.SCROLL_MODE_AUTO
-			and last_card.get_global_rect().end.x <= scroll.get_global_rect().end.x + 2.0,
-			"%s: ten cards accessible through horizontal hand scroll" % dimensions)
-		_ok(scene._end_turn_btn.is_visible_in_tree() and scene._hero_power_btn.is_visible_in_tree()
-			and scene._hand_box.is_visible_in_tree()
-			and viewport.encloses(scene._end_turn_btn.get_global_rect())
-			and viewport.encloses(scene._hero_power_btn.get_global_rect())
-			and viewport.encloses(scroll.get_global_rect()),
-			"%s: turn, power and hand remain in viewport (end %s power %s scroll %s)" % [
-				dimensions, scene._end_turn_btn.get_global_rect(),
-				scene._hero_power_btn.get_global_rect(), scroll.get_global_rect()])
-		_ok(scene._plr_board.size.x <= safe.size.x and scene._opp_board.size.x <= safe.size.x
-			and scene._plr_board.get_child(6).get_global_rect().end.x <= safe.get_global_rect().end.x
+		var safe := scene.get_node("SafeArea") as Control
+		var viewport := scene.get_viewport_rect().grow(1.0)
+		var label := "%dx%d" % [dimensions.x, dimensions.y]
+		_ok(scene._plr_board.get_child_count() == 7 and scene._opp_board.get_child_count() == 7,
+			"%s: seven creatures fit in each board" % label)
+		var pieces_ok := true
+		for row: HBoxContainer in [scene._plr_board, scene._opp_board]:
+			for piece: Control in row.get_children():
+				pieces_ok = pieces_ok and viewport.encloses(piece.get_global_rect()) and piece.size.x >= 110.0
+		_ok(pieces_ok and scene._plr_board.get_child(6).get_global_rect().end.x <= safe.get_global_rect().end.x
 			and scene._opp_board.get_child(6).get_global_rect().end.x <= safe.get_global_rect().end.x,
-			"%s: boards stay within safe width" % dimensions)
+			"%s: 7+7 board pieces stay readable inside the safe width" % label)
+		var hand_ok := scene._hand_box.get_child_count() == 10 and scene.find_child("HandScroll", true, false) == null
+		var board_bottom: float = scene._plr_board.get_global_rect().end.y
+		for card: Control in scene._hand_box.get_children():
+			var rect := card.get_global_rect()
+			var plate := Rect2(rect.position, Vector2(rect.size.x * 0.3, rect.size.y * 0.3))
+			hand_ok = hand_ok and viewport.encloses(plate) and rect.position.y >= board_bottom - 2.0
+		_ok(hand_ok, "%s: ten hand cards fan without scrolling; every cost plate visible below the board" % label)
+		var visible_rects: Array[Rect2] = []
+		for control: Control in [scene._end_turn_btn, scene._hero_power_btn, scene._history_btn, scene._menu_btn,
+				scene._plr_hero, scene._opp_hero]:
+			visible_rects.append(control.get_global_rect())
+		var controls_ok := true
+		for rect: Rect2 in visible_rects:
+			controls_ok = controls_ok and viewport.encloses(rect)
+		_ok(controls_ok and scene._end_turn_btn.is_visible_in_tree() and scene._hero_power_btn.is_visible_in_tree(),
+			"%s: end turn, hero power, history, menu and hero clusters remain in viewport" % label)
+		var field: Rect2 = scene._field_rect
+		_ok(not field.intersects(scene._plr_hero.get_rect()) and not field.intersects(scene._opp_hero.get_rect())
+			and not field.intersects(scene._end_turn_btn.get_rect()),
+			"%s: HUD sits on the edges; the field centre stays clean" % label)
 		_ok(viewport.encloses(scene._mulligan_overlay.get_global_rect())
 			and viewport.encloses(scene._detail_overlay.get_global_rect())
 			and viewport.encloses(scene._choice_overlay.get_global_rect()),
-			"%s: modal overlays remain visible" % dimensions)
+			"%s: modal overlays remain visible" % label)
 		scene.free()
 	_tree.root.size = Vector2i(1920, 1080)
