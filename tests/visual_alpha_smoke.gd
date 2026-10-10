@@ -6,6 +6,7 @@ const MODULES := [
 	["deck_builder", preload("res://tests/deck_builder_v1_tests.gd")],
 	["prebattle", preload("res://tests/prebattle_v3_tests.gd")],
 	["battle", preload("res://tests/battle_v2_tests.gd")],
+	["result_library", preload("res://tests/result_library_tests.gd")],
 ]
 const WATCHDOG_SECONDS := 180.0
 

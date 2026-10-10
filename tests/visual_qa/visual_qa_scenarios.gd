@@ -47,6 +47,12 @@ func all() -> Array:
 		["battle-opponent_turn", battle_opponent_turn],
 		["battle-history", battle_history],
 		["battle-detail", battle_detail],
+		["result-victory", result_victory],
+		["result-defeat", result_defeat],
+		["result-draw", result_draw],
+		["library-factions", library_factions],
+		["library-heroes", library_heroes],
+		["library-sealed", library_sealed],
 	]
 
 
@@ -511,6 +517,45 @@ func battle_detail() -> bool:
 	var first := scene._hand_box.get_child(0) as BattleCardView
 	scene._show_hand_detail(first.instance_id)
 	return scene._detail_overlay.visible
+
+
+func _result(outcome: MatchOutcome.Result) -> bool:
+	_clear_overlay()
+	_use_profile(qa_profile())
+	return await runner.open_route(Routes.RESULT, {ResultScreen.PARAM_OUTCOME: outcome,
+		BattleLaunchConfig.PARAM_KEY: qa_battle_config(), "turns": 11, "cards_player": 9, "cards_ai": 8})
+
+
+func result_victory() -> bool:
+	return await _result(MatchOutcome.Result.VICTORY)
+
+
+func result_defeat() -> bool:
+	return await _result(MatchOutcome.Result.DEFEAT)
+
+
+func result_draw() -> bool:
+	return await _result(MatchOutcome.Result.DRAW)
+
+
+func _library(section: String) -> bool:
+	_clear_overlay()
+	if not await runner.open_route(Routes.HISTORY):
+		return false
+	(runner.get_tree().current_scene as HistoryShell).show_section(section)
+	return true
+
+
+func library_factions() -> bool:
+	return await _library("ФРАКЦИИ")
+
+
+func library_heroes() -> bool:
+	return await _library("ГЕРОИ")
+
+
+func library_sealed() -> bool:
+	return await _library("ХРОНИКИ")
 
 
 ## Synchronous QA ticks never advance tweens; drop transient effects before a shot.

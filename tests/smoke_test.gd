@@ -430,9 +430,12 @@ func _test_navigation() -> void:
 		_check(await _wait_for_route(Routes.RESULT), "real Battle result route opens")
 		var result_scene := get_tree().current_scene
 		var stats := result_scene.find_child("ResultStats", true, false) as Label
+		var player_side := result_scene.find_child("PlayerSide", true, false) as Control
+		var opponent_side := result_scene.find_child("OpponentSide", true, false) as Control
 		_check(stats != null and stats.text.contains("Ходов: 3") and stats.text.contains("2 (вы) / 1 (ИИ)")
-			and stats.text.contains("Стратег")
-			and stats.text.contains(player_name) and stats.text.contains(opponent_name),
+			and player_side != null and (player_side.find_child("HeroName", true, false) as Label).text == player_name.to_upper()
+			and opponent_side != null and (opponent_side.find_child("HeroName", true, false) as Label).text == opponent_name.to_upper()
+			and (opponent_side.find_child("SideDetail", true, false) as Label).text.contains("Стратег"),
 			"Result displays both heroes, authoritative turns and difficulty (%s)" % (stats.text if stats != null else "missing"))
 		_check(_find_button("OpponentButton") != null and _find_button("DeckButton") != null
 			and _find_button("RematchButton") != null and _find_button("MainMenuButton") != null,
@@ -450,7 +453,7 @@ func _test_navigation() -> void:
 		SceneRouter.replace_with(Routes.RESULT, return_params)
 		await _wait_for_route(Routes.RESULT)
 		_find_button("OpponentButton").pressed.emit()
-		_check(await _wait_for_route(Routes.PREBATTLE), "Result opponent action uses persisted Prebattle")
+		_check(await _wait_for_route(Routes.OPPONENT_SEARCH), "Result НОВЫЙ СОПЕРНИК draws again through Opponent Search")
 		SceneRouter.replace_with(Routes.RESULT, return_params)
 		await _wait_for_route(Routes.RESULT)
 		_find_button("DeckButton").pressed.emit()
@@ -467,7 +470,7 @@ func _test_navigation() -> void:
 			continue
 		finish.pressed.emit()
 		_check(await _wait_for_route(Routes.RESULT), "battle leads to result (%s)" % key)
-		var message := get_tree().current_scene.find_child("MessageLabel") as Label
+		var message := get_tree().current_scene.find_child("MessageLabel", true, false) as Label
 		_check(message != null and message.visible and message.text == MatchOutcome.title(outcome),
 			"result shows '%s'" % MatchOutcome.title(outcome))
 
@@ -488,7 +491,7 @@ func _test_navigation() -> void:
 
 	var result_without_params := SceneRouter.go_to(Routes.RESULT)
 	_check(result_without_params == OK and await _wait_for_route(Routes.RESULT)
-		and (get_tree().current_scene.find_child("MessageLabel") as Label).text == "Результат неизвестен",
+		and (get_tree().current_scene.find_child("MessageLabel", true, false) as Label).text == "Результат неизвестен",
 		"result without outcome does not crash")
 	_expect_errors(false)
 	EventBus.route_changed.disconnect(_on_route_changed)
