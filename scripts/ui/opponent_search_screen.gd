@@ -261,6 +261,8 @@ func _cancel() -> void:
 	set_process(false)
 	if SceneRouter.can_go_back():
 		SceneRouter.go_back()
+	elif config != null and config.is_story():
+		SceneRouter.reset_to(Routes.PREBATTLE, StoryFlow.story_params(config.story_chapter))
 	else:
 		SceneRouter.reset_to(Routes.PREBATTLE)
 

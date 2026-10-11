@@ -9,7 +9,7 @@ ODRAVETH — offline fantasy card strategy game for Android
 
 ## Статус
 
-**Stage 7 Visual Alpha + Stage B UI/UX hardening.** Поверх проверенного offline-движка и Android technical alpha собрана единая визуальная система, интегрированы арт-кандидаты, обновлены основные экраны и открыта каноническая Библиотека Нулмериса:
+**Stage 7 Visual Alpha + Stage B UI/UX hardening + Stage C Story Mode V1.** Поверх проверенного offline-движка и Android technical alpha собрана единая визуальная система, интегрированы арт-кандидаты, обновлены основные экраны и открыта каноническая Библиотека Нулмериса:
 
 - честный sanitized observation API без opponent hand, deck order, future draw и RNG;
 - NOVICE / TACTICIAN / STRATEGIST с детерминированным explainable command scoring;
@@ -18,7 +18,8 @@ ODRAVETH — offline fantasy card strategy game for Android
 - information-barrier, determinism, AI-vs-AI, stress и mutation tests.
 - адаптивные Hero Select, Collection, Deck Builder, Prebattle, Battle, Result и Library для четырёх landscape-разрешений;
 - утверждённая нарративная основа: Книга выбирает реальность, игрок — Одравет, Хранитель поддерживает цикл, а стёртые земли возвращаются;
-- семь содержательных разделов Библиотеки; неутверждённые «Авторы» остаются запечатаны.
+- семь содержательных разделов Библиотеки; неутверждённые «Авторы» остаются запечатаны;
+- Story Mode V1: «Хроники» → пролог → «Испытание Цитадели» → сюжетный бой по обычным правилам без модификаторов → последствие реального исхода (победа, поражение или ничья); обычный режим «Войти в Нулмерис» не изменился.
 
 Путь «Герои → Колоды → Играть → Подготовка к бою → Начать бой» запускает матч с сохранённой пользовательской колодой из 30 карт. Коллекция содержит все 40 карт; фильтры и описание доступны без системы владения. До утверждения колод ИИ внутренняя техническая генерация используется только для противника. Battle UI включает выбор целей, информационную карточку, пошаговое отображение AI и результат с повтором. Текущий APK остаётся техническим debug-артефактом с временным package ID; арт и бренд Visual Alpha ещё требуют финального утверждения. «Прогресс» скрыт и запечатан (Q-15), «Настройки» содержат два работающих переключателя. AI не использует neural network, external API или сеть.
 
@@ -38,6 +39,7 @@ GODOT_BIN=/path/to/godot-4.7.2 tests/run_tests.sh   # все проверки
 | [docs/PRODUCT_BASELINE.md](docs/PRODUCT_BASELINE.md) | Утверждённые продуктовые решения — source of truth |
 | [docs/NARRATIVE_CANON.md](docs/NARRATIVE_CANON.md) | Канон мира, первая сюжетная арка и границы расширения |
 | [docs/STORY_SLICE_01.md](docs/STORY_SLICE_01.md) | Реализованный пролог «Страница без имени → Цитадель» |
+| [docs/STORY_MODE_V1.md](docs/STORY_MODE_V1.md) | Story Mode V1: «Испытание Цитадели», сюжетный бой и последствия |
 | [docs/BATTLE_MODIFIERS_DESIGN.md](docs/BATTLE_MODIFIERS_DESIGN.md) | Четыре режима боя, правила модификаторов и этапы внедрения |
 | [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | Архитектура проекта |
 | [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md) | Установка, запуск, проверки, соглашения |

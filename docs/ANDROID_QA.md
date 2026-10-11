@@ -34,7 +34,10 @@ Package ID намеренно технический. Перед публика�
 - `minSdk=24`, `targetSdk=36` задаются официальным prebuilt template;
 - offline: custom permissions пусты, `INTERNET` не запрашивается;
 - backup user data отключён;
-- `tests/**`, `docs/**`, `.github/**` исключены; production scenes/scripts и `data/cards/*.json` включены.
+- `tests/**`, `docs/**`, `.github/**` и `masters/**` исключены; production scenes/scripts и `data/cards/*.json` включены.
+- `masters/` (≈113 МБ исходных художественных мастеров) защищён дважды: `masters/.gdignore` не даёт Godot
+  импортировать его, а `exclude_filter` явно исключает его из export. `include_filter` пуст. Обе части
+  контракта проверяет `tests/smoke_test.gd` (раздел «Android export configuration»).
 
 Техническая SVG-иконка является placeholder для валидного Android export и не является финальным art.
 
@@ -93,3 +96,20 @@ adb logcat
 каждую ZIP-запись, проверяет package/version и APK Signature Scheme v2/v3 и
 только после этого атомарно присваивает итоговое имя. Частично записанный APK
 не может заменить последний валидный артефакт.
+
+## Packaging audit — Story Mode V1 (2026-10-11)
+
+Диагностические debug-APK собраны локально Godot 4.7.2 stable с официальными export templates до и после
+добавления `masters/**` в `exclude_filter`; пользователю они не публиковались и релизом не являются.
+
+| Проверка | Результат |
+|---|---|
+| `masters/`, `tests/`, `docs/`, `.github/` внутри APK | отсутствуют в обеих сборках (до изменения их уже отсекал `.gdignore`) |
+| `data/cards/*.json` | 5 файлов (все 40 карт) присутствуют |
+| Package / version | `com.example.odraveth.qa`, `0.6.1-qa` (`versionCode=7`) — без изменений |
+| Permissions | ни одного `uses-permission`, `INTERNET` нет |
+| Ориентация | `sensorLandscape` |
+| Подпись | стандартная debug-подпись (`CN=Android Debug`), APK Signature Scheme v2/v3 |
+| Секреты | keystore, `.env`, `export_credentials.cfg` в архиве отсутствуют |
+
+Сборка не является финальной; реальное Android-устройство этим аудитом не проверялось.

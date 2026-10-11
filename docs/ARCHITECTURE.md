@@ -120,6 +120,11 @@ MatchEngine ──► CommandValidator, TurnFlow, CardPlay, Combat, HeroPowers �
 | `prebattle` | `scenes/prebattle/prebattle.tscn` | Подготовка к бою |
 | `battle` | `scenes/battle/battle.tscn` | Боевой экран |
 | `result` | `scenes/result/result.tscn` | Результат боя |
+| `opponent_search` | `scenes/prebattle/opponent_search.tscn` | Поиск соперника |
+| `history` | `scenes/history/history_shell.tscn` | Библиотека Нулмериса |
+| `story_prologue` | `scenes/story/story_prologue.tscn` | Страница без имени |
+| `story_citadel` | `scenes/story/story_citadel.tscn` | Испытание Цитадели |
+| `story_aftermath` | `scenes/story/story_aftermath.tscn` | Запись испытания |
 | `progress` | `scenes/progress/progress.tscn` | Прогресс |
 | `settings` | `scenes/settings/settings.tscn` | Настройки |
 
@@ -148,7 +153,8 @@ MatchEngine ──► CommandValidator, TurnFlow, CardPlay, Combat, HeroPowers �
 SceneRouter.replace_with(Routes.RESULT, {ResultScreen.PARAM_OUTCOME: MatchOutcome.Result.VICTORY})
 ```
 
-Получатель объявляет ключи своих параметров константами (`ResultScreen.PARAM_OUTCOME`). Тот же механизм в будущем передаст на экран боя конфигурацию матча (герой, колода, противник, сложность), не храня её в `AppState`.
+Получатель объявляет ключи своих параметров константами (`ResultScreen.PARAM_OUTCOME`,
+`HistoryShell.PARAM_SECTION`, `StoryFlow.PARAM_CHAPTER` / `PARAM_PAGE` / `PARAM_VIEW`) и проверяет их значения. Тот же механизм в будущем передаст на экран боя конфигурацию матча (герой, колода, противник, сложность), не храня её в `AppState`.
 
 ### 5.4. Эволюция экранов после Stage 0
 
@@ -423,6 +429,8 @@ tests/ai/ проверяет information barriers, 100-кратную повто
 
 `BattleLaunchConfig` (`scripts/battle/battle_launch_config.gd`) — DTO для запуска матча. Передаётся параметром маршрута (`BattleLaunchConfig.PARAM_KEY`). Поля: `player_hero`, `opponent_hero`, `player_deck`, `opponent_deck`, `ai_difficulty` (`AiDifficulty.Level`), `rng_seed`. `technical_dev_config(card_source)` (и совместимый `default_config`) строит только dev/test fixture, не продуктовый preset. Начиная со Stage 5 Prebattle всегда передаёт конфигурацию с сохранённой готовой пользовательской колодой; `presentation_options` не влияют на движок.
 
+Stage C (Story Mode V1) добавил только navigation/presentation-метаданные: `mode` (`BattleLaunchConfig.Mode.NORMAL` по умолчанию или `STORY`), `story_chapter` (только id из `STORY_CHAPTERS`, сейчас `citadel_trial`) и `story_return_route`. `set_story()` отклоняет неизвестную главу; `rematch()` и `with_opponent()` копируют метаданные. `BattleSession` их не читает, поэтому MatchEngine, AI и RNG при одинаковых входах ведут себя одинаково в NORMAL и STORY (тест). Подробности: [STORY_MODE_V1.md](STORY_MODE_V1.md).
+
 ### 14.2. BattleSession
 
 `BattleSession` (`scripts/battle/battle_session.gd`) — оркестрация одного матча. Владеет `MatchEngine`, `AiController` и `AiTurnRunner`. Единственный интерфейс боевого UI к движку: UI не обращается к `MatchState`, `MatchResolver`, `CommandValidator`, `EffectExecutor`, `AiEvaluator`, `AiMulliganPolicy` напрямую.
@@ -439,7 +447,11 @@ UIState machine: `TEST_MODE`, `MULLIGAN`, `PLAYER_IDLE`, `CARD_SELECTED`, `ATTAC
 
 ### 14.4. ResultScreen
 
-`ResultScreen` (`scripts/ui/result_screen.gd`) показывает исход, обоих героев, AI difficulty, движковый turn count и карты; «Повторить бой» создаёт новый seed и новый MatchEngine при сохранении config. «Выбор противника» → PREBATTLE и «Сменить колоду» → DECK_BUILDER — утверждённые Stage 5 маршруты (Q-14 закрыт).
+`ResultScreen` (`scripts/ui/result_screen.gd`) показывает исход, обоих героев, AI difficulty, движковый turn count и карты; «Повторить бой» создаёт новый seed и новый MatchEngine при сохранении config. «Выбор противника» → PREBATTLE и «Сменить колоду» → DECK_BUILDER — утверждённые Stage 5 маршруты (Q-14 закрыт). Для STORY-конфигурации экран меняет только набор действий: «Продолжить историю» → `STORY_AFTERMATH` (исход MatchEngine + та же конфигурация), «Повторить испытание» → `rematch()`, «В Хроники» → `StoryFlow.return_from(config)`, «Главное меню»; Back ведёт в «Хроники».
+
+### 14.6. Story Mode V1
+
+`StoryCitadelScreen` (`scripts/ui/story_citadel.gd`) — вступление из трёх страниц и вид подготовки, который читает `AppState.profile` и открывает существующие Hero Select / Deck Builder и Prebattle с параметром `story_chapter`. `PrebattleScreen` в STORY показывает подпись и «МОДИФИКАТОРЫ: НЕТ» и вызывает `OpponentSelector.pick_story_trial_with_seed()`. `StoryAftermathScreen` показывает запись Книги для реального исхода; `StoryFlow` хранит ключи параметров, утверждённые тексты последствий, склонение имён и возврат в «Хроники» (`reset_to(HISTORY, {section: "ХРОНИКИ"})`, история маршрутов очищается). Новых autoload нет.
 
 ### 14.5. Поток данных
 
