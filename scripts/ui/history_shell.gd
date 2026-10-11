@@ -20,6 +20,7 @@ var section_buttons: Dictionary = {}
 var current_section := ""
 var page_title: Label
 var page_body: VBoxContainer
+var prologue_button: Button
 
 var _display_font: Font
 
@@ -165,6 +166,7 @@ func show_section(section: String) -> void:
 		button.text = key if key in OPEN_SECTIONS else "%s\nзапечатано" % key
 		button.add_theme_font_size_override("font_size", 22 if key in OPEN_SECTIONS else 20)
 	page_title.text = section
+	prologue_button = null
 	for child: Node in page_body.get_children():
 		page_body.remove_child(child)
 		child.queue_free()
@@ -205,6 +207,10 @@ func show_section(section: String) -> void:
 			_place_entry("БЕЗМОЛВНЫЕ ЗЕМЛИ", "Здесь Вхоразель находит имена исчезнувших людей и узнаёт одно из них, не понимая почему.")
 		"ХРОНИКИ":
 			_paragraph("Первая большая арка раскрывает тайну постепенно — от первого противоречия до признания Хранителя.")
+			prologue_button = UiKit.make_button("ПРОЧИТАТЬ ПРОЛОГ", UiKit.ButtonRole.PRIMARY)
+			prologue_button.name = "PrologueButton"
+			prologue_button.pressed.connect(SceneRouter.go_to.bind(Routes.STORY_PROLOGUE))
+			page_body.add_child(prologue_button)
 			_chronicle_entry("I · СТРАНИЦА БЕЗ ИМЕНИ", "Книга показывает следы прошлых побед, хотя Хранитель называет происходящее первым испытанием.")
 			_chronicle_entry("II · ЦИТАДЕЛЬ", "Герои входят в Конвергенцию. После боёв появляются несовместимые записи об одних событиях.")
 			_chronicle_entry("III · ЛЕС", "Стёртая область возвращается в мир, а воспоминания героев о ней не совпадают.")
