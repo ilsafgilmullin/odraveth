@@ -36,7 +36,8 @@ GODOT_BIN=/path/to/godot-4.7.2 tests/run_tests.sh   # все проверки
 | Документ | Содержание |
 |---|---|
 | [docs/PRODUCT_BASELINE.md](docs/PRODUCT_BASELINE.md) | Утверждённые продуктовые решения — source of truth |
-| [docs/NARRATIVE_CANON.md](docs/NARRATIVE_CANON.md) | Утверждённая сюжетная основа и правила расширения мира |
+| [docs/NARRATIVE_CANON.md](docs/NARRATIVE_CANON.md) | Канон мира, первая сюжетная арка и границы расширения |
+| [docs/BATTLE_MODIFIERS_DESIGN.md](docs/BATTLE_MODIFIERS_DESIGN.md) | Четыре режима боя, правила модификаторов и этапы внедрения |
 | [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | Архитектура проекта |
 | [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md) | Установка, запуск, проверки, соглашения |
 | [docs/DECISIONS.md](docs/DECISIONS.md) | Журнал технических решений |
