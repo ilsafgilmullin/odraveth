@@ -62,6 +62,16 @@ func all() -> Array:
 		["library-sealed", library_sealed],
 		["story-prologue-first", story_prologue_first],
 		["story-prologue-citadel", story_prologue_citadel],
+		["story-citadel-intro", story_citadel_intro],
+		["story-citadel-no_hero", story_citadel_no_hero],
+		["story-citadel-ready", story_citadel_ready],
+		["story-prebattle", story_prebattle],
+		["story-result-victory", story_result_victory],
+		["story-result-defeat", story_result_defeat],
+		["story-result-draw", story_result_draw],
+		["story-aftermath-victory", story_aftermath_victory],
+		["story-aftermath-defeat", story_aftermath_defeat],
+		["story-aftermath-draw", story_aftermath_draw],
 		["boot-first", boot_first],
 		["boot-mid", boot_mid],
 		["boot-reveal", boot_reveal],
@@ -625,6 +635,83 @@ func story_prologue_first() -> bool:
 
 func story_prologue_citadel() -> bool:
 	return await _story_prologue(StoryPrologueScreen.PAGES.size() - 1)
+
+
+func qa_story_config(opponent: StringName) -> BattleLaunchConfig:
+	var config := qa_battle_config(opponent)
+	config.set_story(BattleLaunchConfig.STORY_CHAPTER_CITADEL_TRIAL, Routes.HISTORY)
+	return config
+
+
+func story_citadel_intro() -> bool:
+	_clear_overlay()
+	_use_profile(qa_profile())
+	return await runner.open_route(Routes.STORY_CITADEL, {StoryFlow.PARAM_PAGE: 0})
+
+
+func story_citadel_no_hero() -> bool:
+	_clear_overlay()
+	_use_profile(SaveManager.create_default_data())
+	return await runner.open_route(Routes.STORY_CITADEL, {StoryFlow.PARAM_VIEW: StoryFlow.VIEW_PREPARATION})
+
+
+func story_citadel_ready() -> bool:
+	_clear_overlay()
+	_use_profile(qa_profile())
+	return await runner.open_route(Routes.STORY_CITADEL, {StoryFlow.PARAM_VIEW: StoryFlow.VIEW_PREPARATION})
+
+
+func story_prebattle() -> bool:
+	_clear_overlay()
+	_use_profile(qa_profile())
+	return await runner.open_route(Routes.PREBATTLE, StoryFlow.story_params())
+
+
+## Victory faces Сирравет so the feminine agreement of the aftermath text is rendered.
+const _STORY_OPPONENTS := {
+	MatchOutcome.Result.VICTORY: HeroCatalog.SYRRAVETH,
+	MatchOutcome.Result.DEFEAT: HeroCatalog.VHORAZEL,
+	MatchOutcome.Result.DRAW: HeroCatalog.TAZHYRION,
+}
+
+
+func _story_result(outcome: MatchOutcome.Result) -> bool:
+	_clear_overlay()
+	_use_profile(qa_profile())
+	return await runner.open_route(Routes.RESULT, {ResultScreen.PARAM_OUTCOME: outcome,
+		BattleLaunchConfig.PARAM_KEY: qa_story_config(_STORY_OPPONENTS[outcome]), "turns": 11, "cards_player": 9,
+		"cards_ai": 8})
+
+
+func story_result_victory() -> bool:
+	return await _story_result(MatchOutcome.Result.VICTORY)
+
+
+func story_result_defeat() -> bool:
+	return await _story_result(MatchOutcome.Result.DEFEAT)
+
+
+func story_result_draw() -> bool:
+	return await _story_result(MatchOutcome.Result.DRAW)
+
+
+func _story_aftermath(outcome: MatchOutcome.Result) -> bool:
+	_clear_overlay()
+	_use_profile(qa_profile())
+	return await runner.open_route(Routes.STORY_AFTERMATH, {ResultScreen.PARAM_OUTCOME: outcome,
+		BattleLaunchConfig.PARAM_KEY: qa_story_config(_STORY_OPPONENTS[outcome])})
+
+
+func story_aftermath_victory() -> bool:
+	return await _story_aftermath(MatchOutcome.Result.VICTORY)
+
+
+func story_aftermath_defeat() -> bool:
+	return await _story_aftermath(MatchOutcome.Result.DEFEAT)
+
+
+func story_aftermath_draw() -> bool:
+	return await _story_aftermath(MatchOutcome.Result.DRAW)
 
 
 ## Boot frames are posed on an overlay so the capture run keeps its own route.
