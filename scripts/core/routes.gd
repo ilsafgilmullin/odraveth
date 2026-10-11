@@ -15,6 +15,7 @@ const OPPONENT_SEARCH := &"opponent_search"
 const BATTLE := &"battle"
 const RESULT := &"result"
 const HISTORY := &"history"
+const STORY_PROLOGUE := &"story_prologue"
 const PROGRESS := &"progress"
 const SETTINGS := &"settings"
 const RULES := &"rules"
@@ -42,6 +43,7 @@ const _SCENE_PATHS := {
 	BATTLE: "res://scenes/battle/battle.tscn",
 	RESULT: "res://scenes/result/result.tscn",
 	HISTORY: "res://scenes/history/history_shell.tscn",
+	STORY_PROLOGUE: "res://scenes/story/story_prologue.tscn",
 	PROGRESS: "res://scenes/progress/progress.tscn",
 	SETTINGS: "res://scenes/settings/settings.tscn",
 	RULES: "res://scenes/rules/rules.tscn",
@@ -58,6 +60,7 @@ const _TITLES := {
 	BATTLE: "Боевой экран",
 	RESULT: "Результат боя",
 	HISTORY: "Библиотека Нулмериса",
+	STORY_PROLOGUE: "Страница без имени",
 	PROGRESS: "Прогресс",
 	SETTINGS: "Настройки",
 	RULES: "Правила игры",

@@ -60,6 +60,8 @@ func all() -> Array:
 		["library-places", library_places],
 		["library-chronicles", library_chronicles],
 		["library-sealed", library_sealed],
+		["story-prologue-first", story_prologue_first],
+		["story-prologue-citadel", story_prologue_citadel],
 		["boot-first", boot_first],
 		["boot-mid", boot_mid],
 		["boot-reveal", boot_reveal],
@@ -609,6 +611,20 @@ func library_chronicles() -> bool:
 
 func library_sealed() -> bool:
 	return await _library("АВТОРЫ")
+
+
+func _story_prologue(page: int) -> bool:
+	_clear_overlay()
+	_use_profile(qa_profile())
+	return await runner.open_route(Routes.STORY_PROLOGUE, {"page": page})
+
+
+func story_prologue_first() -> bool:
+	return await _story_prologue(0)
+
+
+func story_prologue_citadel() -> bool:
+	return await _story_prologue(StoryPrologueScreen.PAGES.size() - 1)
 
 
 ## Boot frames are posed on an overlay so the capture run keeps its own route.

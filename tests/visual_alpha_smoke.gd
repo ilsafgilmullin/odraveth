@@ -7,6 +7,7 @@ const MODULES := [
 	["prebattle", preload("res://tests/prebattle_v3_tests.gd")],
 	["battle", preload("res://tests/battle_v2_tests.gd")],
 	["result_library", preload("res://tests/result_library_tests.gd")],
+	["story_prologue", preload("res://tests/story_prologue_tests.gd")],
 	["boot_brand", preload("res://tests/boot_brand_tests.gd")],
 	["art_assets", preload("res://tests/art_assets_tests.gd")],
 ]
