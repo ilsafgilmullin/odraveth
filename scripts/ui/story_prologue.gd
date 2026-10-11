@@ -142,6 +142,8 @@ func _build_interface() -> void:
 	navigation.add_child(previous_button)
 	page_label = _label("PageIndicator", 24, VisualTokens.COLOR_STEEL_700)
 	page_label.size_flags_horizontal = SIZE_EXPAND_FILL
+	page_label.custom_minimum_size.x = 190
+	page_label.autowrap_mode = TextServer.AUTOWRAP_OFF
 	page_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	page_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	navigation.add_child(page_label)

@@ -46,8 +46,8 @@ Codex и Claude не коммитят одновременно прямо в `de
   контракт режимов и модификаторов — через PR #10.
 - Активная задача: первый сюжетный срез в ветке
   `codex/story-slice-page-citadel`, базовый SHA `develop` указан выше.
-- Проверенный implementation commit: `e1f9f58dfc8ca483344de28c25f5f204530fced3`.
-  Targeted story gate: `23/23 PASS`; полный regression: `3019/3019 PASS`;
+- Проверенный implementation commit: `fe5d010868b74a28251edb33559c85146cdc1738`.
+  Targeted story gate: `27/27 PASS`; полный regression: `3023/3023 PASS`;
   Boot → Main Menu подтверждён. Реальные screenshot-сценарии добавлены для
   первого и финального экранов и ожидают оконный GitHub Actions visual gate.
 - В задаче разрешены только маршрут и UI пролога, вход из Библиотеки, тесты и

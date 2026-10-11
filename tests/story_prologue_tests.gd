@@ -94,6 +94,8 @@ func _test_responsive_layout() -> void:
 		_ok(inside, "%dx%d keeps the complete story interface inside the viewport" % [size.x, size.y])
 		_ok(story.previous_button.size.y >= 64.0 and story.next_button.size.y >= 64.0,
 			"%dx%d keeps navigation touch targets" % [size.x, size.y])
+		_ok(story.page_label.get_line_count() == 1,
+			"%dx%d keeps the page indicator on one line" % [size.x, size.y])
 		_ok(story.body_label.get_visible_line_count() >= 4,
 			"%dx%d keeps the canonical body readable" % [size.x, size.y])
 	_tree.root.size = original_size
