@@ -5,12 +5,27 @@ extends Control
 ## No face, costume, weapon or equipment canon is invented; final character art replaces it.
 
 const IS_TEMPORARY_ASSET := true
+## Production art is cropped from the top with this share of the frame left above
+## the head, so portraits lose feet in wide frames instead of heads.
+const HEADROOM := 0.04
+const ART_ANCHOR := Vector2(0.5, 0.0)
+const REDRAW_INTERVAL := 1.0 / 30.0
 
 var hero_id: StringName = &""
 var accent := VisualTokens.COLOR_STEEL_500
 var presentation_gender := ""
 var faction: Faction.Id = Faction.Id.NEUTRAL
 var compact := false
+## Idle character layers (HeroIdleFx). Opt-in per screen; drawn still when animations are off.
+var idle_effects := false
+var animated := false
+var effect_strength := 1.0
+var fx_time := 0.0
+
+var _redraw_wait := 0.0
+## Production art and idle layers draw inside a child clipped exactly to the frame.
+var _clip: Control
+var _layer: Control
 
 
 func configure(id: StringName) -> void:
@@ -18,17 +33,73 @@ func configure(id: StringName) -> void:
 	accent = HeroPresentation.faction_accent(id)
 	presentation_gender = HeroPresentation.presentation_gender(id)
 	faction = HeroCatalog.faction_of(id) if HeroCatalog.has_hero(id) else Faction.Id.NEUTRAL
-	queue_redraw()
+	_redraw_all()
 
 
 func is_temporary_asset() -> bool:
 	return not ArtAssets.has(ArtAssets.hero_slot(hero_id))
 
 
+## [param play] = false keeps a single still frame (animations disabled).
+func set_idle_effects(enabled: bool, play: bool) -> void:
+	idle_effects = enabled
+	animated = enabled and play
+	set_process(animated)
+	_redraw_all()
+
+
 func _ready() -> void:
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
-	resized.connect(queue_redraw)
+	_clip = Control.new()
+	_clip.name = "ArtClip"
+	_clip.clip_contents = true
+	_clip.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(_clip)
+	_layer = Control.new()
+	_layer.name = "ArtLayer"
+	_layer.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_layer.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	_clip.add_child(_layer)
+	_layer.draw.connect(_draw_art_layer)
+	resized.connect(_on_resized)
+	_on_resized()
+	set_process(animated)
+
+
+func frame_rect() -> Rect2:
+	var inset := 6.0 if compact else 10.0
+	return Rect2(Vector2(inset, inset), size - Vector2(inset, inset) * 2.0)
+
+
+func _on_resized() -> void:
+	var rect := frame_rect()
+	_clip.position = rect.position
+	_clip.size = rect.size
+	_redraw_all()
+
+
+func _redraw_all() -> void:
 	queue_redraw()
+	if _layer != null:
+		_layer.queue_redraw()
+
+
+func _process(delta: float) -> void:
+	if not is_visible_in_tree():
+		return
+	fx_time += delta
+	_redraw_wait -= delta
+	if _redraw_wait <= 0.0:
+		_redraw_wait = REDRAW_INTERVAL
+		if _layer != null:
+			_layer.queue_redraw()
+
+
+## Destination rect and crop of the production art inside [param rect] (head-safe).
+func art_layout(tex_size: Vector2, rect: Rect2) -> Dictionary:
+	var pad := rect.size.y * HEADROOM
+	var dest := Rect2(rect.position + Vector2(0.0, pad), rect.size - Vector2(0.0, pad))
+	return {"dest": dest, "region": ArtAssets.cover_region(tex_size, dest.size, ART_ANCHOR)}
 
 
 func _draw() -> void:
@@ -37,8 +108,7 @@ func _draw() -> void:
 		return
 	var tone := NulmerisEmblems.faction_color(faction)
 	var glow := NulmerisEmblems.faction_secondary(faction)
-	var inset := 6.0 if compact else 10.0
-	var rect := Rect2(Vector2(inset, inset), s - Vector2(inset, inset) * 2.0)
+	var rect := frame_rect()
 	var stone := Color("cfc6b6")
 	draw_rect(rect, stone)
 	# Approved production portrait (crop-safe alpha PNG) replaces the silhouette.
@@ -46,10 +116,7 @@ func _draw() -> void:
 	if hero_id != &"":
 		art = ArtAssets.texture(ArtAssets.hero_slot(hero_id))
 	if art != null:
-		_gradient_niche_backlight(rect)
-		ArtAssets.draw_cover(self, art, rect)
-		draw_rect(rect, VisualTokens.COLOR_STEEL_700, false, 2.0)
-		draw_rect(Rect2(rect.position, Vector2(rect.size.x, maxf(4.0, rect.size.y * 0.018))), accent)
+		# Backlight, idle layers, art and frame are drawn by the clipped art layer.
 		return
 
 	var area := rect.grow(-maxf(4.0, rect.size.x * 0.05))
@@ -80,6 +147,31 @@ func _draw() -> void:
 	draw_polyline(closed, VisualTokens.COLOR_GOLD_500.darkened(0.1), maxf(2.0, rect.size.x * 0.012), true)
 	draw_rect(rect, VisualTokens.COLOR_STEEL_700, false, 2.0)
 	draw_rect(Rect2(rect.position, Vector2(rect.size.x, maxf(4.0, rect.size.y * 0.018))), accent)
+
+
+func _current_art() -> Texture2D:
+	return ArtAssets.texture(ArtAssets.hero_slot(hero_id)) if hero_id != &"" else null
+
+
+## Layer coordinates: (0, 0) is the frame's top-left corner.
+func _draw_art_layer() -> void:
+	var art := _current_art()
+	var rect := Rect2(Vector2.ZERO, _layer.size)
+	if art == null or rect.size.x <= 24.0 or rect.size.y <= 24.0:
+		return
+	_gradient_niche_backlight(rect, _layer)
+	var layout := art_layout(art.get_size(), rect)
+	var dest: Rect2 = layout["dest"]
+	var region: Rect2 = layout["region"]
+	var to_canvas := func(point: Vector2) -> Vector2:
+		return dest.position + (point * art.get_size() - region.position) * (dest.size.x / region.size.x)
+	if idle_effects:
+		HeroIdleFx.draw(_layer, hero_id, rect, to_canvas, fx_time, effect_strength, true)
+	_layer.draw_texture_rect_region(art, dest, region)
+	if idle_effects:
+		HeroIdleFx.draw(_layer, hero_id, rect, to_canvas, fx_time, effect_strength, false)
+	_layer.draw_rect(rect, VisualTokens.COLOR_STEEL_700, false, 2.0)
+	_layer.draw_rect(Rect2(rect.position, Vector2(rect.size.x, maxf(4.0, rect.size.y * 0.018))), accent)
 
 
 func _niche_polygon(area: Rect2) -> PackedVector2Array:
@@ -136,8 +228,8 @@ func _draw_silhouette(rect: Rect2, tone: Color, glow: Color) -> void:
 	draw_polyline(mantle, Color(glow, 0.45), maxf(1.5, w * 0.008), true)
 
 
-func _gradient_niche_backlight(rect: Rect2) -> void:
+func _gradient_niche_backlight(rect: Rect2, canvas: CanvasItem) -> void:
 	var glow := NulmerisEmblems.faction_secondary(faction)
-	draw_polygon(PackedVector2Array([rect.position, Vector2(rect.end.x, rect.position.y), rect.end,
+	canvas.draw_polygon(PackedVector2Array([rect.position, Vector2(rect.end.x, rect.position.y), rect.end,
 		Vector2(rect.position.x, rect.end.y)]), PackedColorArray([VisualTokens.COLOR_STONE_050.lerp(glow, 0.5),
 		VisualTokens.COLOR_STONE_050.lerp(glow, 0.5), accent.darkened(0.35), accent.darkened(0.35)]))

@@ -20,6 +20,9 @@ func all() -> Array:
 		["emblems", emblems],
 		["main_menu", main_menu],
 		["hero_select", hero_select],
+		["hero_select-vhorazel", hero_select_vhorazel],
+		["hero_select-syrraveth", hero_select_syrraveth],
+		["hero_select-tazhyrion", hero_select_tazhyrion],
 		["card_gallery", card_gallery],
 		["card_detail", card_detail],
 		["collection", collection],
@@ -109,7 +112,32 @@ func main_menu() -> bool:
 func hero_select() -> bool:
 	_clear_overlay()
 	_use_profile(qa_profile())
-	return await runner.open_route(Routes.HERO_SELECT)
+	if not await runner.open_route(Routes.HERO_SELECT):
+		return false
+	# Let the card entrance finish so the frame shows the settled screen.
+	await runner.get_tree().create_timer(0.9).timeout
+	return true
+
+
+## The selected card carries the hero's idle character; one frame per hero.
+func _hero_select_with(hero: StringName) -> bool:
+	if not await hero_select():
+		return false
+	(runner.get_tree().current_scene as HeroSelectScreen)._choose(hero)
+	await runner.get_tree().create_timer(1.2).timeout
+	return true
+
+
+func hero_select_vhorazel() -> bool:
+	return await _hero_select_with(HeroCatalog.VHORAZEL)
+
+
+func hero_select_syrraveth() -> bool:
+	return await _hero_select_with(HeroCatalog.SYRRAVETH)
+
+
+func hero_select_tazhyrion() -> bool:
+	return await _hero_select_with(HeroCatalog.TAZHYRION)
 
 
 func card_gallery() -> bool:

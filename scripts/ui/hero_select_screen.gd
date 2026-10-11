@@ -4,6 +4,8 @@ extends Control
 
 var pending_hero: StringName = &""
 var hero_buttons: Dictionary = {}
+## Saved «Анимации» preference: idle character, selection glow and card entrance.
+var animations_enabled := true
 
 @onready var hero_row: HBoxContainer = %HeroCards
 @onready var info_panel: PanelContainer = %HeroInfoPanel
@@ -39,9 +41,12 @@ func _ready() -> void:
 	pending_hero = StringName(str(AppState.profile.get("selected_hero_id", "")))
 	if not HeroCatalog.has_hero(pending_hero):
 		pending_hero = &""
+	animations_enabled = bool(PlayerSetupData.normalized(AppState.profile)["prebattle"][PlayerSetupData.ANIMATIONS])
+	_outline_header()
 
 	_build_hero_cards()
 	_refresh_selection()
+	_play_entrance()
 	get_viewport().size_changed.connect(_on_viewport_size_changed)
 	_apply_layout_for_size(get_viewport_rect().size)
 
@@ -60,14 +65,15 @@ func _build_hero_cards() -> void:
 func _choose(hero: StringName) -> void:
 	if not HeroCatalog.has_hero(hero):
 		return
+	var changed := hero != pending_hero
 	pending_hero = hero
 	status_message.text = ""
-	_refresh_selection()
+	_refresh_selection(changed)
 
 
-func _refresh_selection() -> void:
+func _refresh_selection(flash: bool = false) -> void:
 	for hero: StringName in hero_buttons:
-		(hero_buttons[hero] as HeroSelectCard).set_selected_state(hero == pending_hero)
+		(hero_buttons[hero] as HeroSelectCard).set_selected_state(hero == pending_hero, animations_enabled, flash)
 	_update_info_panel()
 	confirm_button.disabled = not HeroCatalog.has_hero(pending_hero)
 
@@ -92,6 +98,29 @@ func _update_info_panel() -> void:
 	power_cost_label.text = "СТОИМОСТЬ: %d ЭНЕРГИИ" % HeroPresentation.power_cost(pending_hero)
 	power_description_label.text = HeroPresentation.power_description(pending_hero)
 	playstyle_label.text = HeroPresentation.playstyle(pending_hero)
+
+
+## Cards rise in one after another; input is never blocked (only modulate changes).
+func _play_entrance() -> void:
+	if not animations_enabled:
+		return
+	var index := 0
+	for hero: StringName in PlayerSetupData.HERO_IDS:
+		var card := hero_buttons[hero] as HeroSelectCard
+		card.modulate.a = 0.0
+		var tween := create_tween()
+		tween.tween_interval(0.07 * float(index))
+		tween.tween_property(card, "modulate:a", 1.0, 0.3).set_trans(Tween.TRANS_SINE)
+		index += 1
+
+
+## Light outline keeps the dark title and subtitle readable over the bright hall art.
+func _outline_header() -> void:
+	for label: Label in [title_label, get_node_or_null("SafeArea/Layout/Header/TitleBlock/Subtitle") as Label]:
+		if label == null:
+			continue
+		label.add_theme_color_override("font_outline_color", Color(VisualTokens.COLOR_STONE_050, 0.92))
+		label.add_theme_constant_override("outline_size", 10 if label == title_label else 8)
 
 
 func _confirm() -> void:
