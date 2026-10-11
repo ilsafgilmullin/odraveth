@@ -171,7 +171,7 @@ func _build_identity_bar() -> void:
 	status_caption.add_theme_constant_override("separation", VisualTokens.SPACE_2)
 	status_stack.add_child(status_caption)
 	status_caption.add_child(_caption("СТАТУС"))
-	selected_marker = _label("✓ ВЫБРАНА ДЛЯ БОЯ", 18, VisualTokens.COLOR_GOLD_700)
+	selected_marker = _label("✓ ВЫБРАНА ДЛЯ БОЯ", 20, VisualTokens.COLOR_GOLD_700)
 	selected_marker.name = "SelectedForBattle"
 	status_caption.add_child(selected_marker)
 	ready_marker = PanelContainer.new()
@@ -211,7 +211,7 @@ func _build_tab_row() -> void:
 	filter_bar.size_flags_horizontal = SIZE_EXPAND_FILL
 	filter_bar.filters_changed.connect(_refresh_grid)
 	row.add_child(filter_bar)
-	deck_hint = _label("Нажмите на название карты, чтобы прочитать её полностью", 22, VisualTokens.COLOR_MUTED)
+	deck_hint = _label("Нажмите на название карты, чтобы прочитать её полностью", 24, VisualTokens.COLOR_MUTED)
 	deck_hint.name = "DeckHint"
 	deck_hint.size_flags_horizontal = SIZE_EXPAND_FILL
 	deck_hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
@@ -601,7 +601,7 @@ func _deck_row(id: String, copies: int) -> PanelContainer:
 	name_stack.add_child(title)
 	if card != null:
 		var sub := _label("%s · %s" % [SetupUi.TYPE_NAMES[card.card_type].to_upper(), SetupUi.RARITY_NAMES[card.rarity].to_upper()],
-			17, VisualTokens.COLOR_MUTED)
+			19, VisualTokens.COLOR_MUTED)
 		sub.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		name_stack.add_child(sub)
 
@@ -726,7 +726,7 @@ func _step_button(text_value: String, node_name: String) -> Button:
 
 
 func _caption(text_value: String) -> Label:
-	return _label(text_value, 18, VisualTokens.COLOR_MUTED)
+	return _label(text_value, 20, VisualTokens.COLOR_MUTED)
 
 
 func _label(text_value: String, font_size: int, color: Color, display: bool = false) -> Label:

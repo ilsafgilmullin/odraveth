@@ -75,7 +75,7 @@ func _select(node_name: String) -> OptionButton:
 	control.fit_to_longest_item = false
 	control.clip_text = true
 	UiKit.prepare_select(control)
-	control.add_theme_font_size_override("font_size", 22)
+	control.add_theme_font_size_override("font_size", 24)
 	control.item_selected.connect(_on_select_changed)
 	add_child(control)
 	return control

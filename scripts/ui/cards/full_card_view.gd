@@ -11,7 +11,7 @@ const BASE_SIZE := Vector2(320, 448) # 5:7
 const CONTENT_MARGIN := 13.0
 const STACK_GAP := 4.0
 const NAME_SIZES: Array[int] = [26, 24, 22]
-const RULES_MAX := 19
+const RULES_MAX := 20
 const RULES_MIN := 16
 const ART_MIN := 92.0
 const ART_MAX_RATIO := 0.50
@@ -188,7 +188,7 @@ func _ensure_structure() -> void:
 	selected_marker.size = Vector2(130, 34)
 	selected_marker.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	selected_marker.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	selected_marker.add_theme_font_size_override("font_size", 17)
+	selected_marker.add_theme_font_size_override("font_size", 18)
 	selected_marker.add_theme_color_override("font_color", VisualTokens.COLOR_STONE_050)
 	selected_marker.add_theme_stylebox_override("normal", _badge_box(VisualTokens.COLOR_GOLD_700, VisualTokens.COLOR_GOLD_300, 1))
 	selected_marker.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -232,7 +232,7 @@ func _ensure_structure() -> void:
 	type_label.name = "Type"
 	type_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	type_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	type_label.add_theme_font_size_override("font_size", 17)
+	type_label.add_theme_font_size_override("font_size", 18)
 	type_label.add_theme_color_override("font_color", VisualTokens.COLOR_MUTED)
 	type_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	meta.add_child(type_label)
@@ -243,7 +243,7 @@ func _ensure_structure() -> void:
 	rarity_label.name = "Rarity"
 	rarity_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 	rarity_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	rarity_label.add_theme_font_size_override("font_size", 16)
+	rarity_label.add_theme_font_size_override("font_size", 17)
 	rarity_label.add_theme_color_override("font_color", VisualTokens.COLOR_MUTED)
 	rarity_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	meta.add_child(rarity_label)
@@ -384,7 +384,7 @@ func _stat_badge(label_text: String, value: int, accent: Color) -> PanelContaine
 	var caption := Label.new()
 	caption.text = label_text
 	caption.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	caption.add_theme_font_size_override("font_size", 14)
+	caption.add_theme_font_size_override("font_size", 15)
 	caption.add_theme_color_override("font_color", accent.darkened(0.15))
 	caption.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	row.add_child(caption)

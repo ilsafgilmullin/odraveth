@@ -2,7 +2,7 @@
 
 Документ описывает техническое устройство проекта. Продуктовые правила — только в [`PRODUCT_BASELINE.md`](PRODUCT_BASELINE.md); обоснования решений — в [`DECISIONS.md`](DECISIONS.md).
 
-Текущее состояние: **Stage 6 technical alpha** — технический фундамент (Stage 0), типизированная база 40 утверждённых карт (Stage 1), детерминированный MatchEngine (Stage 2), офлайн AI трёх уровней сложности (Stage 3), полнофункциональный Battle UI (Stage 4), пользовательский setup и SaveManager v2 (Stage 5), pre-APK hardening и Android QA export (Stage 6).
+Текущее состояние: **Stage 7 Visual Alpha + Stage B UI/UX hardening** — технический фундамент (Stage 0), типизированная база 40 утверждённых карт (Stage 1), детерминированный MatchEngine (Stage 2), офлайн AI трёх уровней сложности (Stage 3), полнофункциональный Battle UI (Stage 4), пользовательский setup и SaveManager v2 (Stage 5), Android QA export (Stage 6), единая визуальная система и каноническая Библиотека Нулмериса (Stage 7/Stage B).
 
 ## 1. Принципы
 
@@ -21,9 +21,9 @@
 | `project.godot` | Настройки проекта: main scene, autoload, экран, рендерер, строгие предупреждения GDScript |
 | `scenes/boot/` | Boot-экран (инициализация сервисов) |
 | `scenes/menu/` | Главное меню |
-| `scenes/common/` | Общие сцены экранов (сейчас — базовый placeholder-экран) |
+| `scenes/common/` | Переиспользуемые UI-сцены и сохранённый legacy placeholder для совместимых тестовых маршрутов |
 | `scenes/heroes/` · `collection/` · `deck_builder/` · `prebattle/` · `battle/` · `result/` | Экраны пользовательской подготовки и боя |
-| `scenes/progress/` · `settings/` | Экраны пунктов меню «Прогресс» и «Настройки» (пока placeholder) |
+| `scenes/progress/` · `settings/` | Оболочки Цитадели: запечатанный «Прогресс» и два работающих локальных переключателя «Настроек» |
 | `scripts/core/` | Сервисы приложения (EventBus, SceneRouter, AppState), таблица маршрутов, правила и фракции baseline, boot |
 | `scripts/cards/` | База карт: `CardDatabase` (реестр), `CardSchema` (валидация JSON), `CardDefinition` и `CardEffectSpec` (модель), `EffectVocabulary` (словарь эффектов), `CardEnums` (таксономия) |
 | `scripts/battle/` | Боевой домен: MatchEngine — состояние матча, команды, правила, исполнение эффектов (раздел 9); `BattleSession` — оркестрация матча (раздел 14); `BattleLaunchConfig` — конфигурация запуска |
@@ -35,8 +35,8 @@
 | `scripts/ui/battle/` | Боевой экран: `BattleScene` — полный UI матча с программной компоновкой (раздел 14) |
 | `data/cards/` | 40 утверждённых карт: `ashravael.json`, `nerqathen.json`, `dumoryss.json`, `khevaruun.json`, `neutral.json` (по 8 карт) |
 | `data/heroes/` · `decks/` · `balance/` | Данные героев, стартовых колод, баланса — следующие этапы |
-| `assets/ui/` | UI-ресурсы; сейчас только временная тема `placeholder_theme.tres` |
-| `assets/heroes/` · `cards/` · `backgrounds/` · `effects/` · `audio/` · `fonts/` | Зарезервировано под утверждённые ассеты |
+| `assets/ui/` | Bootstrap-тема, Visual Alpha theme, иконки, бренд и окружение интерфейса |
+| `assets/heroes/` · `cards/` · `backgrounds/` · `effects/` · `audio/` · `fonts/` | Интегрированные art-кандидаты и каталоги для дальнейших утверждённых ассетов |
 | `tests/` | Headless smoke-тест, тесты базы карт, независимая таблица утверждённых карт, скрипт запуска проверок |
 | `tests/engine/` | Тесты MatchEngine: ядро правил, способности героев, ключевые слова и тайминг, 40 карт, детерминизм; фикстура сценариев и `ScriptedRng` |
 | `docs/` | Документация |
@@ -150,12 +150,12 @@ SceneRouter.replace_with(Routes.RESULT, {ResultScreen.PARAM_OUTCOME: MatchOutcom
 
 Получатель объявляет ключи своих параметров константами (`ResultScreen.PARAM_OUTCOME`). Тот же механизм в будущем передаст на экран боя конфигурацию матча (герой, колода, противник, сложность), не храня её в `AppState`.
 
-### 5.4. Placeholder-экраны Stage 0
+### 5.4. Эволюция экранов после Stage 0
 
 - `scenes/common/placeholder_screen.tscn` + `PlaceholderScreen` — базовый временный экран: заголовок, «Назад», «Далее: <следующий экран потока>», «В главное меню».
-- На Stage 0 экраны маршрутов были наследованными placeholder-сценами. Hero Select, Collection, Deck Builder и Prebattle заменены самостоятельными сценами Stage 5; Progress/Settings и Result используют базовый временный экран.
+- На Stage 0 экраны маршрутов были наследованными placeholder-сценами. Hero Select, Collection, Deck Builder и Prebattle заменены самостоятельными сценами Stage 5; Main Menu, Result, Library, Settings и Progress получили отдельную Visual Alpha presentation. Progress остаётся намеренно запечатанным и скрытым из главного меню, пока Q-15 не решён.
 - Battle без конфигурации сохраняет только явный legacy TEST_MODE для smoke-проверок; нормальный пользовательский маршрут всегда передаёт BattleLaunchConfig.
-- При реализации финального экрана наследованная сцена заменяется самостоятельной; маршрут в `Routes` остаётся прежним.
+- При следующей итерации presentation маршрут в `Routes` остаётся прежним; меняется только самостоятельная сцена/скрипт экрана.
 
 ## 6. Boot
 
@@ -358,18 +358,18 @@ var result := engine.play_card(player, card_instance_id, target_id, {"soul_shard
 - Дизайн-разрешение 1920×1080, `canvas_items` + `expand`: высота 1080 сохраняется, на вытянутых экранах (20:9 и т. п.) расширяется ширина, на планшетах (4:3) — высота. Вёрстка — контейнеры и якоря, без абсолютных координат.
 - Ориентация `sensor_landscape`: только альбомная, допускается переворот на 180°.
 - `SafeAreaContainer` — корневой контейнер каждого экрана: базовый отступ 32 px плюс вырезы/скругления из `DisplayServer.get_display_safe_area()` на мобильных устройствах. Отступы симметричны, потому что переворот на 180° переносит вырез на другую сторону без события изменения размера.
-- Минимальная высота интерактивных кнопок — 112 px дизайна (≈ 48 dp на типичном 1080p-телефоне).
-- Тема `assets/ui/placeholder_theme.tres` задаёт только размер шрифта (40). Шрифт — встроенный шрифт Godot (поддерживает кириллицу; проверяется тестом). Финальный шрифт не выбран (PRODUCT_BASELINE §9).
-- Планшеты: точка расширения — проверка соотношения сторон / размера экрана в корне экрана и выбор альтернативной компоновки контейнеров. На Stage 0 не реализовано.
+- Минимальная интерактивная цель — 64×64 design px; основные действия используют более крупные размеры. Геометрия проверяется headless-тестами.
+- `assets/ui/placeholder_theme.tres` остаётся import-safe bootstrap-темой. Экраны после инициализации применяют Visual Alpha theme через `UiKit.apply_root_theme()`; шрифты Noto Serif покрывают кириллицу и проверяются тестами.
+- Адаптивные точки Collection/Deck Builder: 4 колонки на 1600×900, 5 на 1920×1080 и 2400×1080, 6 на 2800×1752. Основные экраны проверяются на всех четырёх размерах.
 - Пользовательские строки — на русском прямо в сценах/скриптах (единственный язык первой версии).
 
-## 11. Следующие модули (план, не реализовано)
+## 11. Следующие продуктовые направления
 
 | Модуль | Где | Ключевые требования |
 |---|---|---|
-| Колоды | `data/decks/` | Стартовые колоды и редактор; проверка — уже `DeckValidator` |
-| Финальный UI | `scenes/*`, `scripts/ui/` | По утверждённому дизайну; заменяет placeholder-сцены |
-| Android QA build | `export_presets.cfg`, `docs/ANDROID_QA.md` | Debug technical alpha; temporary ID, offline, landscape, без store signing |
+| Контентные главы | `data/`, `scenes/*`, `scripts/ui/` | Новые герои, карты и локации только после отдельного ТЗ; базовый режим без модификаторов поля |
+| Финализация presentation | `assets/`, `scenes/*`, `scripts/ui/` | Утверждение art/brand-кандидатов, звук и дальнейший polish без изменения движка |
+| Android release track | `export_presets.cfg`, `docs/ANDROID_QA.md` | Реальное устройство, финальная identity/signing и store-подготовка после отдельного решения |
 
 ## 12. Тестирование
 
