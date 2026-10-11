@@ -17,6 +17,7 @@ const RESULT := &"result"
 const HISTORY := &"history"
 const STORY_PROLOGUE := &"story_prologue"
 const STORY_CITADEL := &"story_citadel"
+const STORY_AFTERMATH := &"story_aftermath"
 const PROGRESS := &"progress"
 const SETTINGS := &"settings"
 const RULES := &"rules"
@@ -46,6 +47,7 @@ const _SCENE_PATHS := {
 	HISTORY: "res://scenes/history/history_shell.tscn",
 	STORY_PROLOGUE: "res://scenes/story/story_prologue.tscn",
 	STORY_CITADEL: "res://scenes/story/story_citadel.tscn",
+	STORY_AFTERMATH: "res://scenes/story/story_aftermath.tscn",
 	PROGRESS: "res://scenes/progress/progress.tscn",
 	SETTINGS: "res://scenes/settings/settings.tscn",
 	RULES: "res://scenes/rules/rules.tscn",
@@ -64,6 +66,7 @@ const _TITLES := {
 	HISTORY: "Библиотека Нулмериса",
 	STORY_PROLOGUE: "Страница без имени",
 	STORY_CITADEL: "Испытание Цитадели",
+	STORY_AFTERMATH: "Запись испытания",
 	PROGRESS: "Прогресс",
 	SETTINGS: "Настройки",
 	RULES: "Правила игры",

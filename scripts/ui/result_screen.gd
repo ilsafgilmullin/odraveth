@@ -5,6 +5,9 @@ extends Control
 ## AI difficulty on the right, authoritative turn/card counts only, and four actions.
 ## ПОВТОРИТЬ БОЙ keeps the exact deck snapshot, opponent and settings with a fresh
 ## seed; НОВЫЙ СОПЕРНИК draws again through OpponentSelector and the search scene.
+## A STORY launch config (Story Mode V1) swaps only the action set: ПРОДОЛЖИТЬ
+## ИСТОРИЮ, ПОВТОРИТЬ ИСПЫТАНИЕ, В ХРОНИКИ and ГЛАВНОЕ МЕНЮ; the outcome still comes
+## from MatchEngine.
 
 const PARAM_OUTCOME := "outcome"
 const DIM_SHADER := preload("res://assets/ui/visual_alpha/shaders/battlefield_dim.gdshader")
@@ -18,6 +21,8 @@ var rematch_button: Button
 var opponent_button: Button
 var deck_button: Button
 var menu_button: Button
+var continue_button: Button
+var chronicles_button: Button
 ## The configuration handed to the next route (tests and QA read it).
 var last_config: BattleLaunchConfig
 
@@ -67,6 +72,18 @@ func _build() -> void:
 	seal.custom_minimum_size = Vector2(120, 120)
 	seal.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	col.add_child(seal)
+	if is_story():
+		var story_caption := Label.new()
+		story_caption.name = "StoryCaption"
+		story_caption.text = "ИСПЫТАНИЕ ЦИТАДЕЛИ"
+		story_caption.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		story_caption.add_theme_font_size_override("font_size", 30)
+		story_caption.add_theme_color_override("font_color", VisualTokens.COLOR_GOLD_300)
+		story_caption.add_theme_color_override("font_outline_color", Color(VisualTokens.COLOR_STEEL_900, 0.6))
+		story_caption.add_theme_constant_override("outline_size", 6)
+		if _display_font != null:
+			story_caption.add_theme_font_override("font", _display_font)
+		col.add_child(story_caption)
 	message_label = Label.new()
 	message_label.name = "MessageLabel"
 	message_label.uppercase = true
@@ -118,6 +135,9 @@ func _build() -> void:
 	actions.alignment = BoxContainer.ALIGNMENT_CENTER
 	actions.add_theme_constant_override("separation", VisualTokens.SPACE_3)
 	col.add_child(actions)
+	if is_story():
+		_build_story_actions(actions)
+		return
 	if config != null:
 		rematch_button = _action(actions, "ПОВТОРИТЬ БОЙ", "RematchButton", UiKit.ButtonRole.PRIMARY, _rematch)
 	opponent_button = _action(actions, "НОВЫЙ СОПЕРНИК", "OpponentButton", UiKit.ButtonRole.SECONDARY, _new_opponent)
@@ -127,6 +147,38 @@ func _build() -> void:
 		SceneRouter.reset_to.bind(Routes.MAIN_MENU))
 	menu_button.add_theme_color_override("font_color", VisualTokens.COLOR_STONE_050)
 	menu_button.add_theme_color_override("font_hover_color", VisualTokens.COLOR_STEEL_900)
+
+
+func is_story() -> bool:
+	return config != null and config.is_story()
+
+
+func _build_story_actions(actions: HBoxContainer) -> void:
+	if outcome_valid:
+		continue_button = _action(actions, "ПРОДОЛЖИТЬ ИСТОРИЮ", "ContinueStoryButton", UiKit.ButtonRole.PRIMARY,
+			continue_story)
+	rematch_button = _action(actions, "ПОВТОРИТЬ ИСПЫТАНИЕ", "RematchButton",
+		UiKit.ButtonRole.SECONDARY if outcome_valid else UiKit.ButtonRole.PRIMARY, _rematch)
+	chronicles_button = _action(actions, "В ХРОНИКИ", "ChroniclesButton", UiKit.ButtonRole.SECONDARY,
+		StoryFlow.return_from.bind(config))
+	menu_button = _action(actions, "ГЛАВНОЕ МЕНЮ", "MainMenuButton", UiKit.ButtonRole.SUBTLE,
+		SceneRouter.reset_to.bind(Routes.MAIN_MENU))
+	menu_button.add_theme_color_override("font_color", VisualTokens.COLOR_STONE_050)
+	menu_button.add_theme_color_override("font_hover_color", VisualTokens.COLOR_STEEL_900)
+	for button: Button in [continue_button, rematch_button, chronicles_button, menu_button]:
+		if button != null:
+			button.custom_minimum_size.x = 300
+			button.add_theme_font_size_override("font_size", 26)
+
+
+## Opens the story aftermath of the authoritative MatchEngine outcome.
+func continue_story() -> void:
+	if not is_story() or not outcome_valid:
+		return
+	SceneRouter.replace_with(Routes.STORY_AFTERMATH, {
+		ResultScreen.PARAM_OUTCOME: route_params.get(PARAM_OUTCOME),
+		BattleLaunchConfig.PARAM_KEY: config,
+	})
 
 
 func _outcome_color(outcome: Variant) -> Color:
@@ -222,5 +274,8 @@ func _new_opponent() -> void:
 
 
 func handle_back_request() -> bool:
-	SceneRouter.reset_to(Routes.MAIN_MENU)
+	if is_story():
+		StoryFlow.return_from(config)
+	else:
+		SceneRouter.reset_to(Routes.MAIN_MENU)
 	return true

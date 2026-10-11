@@ -101,6 +101,9 @@ func _build_header(layout: VBoxContainer) -> void:
 	heading.add_theme_font_size_override("font_size", VisualTokens.FONT_TITLE)
 	if view == View.INTRO:
 		heading.add_theme_color_override("font_color", VisualTokens.COLOR_STONE_050)
+	else:
+		heading.add_theme_color_override("font_outline_color", Color(VisualTokens.COLOR_STONE_050, 0.9))
+		heading.add_theme_constant_override("outline_size", 10)
 	header.add_child(heading)
 	var chronicles := UiKit.make_button("ХРОНИКИ", UiKit.ButtonRole.SECONDARY)
 	chronicles.name = "ChroniclesButton"
