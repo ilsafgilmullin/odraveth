@@ -52,6 +52,30 @@ static func pick_with_seed(player_hero: StringName, seed_value: int,
 	return pick(player_hero, eligible, DeterministicRng.new(seed_value))
 
 
+## Story «Испытание Цитадели»: only the other eligible heroes, equal integer
+## weights, the exact mirror is forbidden. Independent of [method weights].
+static func story_trial_weights(player_hero: StringName, eligible: Array[StringName]) -> Dictionary:
+	var result := {}
+	for hero: StringName in eligible:
+		if hero != player_hero:
+			result[hero] = 1
+	return result
+
+
+static func pick_story_trial(player_hero: StringName, eligible: Array[StringName], rng: MatchRng) -> StringName:
+	var table := story_trial_weights(player_hero, eligible)
+	if table.is_empty():
+		return &""
+	var ordered := _ordered(eligible, table)
+	return ordered[rng.next_int(ordered.size())]
+
+
+## Story selection with its own seeded setup RNG (never the match's RNG instance).
+static func pick_story_trial_with_seed(player_hero: StringName, seed_value: int,
+		eligible: Array[StringName] = PlayerSetupData.HERO_IDS) -> StringName:
+	return pick_story_trial(player_hero, eligible, DeterministicRng.new(seed_value))
+
+
 static func _ordered(eligible: Array[StringName], table: Dictionary) -> Array[StringName]:
 	var ordered: Array[StringName] = []
 	for hero: StringName in eligible:

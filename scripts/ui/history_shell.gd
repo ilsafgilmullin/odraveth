@@ -16,6 +16,10 @@ const FACTION_ROWS := [
 	[Faction.Id.KHEVARUUN, "Khevaruun", HeroCatalog.TAZHYRION, "золотисто-синий"],
 ]
 
+const PARAM_SECTION := "section"
+const DEFAULT_SECTION := "ФРАКЦИИ"
+const CHRONICLES := "ХРОНИКИ"
+
 var section_buttons: Dictionary = {}
 var current_section := ""
 var page_title: Label
@@ -23,6 +27,14 @@ var page_body: VBoxContainer
 var prologue_button: Button
 
 var _display_font: Font
+var _initial_section := DEFAULT_SECTION
+
+
+## Optional route param [constant PARAM_SECTION]: only a name from [constant SECTIONS] is accepted.
+func apply_route_params(params: Dictionary) -> void:
+	var requested: Variant = params.get(PARAM_SECTION, "")
+	if typeof(requested) == TYPE_STRING and SECTIONS.has(requested):
+		_initial_section = requested
 
 
 func _ready() -> void:
@@ -79,7 +91,7 @@ func _ready() -> void:
 		shelf.add_child(button)
 		section_buttons[section] = button
 	body.add_child(_build_book())
-	show_section("ФРАКЦИИ")
+	show_section(_initial_section)
 
 
 func _build_book() -> Control:

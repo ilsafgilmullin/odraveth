@@ -3,6 +3,10 @@ extends RefCounted
 ## Match launch parameters passed to BattleScene via route params.
 
 const PARAM_KEY := "launch_config"
+## Navigation/presentation mode only. MatchEngine, AI and RNG never read it.
+enum Mode { NORMAL, STORY }
+const STORY_CHAPTER_CITADEL_TRIAL := &"citadel_trial"
+const STORY_CHAPTERS: Array[StringName] = [STORY_CHAPTER_CITADEL_TRIAL]
 static var _last_generated_seed: int = 0
 
 var player_hero: StringName = &""
@@ -16,6 +20,10 @@ var presentation_options: Dictionary = {}
 ## Presentation-only metadata of the player's saved deck snapshot (Result screen).
 var player_deck_name: String = ""
 var player_deck_id: String = ""
+## Story navigation metadata (docs/STORY_MODE_V1.md); never passed to MatchEngine as rules.
+var mode: Mode = Mode.NORMAL
+var story_chapter: StringName = &""
+var story_return_route: StringName = &""
 
 
 static func create(p_hero: StringName, p_deck: Array, o_hero: StringName, o_deck: Array,
@@ -78,8 +86,7 @@ static func _build_deck(hero_id: StringName, card_source: Object) -> Array:
 func rematch() -> BattleLaunchConfig:
 	var next := BattleLaunchConfig.create(player_hero, player_deck, opponent_hero, opponent_deck,
 		ai_difficulty, 0, presentation_options)
-	next.player_deck_name = player_deck_name
-	next.player_deck_id = player_deck_id
+	_copy_metadata(next)
 	return next
 
 
@@ -87,9 +94,35 @@ func rematch() -> BattleLaunchConfig:
 func with_opponent(hero_id: StringName, card_source: Object) -> BattleLaunchConfig:
 	var next := BattleLaunchConfig.create(player_hero, player_deck, hero_id,
 		technical_opponent_deck(hero_id, card_source), ai_difficulty, 0, presentation_options)
+	_copy_metadata(next)
+	return next
+
+
+## Marks this launch as a story battle of a known chapter. Returns false (and
+## leaves the config NORMAL) for an unknown chapter id.
+func set_story(chapter: StringName, return_route: StringName) -> bool:
+	if not is_story_chapter(chapter):
+		return false
+	mode = Mode.STORY
+	story_chapter = chapter
+	story_return_route = return_route
+	return true
+
+
+func is_story() -> bool:
+	return mode == Mode.STORY and is_story_chapter(story_chapter)
+
+
+static func is_story_chapter(chapter: Variant) -> bool:
+	return (chapter is StringName or chapter is String) and STORY_CHAPTERS.has(StringName(chapter))
+
+
+func _copy_metadata(next: BattleLaunchConfig) -> void:
 	next.player_deck_name = player_deck_name
 	next.player_deck_id = player_deck_id
-	return next
+	next.mode = mode
+	next.story_chapter = story_chapter
+	next.story_return_route = story_return_route
 
 
 ## Fresh non-repeating seed for match or setup-time draws (opponent selection).
