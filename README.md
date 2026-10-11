@@ -9,15 +9,18 @@ ODRAVETH — offline fantasy card strategy game for Android
 
 ## Статус
 
-**Stage 6 — pre-APK hardening и Android technical alpha.** Поверх Stage 0–5 выполнен полный regression/security/persistence/UI audit, добавлена защита активного боя от случайного Android Back и настроен воспроизводимый offline debug APK:
+**Stage 7 Visual Alpha + Stage B UI/UX hardening.** Поверх проверенного offline-движка и Android technical alpha собрана единая визуальная система, интегрированы арт-кандидаты, обновлены основные экраны и открыта каноническая Библиотека Нулмериса:
 
 - честный sanitized observation API без opponent hand, deck order, future draw и RNG;
 - NOVICE / TACTICIAN / STRATEGIST с детерминированным explainable command scoring;
 - mulligan, play/targets, Soulmonger choice, hero powers, Impulse Shard, attacks, Cartographer CHOOSE и полный AI turn;
 - canonical tie-break без AI randomness и guard от бесконечного хода;
 - information-barrier, determinism, AI-vs-AI, stress и mutation tests.
+- адаптивные Hero Select, Collection, Deck Builder, Prebattle, Battle, Result и Library для четырёх landscape-разрешений;
+- утверждённая нарративная основа: Книга выбирает реальность, игрок — Одравет, Хранитель поддерживает цикл, а стёртые земли возвращаются;
+- семь содержательных разделов Библиотеки; неутверждённые «Авторы» остаются запечатаны.
 
-Путь «Герои → Колоды → Играть → Подготовка к бою → Начать бой» запускает матч с сохранённой пользовательской колодой из 30 карт. Коллекция содержит все 40 карт; фильтры и описание доступны без системы владения. До утверждения колод ИИ внутренняя техническая генерация используется только для противника. Battle UI включает выбор целей, информационную карточку, пошаговое отображение AI и результат с повтором. Stage 6 APK — debug QA artifact с временным package ID; финальный art отсутствует. Содержимое «Прогресса» и «Настроек» открыто (Q-15). AI не использует neural network, external API или сеть.
+Путь «Герои → Колоды → Играть → Подготовка к бою → Начать бой» запускает матч с сохранённой пользовательской колодой из 30 карт. Коллекция содержит все 40 карт; фильтры и описание доступны без системы владения. До утверждения колод ИИ внутренняя техническая генерация используется только для противника. Battle UI включает выбор целей, информационную карточку, пошаговое отображение AI и результат с повтором. Текущий APK остаётся техническим debug-артефактом с временным package ID; арт и бренд Visual Alpha ещё требуют финального утверждения. «Прогресс» скрыт и запечатан (Q-15), «Настройки» содержат два работающих переключателя. AI не использует neural network, external API или сеть.
 
 ## Быстрый старт
 
