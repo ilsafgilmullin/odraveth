@@ -26,6 +26,13 @@ static func open_chronicles() -> Error:
 	return SceneRouter.reset_to(Routes.HISTORY, {HistoryShell.PARAM_SECTION: HistoryShell.CHRONICLES})
 
 
+## Leaves a story battle for the return route recorded in its launch config.
+static func return_from(config: BattleLaunchConfig) -> Error:
+	if config == null or config.story_return_route == Routes.HISTORY or not Routes.has_route(config.story_return_route):
+		return open_chronicles()
+	return SceneRouter.reset_to(config.story_return_route)
+
+
 static func story_params(chapter: StringName = BattleLaunchConfig.STORY_CHAPTER_CITADEL_TRIAL) -> Dictionary:
 	return {PARAM_CHAPTER: String(chapter)}
 

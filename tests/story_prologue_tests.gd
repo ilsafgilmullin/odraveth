@@ -102,24 +102,23 @@ func _test_responsive_layout() -> void:
 	await _tree.process_frame
 
 
+## Story Mode V1 (D-065): the final page always opens «Испытание Цитадели»;
+## hero/deck readiness is checked there, never by jumping to the ordinary Prebattle.
 func _test_setup_handoff() -> void:
-	AppState.profile = SaveManager.create_default_data()
-	var story := await _open_story(2)
-	story.next_button.pressed.emit()
-	_ok(await _wait(Routes.HERO_SELECT), "no selected hero routes to Hero Select")
-
-	AppState.profile = PlayerSetupData.select_hero(SaveManager.create_default_data(), HeroCatalog.KEZHARYN)
-	story = await _open_story(2)
-	story.next_button.pressed.emit()
-	_ok(await _wait(Routes.DECK_BUILDER), "selected hero without a ready deck routes to Deck Builder")
-
 	var ready := PlayerSetupData.select_hero(SaveManager.create_default_data(), HeroCatalog.KEZHARYN)
 	var deck := UserDeck.create(HeroCatalog.KEZHARYN)
 	deck.name = "Колода Кежарина"
 	for card_id: StringName in BattleLaunchConfig.technical_opponent_deck(HeroCatalog.KEZHARYN, CardDatabase):
 		deck.card_ids.append(String(card_id))
-	AppState.profile = PlayerSetupData.upsert(ready, deck, CardDatabase)
-	story = await _open_story(2)
-	story.next_button.pressed.emit()
-	_ok(await _wait(Routes.PREBATTLE), "ready hero and deck route to ordinary Prebattle")
-	_ok(SceneRouter._current_params.is_empty(), "handoff adds no hidden battle or modifier parameters")
+	var profiles := {
+		"no selected hero": SaveManager.create_default_data(),
+		"selected hero without a ready deck": PlayerSetupData.select_hero(SaveManager.create_default_data(),
+			HeroCatalog.KEZHARYN),
+		"ready hero and deck": PlayerSetupData.upsert(ready, deck, CardDatabase),
+	}
+	for label: String in profiles:
+		AppState.profile = profiles[label]
+		var story := await _open_story(2)
+		story.next_button.pressed.emit()
+		_ok(await _wait(Routes.STORY_CITADEL), "%s: final page opens the Citadel trial" % label)
+		_ok(SceneRouter._current_params.is_empty(), "%s: handoff adds no hidden battle or modifier parameters" % label)

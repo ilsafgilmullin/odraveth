@@ -2,7 +2,7 @@ class_name StoryPrologueScreen
 extends Control
 ## First narrative slice: «Страница без имени → Цитадель».
 ## Presentation only. It does not construct a match, alter progression or add
-## terrain rules; the final action enters the existing player setup flow.
+## terrain rules; the final action opens «Испытание Цитадели» (Story Mode V1).
 
 const PAGES: Array[Dictionary] = [
 	{
@@ -189,18 +189,14 @@ func _next_page() -> void:
 	_enter_citadel()
 
 
+## Never the ordinary Prebattle: hero and deck readiness are handled by the
+## preparation view of «Испытание Цитадели».
 func _enter_citadel() -> void:
-	var hero_id := StringName(str(AppState.profile.get("selected_hero_id", "")))
-	if not HeroCatalog.has_hero(hero_id):
-		SceneRouter.replace_with(Routes.HERO_SELECT)
-	elif PlayerSetupData.selected_deck(AppState.profile, CardDatabase) == null:
-		SceneRouter.replace_with(Routes.DECK_BUILDER)
-	else:
-		SceneRouter.replace_with(Routes.PREBATTLE)
+	SceneRouter.replace_with(Routes.STORY_CITADEL)
 
 
 func _open_library() -> void:
-	SceneRouter.replace_with(Routes.HISTORY)
+	StoryFlow.open_chronicles()
 
 
 func handle_back_request() -> bool:
@@ -211,7 +207,5 @@ func handle_back_request() -> bool:
 func _on_back() -> void:
 	if current_page > 0:
 		_previous_page()
-	elif SceneRouter.can_go_back():
-		SceneRouter.go_back()
 	else:
-		SceneRouter.reset_to(Routes.HISTORY)
+		StoryFlow.open_chronicles()

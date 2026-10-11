@@ -28,6 +28,8 @@ var curve_view: DeckCurveView
 var composition_label: Label
 var choose_deck_button: Button
 var last_config: BattleLaunchConfig
+## Non-empty only when opened from «Испытание Цитадели» with a known chapter id.
+var story_chapter: StringName = &""
 
 var _difficulty_group := ButtonGroup.new()
 
@@ -41,6 +43,7 @@ func _build_content() -> void:
 	add_child(backdrop)
 	move_child(backdrop, 0)
 	message.visible = false
+	story_chapter = StoryFlow.chapter_from_params(route_params)
 	var profile := PlayerSetupData.normalized(AppState.profile)
 
 	var body := HBoxContainer.new()
@@ -56,13 +59,16 @@ func _build_content() -> void:
 	action_row.name = "PrebattleActions"
 	action_row.add_theme_constant_override("separation", VisualTokens.SPACE_4)
 	content.add_child(action_row)
-	var note := _label("Соперника выберут механизмы Цитадели. Его фракция откроется при поиске, герой — перед боем.",
-		24, VisualTokens.COLOR_STEEL_700)
-	note.name = "OpponentNote"
-	note.size_flags_horizontal = SIZE_EXPAND_FILL
-	note.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	note.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	action_row.add_child(note)
+	if is_story():
+		action_row.add_child(_story_banner())
+	else:
+		var note := _label("Соперника выберут механизмы Цитадели. Его фракция откроется при поиске, герой — перед боем.",
+			24, VisualTokens.COLOR_STEEL_700)
+		note.name = "OpponentNote"
+		note.size_flags_horizontal = SIZE_EXPAND_FILL
+		note.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		note.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+		action_row.add_child(note)
 	var rules_button := UiKit.make_button("ПРАВИЛА ИГРЫ", UiKit.ButtonRole.SECONDARY)
 	rules_button.name = "RulesButton"
 	rules_button.custom_minimum_size = Vector2(300, 92)
@@ -76,6 +82,46 @@ func _build_content() -> void:
 	find_button.pressed.connect(find_opponent)
 	action_row.add_child(find_button)
 	_refresh()
+
+
+func is_story() -> bool:
+	return story_chapter != &""
+
+
+## Story Prebattle never falls back to the ordinary flow: without history it
+## returns to the preparation view of «Испытание Цитадели».
+func handle_back_request() -> bool:
+	if super.handle_back_request():
+		return true
+	if is_story() and not SceneRouter.can_go_back():
+		SceneRouter.reset_to(Routes.STORY_CITADEL, {StoryFlow.PARAM_VIEW: StoryFlow.VIEW_PREPARATION})
+		return true
+	return false
+
+
+func _story_banner() -> PanelContainer:
+	var panel := UiKit.make_panel(true)
+	panel.name = "StoryBattleBanner"
+	panel.size_flags_horizontal = SIZE_EXPAND_FILL
+	var stack := VBoxContainer.new()
+	stack.add_theme_constant_override("separation", VisualTokens.SPACE_1)
+	panel.add_child(stack)
+	var caption := _label(StoryFlow.CHAPTER_CAPTION, 30, VisualTokens.COLOR_GOLD_700, true)
+	caption.name = "StoryBattleCaption"
+	stack.add_child(caption)
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override("separation", VisualTokens.SPACE_3)
+	stack.add_child(row)
+	var modifiers := UiKit.make_status_marker(StoryFlow.MODIFIERS_NONE)
+	modifiers.name = "ModifiersMarker"
+	row.add_child(modifiers)
+	var opponent := _label("Соперник — один из трёх других героев.", 22, VisualTokens.COLOR_STEEL_700)
+	opponent.name = "StoryOpponentNote"
+	opponent.size_flags_horizontal = SIZE_EXPAND_FILL
+	opponent.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	opponent.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	row.add_child(opponent)
+	return panel
 
 
 func _panel(parent: Control, node_name: String) -> VBoxContainer:
@@ -288,11 +334,15 @@ func find_opponent() -> BattleLaunchConfig:
 		return null
 	var prefs: Dictionary = PlayerSetupData.normalized(AppState.profile)["prebattle"]
 	var level := DIFFICULTY_KEYS.find(prefs["ai_difficulty"]) as AiDifficulty.Level
-	var opponent := OpponentSelector.pick_with_seed(deck.hero_id, BattleLaunchConfig.generate_seed())
+	var setup_seed := BattleLaunchConfig.generate_seed()
+	var opponent := OpponentSelector.pick_story_trial_with_seed(deck.hero_id, setup_seed) if is_story() \
+		else OpponentSelector.pick_with_seed(deck.hero_id, setup_seed)
 	var config := BattleLaunchConfig.create(deck.hero_id, deck.card_ids, opponent,
 		BattleLaunchConfig.technical_opponent_deck(opponent, CardDatabase), level, 0, prefs)
 	config.player_deck_name = deck.name
 	config.player_deck_id = deck.id
+	if is_story():
+		config.set_story(story_chapter, Routes.HISTORY)
 	last_config = config
 	SceneRouter.go_to(Routes.OPPONENT_SEARCH, {BattleLaunchConfig.PARAM_KEY: config})
 	return config
