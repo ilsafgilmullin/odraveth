@@ -80,14 +80,22 @@ static func hero_slot(hero_id: StringName) -> StringName:
 
 
 ## Fills [param rect] keeping aspect (crops overflow), like TextureRect «covered».
-static func draw_cover(ci: CanvasItem, tex: Texture2D, rect: Rect2, modulate: Color = Color.WHITE) -> void:
-	var src_size := tex.get_size()
-	if src_size.x <= 0.0 or src_size.y <= 0.0 or rect.size.x <= 0.0 or rect.size.y <= 0.0:
+## [param anchor] picks which part survives the crop: (0.5, 0.5) centre, (0.5, 0) keeps the top.
+static func draw_cover(ci: CanvasItem, tex: Texture2D, rect: Rect2, modulate: Color = Color.WHITE,
+		anchor: Vector2 = Vector2(0.5, 0.5)) -> void:
+	var src := cover_region(tex.get_size(), rect.size, anchor)
+	if src.size.x <= 0.0 or src.size.y <= 0.0:
 		return
-	var scale := maxf(rect.size.x / src_size.x, rect.size.y / src_size.y)
-	var visible := rect.size / scale
-	var src := Rect2((src_size - visible) * 0.5, visible)
 	ci.draw_texture_rect_region(tex, rect, src, modulate)
+
+
+## Source region of a [param src_size] texture that covers [param dest_size] keeping aspect.
+static func cover_region(src_size: Vector2, dest_size: Vector2, anchor: Vector2 = Vector2(0.5, 0.5)) -> Rect2:
+	if src_size.x <= 0.0 or src_size.y <= 0.0 or dest_size.x <= 0.0 or dest_size.y <= 0.0:
+		return Rect2()
+	var scale := maxf(dest_size.x / src_size.x, dest_size.y / src_size.y)
+	var visible := dest_size / scale
+	return Rect2((src_size - visible) * anchor, visible)
 
 
 ## Fits inside [param rect] keeping aspect; [param anchor] 0..1 places it (0.5,1 = bottom centre).

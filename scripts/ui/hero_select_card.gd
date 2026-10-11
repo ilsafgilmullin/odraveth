@@ -1,7 +1,11 @@
 class_name HeroSelectCard
 extends Button
 ## Interactive Hero Select portrait card. Portrait is a documented Visual Alpha temporary
-## asset; the faction symbol is the Visual Alpha faction mark.
+## asset; the faction symbol is the Visual Alpha faction mark. The selected card shows
+## the hero's idle character (HeroIdleFx) and a soft gold glow that flashes on selection.
+
+const SELECTED_SCALE := 1.015
+const GLOW_REST := 0.35
 
 var hero_id: StringName = &""
 var portrait: HeroPortraitPlaceholder
@@ -12,6 +16,13 @@ var faction_symbol: EmblemView
 
 var _accent := VisualTokens.COLOR_STEEL_500
 var _built := false
+var _tween: Tween
+var _glow_box: StyleBoxFlat
+## Selection glow 0..1, drawn as a soft outer light around the card.
+var glow := 0.0:
+	set(value):
+		glow = value
+		queue_redraw()
 
 
 func configure(id: StringName) -> void:
@@ -27,11 +38,37 @@ func configure(id: StringName) -> void:
 	_apply_styles()
 
 
-func set_selected_state(selected: bool) -> void:
+## [param animations] plays the idle character; [param flash] adds the selection
+## glow/ignition transition. With animations off the selected state is a still frame.
+func set_selected_state(selected: bool, animations: bool = false, flash: bool = false) -> void:
 	button_pressed = selected
 	selected_marker.visible = selected
-	scale = Vector2(1.008, 1.008) if selected else Vector2.ONE
+	scale = Vector2.ONE * SELECTED_SCALE if selected else Vector2.ONE
 	z_index = 2 if selected else 0
+	portrait.set_idle_effects(selected, animations)
+	if _tween != null:
+		_tween.kill()
+		_tween = null
+	portrait.effect_strength = 1.0
+	glow = GLOW_REST if selected else 0.0
+	if selected and animations and flash and is_inside_tree():
+		portrait.effect_strength = 0.0
+		glow = 1.0
+		_tween = create_tween().set_parallel(true)
+		_tween.tween_property(portrait, "effect_strength", 1.0, 0.55).set_trans(Tween.TRANS_SINE)
+		_tween.tween_property(self, "glow", GLOW_REST, 0.7).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
+
+
+func _draw() -> void:
+	if glow <= 0.01:
+		return
+	if _glow_box == null:
+		_glow_box = StyleBoxFlat.new()
+		_glow_box.bg_color = Color(0, 0, 0, 0)
+		_glow_box.set_corner_radius_all(VisualTokens.RADIUS_MEDIUM)
+		_glow_box.shadow_size = 18
+	_glow_box.shadow_color = Color(VisualTokens.COLOR_GOLD_300, 0.75 * glow)
+	draw_style_box(_glow_box, Rect2(Vector2.ZERO, size))
 
 
 func _ensure_structure() -> void:

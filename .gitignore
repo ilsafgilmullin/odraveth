@@ -33,6 +33,7 @@ export_credentials.cfg
 # --- Local tooling ---
 # Local Godot binaries downloaded for checks.
 /.tools/
+__pycache__/
 Godot_v*
 *.tmp
 *.log
