@@ -172,8 +172,10 @@ func _test_android_export_config() -> void:
 		"Android QA export path identifies the corrective artifact")
 	_check(preset.contains("screen/immersive_mode=true") and preset.contains("screen/edge_to_edge=true"),
 		"Android fullscreen edge-to-edge enabled")
-	_check(preset.contains("exclude_filter=\"tests/**,docs/**,.github/**\""),
-		"tests, docs and CI files excluded from APK")
+	_check(preset.contains("exclude_filter=\"tests/**,docs/**,.github/**,masters/**\""),
+		"tests, docs, CI files and art masters excluded from APK")
+	_check(FileAccess.file_exists("res://masters/.gdignore") and preset.contains("include_filter=\"\""),
+		"art masters stay unimported (.gdignore) and no include filter pulls them back")
 	_check(preset.contains("permissions/custom_permissions=PackedStringArray()")
 		and not preset.to_lower().contains("permissions/internet=true"),
 		"Android preset requests no custom or Internet permission")

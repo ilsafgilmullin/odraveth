@@ -40,6 +40,12 @@ with zipfile.ZipFile(path) as archive:
     missing = sorted(required - names)
     if missing:
         raise SystemExit(f"APK is missing required entries: {missing}")
+    forbidden = sorted(n for n in names
+                       if n.startswith(("assets/masters/", "assets/tests/", "assets/docs/", "assets/.github/")))
+    if forbidden:
+        raise SystemExit(f"APK contains excluded source content: {forbidden[:5]}")
+    if not any(n.startswith("assets/data/cards/") and n.endswith(".json") for n in names):
+        raise SystemExit("APK is missing data/cards/*.json")
 PY
 
 SIGNATURE_OUTPUT="$("${APKSIGNER}" verify --verbose "${TEMP_APK}")"
