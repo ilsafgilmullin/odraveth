@@ -36,6 +36,9 @@ jobs:
           chmod +x .tools/godot/Godot_v4.7.2-stable_linux.x86_64
           .tools/godot/Godot_v4.7.2-stable_linux.x86_64 --version
 
+      - name: Set up Android command-line tools
+        uses: android-actions/setup-android@v3
+
       - name: Install Android SDK 36
         shell: bash
         run: |
