@@ -1,0 +1,92 @@
+name: Build Android QA Recovery
+
+on:
+  push:
+    branches:
+      - codex/visual-polish-v2-recovery
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build-apk:
+    runs-on: ubuntu-latest
+    timeout-minutes: 75
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Free disk space
+        run: |
+          sudo rm -rf /usr/local/lib/android/sdk/ndk /usr/share/dotnet /opt/ghc || true
+          df -h
+
+      - name: Install Godot 4.7.2 and export templates
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p .tools/godot "$HOME/.local/share/godot/export_templates/4.7.2.stable"
+          base="https://github.com/godotengine/godot-builds/releases/download/4.7.2-stable"
+          curl -fsSL "$base/Godot_v4.7.2-stable_linux.x86_64.zip" -o .tools/godot.zip
+          curl -fsSL "$base/Godot_v4.7.2-stable_export_templates.tpz" -o .tools/templates.tpz
+          unzip -q .tools/godot.zip -d .tools/godot
+          unzip -q .tools/templates.tpz -d .tools/templates
+          cp -a .tools/templates/templates/. "$HOME/.local/share/godot/export_templates/4.7.2.stable/"
+          chmod +x .tools/godot/Godot_v4.7.2-stable_linux.x86_64
+          .tools/godot/Godot_v4.7.2-stable_linux.x86_64 --version
+
+      - name: Install Android SDK 36
+        shell: bash
+        run: |
+          set -euo pipefail
+          yes | sdkmanager --licenses >/dev/null || true
+          sdkmanager "platform-tools" "platforms;android-36" "build-tools;36.0.0"
+
+      - name: Configure isolated Godot editor
+        shell: bash
+        run: |
+          set -euo pipefail
+          export XDG_CONFIG_HOME="$RUNNER_TEMP/godot-config"
+          mkdir -p "$XDG_CONFIG_HOME/godot"
+          cat > "$XDG_CONFIG_HOME/godot/editor_settings-4.7.tres" <<EOF
+          [gd_resource format=3]
+
+          [resource]
+          export/android/android_sdk_path = "$ANDROID_SDK_ROOT"
+          export/android/java_sdk_path = "$JAVA_HOME_17_X64"
+          EOF
+          mkdir -p .tools
+          cat > .tools/godot-safe <<EOF
+          #!/usr/bin/env bash
+          export XDG_CONFIG_HOME="$XDG_CONFIG_HOME"
+          exec "$GITHUB_WORKSPACE/.tools/godot/Godot_v4.7.2-stable_linux.x86_64" --single-threaded --single-threaded-scene "\$@"
+          EOF
+          chmod +x .tools/godot-safe
+          .tools/godot-safe --headless --path . --import
+
+      - name: Run regression tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          GODOT_BIN="$PWD/.tools/godot-safe" tests/run_tests.sh | tee recovery-tests.log
+          grep -q "All checks passed." recovery-tests.log
+
+      - name: Build and verify QA APK
+        shell: bash
+        run: |
+          set -euo pipefail
+          GODOT_BIN="$PWD/.tools/godot-safe" ANDROID_SDK_ROOT="$ANDROID_SDK_ROOT" tools/build_android_qa.sh
+          test -s build/ODRAVETH-Stage6-QA-v0.6.1.apk
+          sha256sum build/ODRAVETH-Stage6-QA-v0.6.1.apk | tee build/ODRAVETH-Stage6-QA-v0.6.1.apk.sha256
+
+      - name: Upload QA APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: ODRAVETH-Android-QA-recovery
+          path: |
+            build/ODRAVETH-Stage6-QA-v0.6.1.apk
+            build/ODRAVETH-Stage6-QA-v0.6.1.apk.sha256
+          if-no-files-found: error
+          retention-days: 30
+          compression-level: 0
