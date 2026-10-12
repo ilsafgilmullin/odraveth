@@ -1,0 +1,24 @@
+name: Publish QA Release
+
+on:
+  push:
+    branches:
+      - codex/visual-polish-v2-recovery
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Make QA release public
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release edit qa-v0.6.1-recovery \
+            --repo "${GITHUB_REPOSITORY}" \
+            --prerelease=false \
+            --draft=false \
+            --title "ODRAVETH QA v0.6.1"
