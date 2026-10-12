@@ -7,7 +7,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   build-apk:
@@ -81,6 +81,21 @@ jobs:
           GODOT_BIN="$PWD/.tools/godot-safe" ANDROID_SDK_ROOT="$ANDROID_SDK_ROOT" tools/build_android_qa.sh
           test -s build/ODRAVETH-Stage6-QA-v0.6.1.apk
           sha256sum build/ODRAVETH-Stage6-QA-v0.6.1.apk | tee build/ODRAVETH-Stage6-QA-v0.6.1.apk.sha256
+
+      - name: Publish public QA download
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          tag="qa-v0.6.1-recovery"
+          if ! gh release view "$tag" >/dev/null 2>&1; then
+            gh release create "$tag" --target "${GITHUB_SHA}" --title "ODRAVETH QA v0.6.1" --notes "Восстановительная QA-сборка Android. Основа: f45694f. SHA-256 приложен отдельным файлом." --prerelease
+          fi
+          gh release upload "$tag" \
+            build/ODRAVETH-Stage6-QA-v0.6.1.apk \
+            build/ODRAVETH-Stage6-QA-v0.6.1.apk.sha256 \
+            --clobber
 
       - name: Upload QA APK
         uses: actions/upload-artifact@v4
