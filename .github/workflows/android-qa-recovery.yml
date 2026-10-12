@@ -36,15 +36,14 @@ jobs:
           chmod +x .tools/godot/Godot_v4.7.2-stable_linux.x86_64
           .tools/godot/Godot_v4.7.2-stable_linux.x86_64 --version
 
-      - name: Set up Android command-line tools
-        uses: android-actions/setup-android@v3
-
       - name: Install Android SDK 36
         shell: bash
         run: |
           set -euo pipefail
-          yes | sdkmanager --licenses >/dev/null || true
-          sdkmanager "platform-tools" "platforms;android-36" "build-tools;36.0.0"
+          SDKMANAGER="$(find "$ANDROID_SDK_ROOT/cmdline-tools" -type f -path "*/bin/sdkmanager" | sort -V | tail -1)"
+          test -x "$SDKMANAGER"
+          yes | "$SDKMANAGER" --licenses >/dev/null || true
+          "$SDKMANAGER" "platform-tools" "platforms;android-36" "build-tools;36.0.0"
 
       - name: Configure isolated Godot editor
         shell: bash
