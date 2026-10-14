@@ -3,6 +3,7 @@ extends Node
 ##   godot --headless --path . --scene res://tests/visual_alpha_smoke.tscn [-- --only=deck_builder]
 
 const MODULES := [
+	["recovery_autosave", preload("res://tests/recovery_autosave_tests.gd")],
 	["deck_builder", preload("res://tests/deck_builder_v1_tests.gd")],
 	["prebattle", preload("res://tests/prebattle_v3_tests.gd")],
 	["battle", preload("res://tests/battle_v2_tests.gd")],

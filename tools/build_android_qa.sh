@@ -2,6 +2,10 @@
 set -euo pipefail
 
 PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+if [[ -f "${PROJECT_ROOT}/APK_BUILD_BLOCKED" ]]; then
+  echo "APK_BUILD_BLOCKED: согласованные дефекты ещё не закрыты; экспорт запрещён." >&2
+  exit 3
+fi
 GODOT_BIN="${GODOT_BIN:?Set GODOT_BIN to Godot 4.7.2 stable}"
 ANDROID_SDK_ROOT="${ANDROID_SDK_ROOT:?Set ANDROID_SDK_ROOT to the Android SDK}"
 BUILD_TOOLS="${ANDROID_SDK_ROOT}/build-tools/36.0.0"

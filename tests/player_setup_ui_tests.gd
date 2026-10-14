@@ -141,7 +141,7 @@ func _test_builder() -> void:
 		_ok((scene.find_child("Add_%s" % legendary.id, true, false) as Button).disabled, "second legendary copy disabled")
 	scene.name_edit.text = "Колода A"
 	scene.name_edit.text_changed.emit(scene.name_edit.text)
-	(scene.find_child("SaveDeckButton", true, false) as Button).pressed.emit()
+	scene._save()
 	var deck_a_id := scene.draft.id
 	var deck_a_cards := scene.draft.card_ids.duplicate()
 	_ok(AppState.profile["user_decks"].size() == 1 and AppState.profile["user_decks"][0]["name"] == "Колода A",
@@ -149,10 +149,10 @@ func _test_builder() -> void:
 
 	(scene.find_child("NewDeckButton", true, false) as Button).pressed.emit()
 	_ok(scene.draft.id != deck_a_id, "new deck uses distinct ID")
-	_ok(scene.deck_select.get_selected_id() == 0, "unsaved draft is distinct in deck selector")
+	_ok(String(scene.deck_select.get_item_metadata(scene.deck_select.selected)) == scene.draft.id, "new draft is autosaved and selected in deck selector")
 	scene.name_edit.text = "Колода B"
 	scene.name_edit.text_changed.emit(scene.name_edit.text)
-	(scene.find_child("SaveDeckButton", true, false) as Button).pressed.emit()
+	scene._save()
 	var deck_b_id := scene.draft.id
 	_ok(AppState.profile["user_decks"].size() == 2 and deck_b_id != deck_a_id,
 		"deck B save creates a second distinct record")
@@ -184,7 +184,7 @@ func _test_builder() -> void:
 	_ok(saved_a_before.name == "Колода A" and saved_a_before.card_ids == deck_a_cards
 		and saved_b_before.name == "Колода B" and saved_b_before.card_ids.is_empty(),
 		"editing selector-created draft does not mutate saved A/B")
-	(scene.find_child("SaveDeckButton", true, false) as Button).pressed.emit()
+	scene._save()
 	_ok(AppState.profile["user_decks"].size() == 3
 		and AppState.profile["user_decks"].any(func(record: Dictionary) -> bool: return record["id"] == new_draft_id),
 		"saving selector-created draft creates a third record")
@@ -192,7 +192,7 @@ func _test_builder() -> void:
 	_select_deck_metadata(scene, deck_a_id)
 	scene.name_edit.text = "Колода A обновлена"
 	scene.name_edit.text_changed.emit(scene.name_edit.text)
-	(scene.find_child("SaveDeckButton", true, false) as Button).pressed.emit()
+	scene._save()
 	var a_records: Array = AppState.profile["user_decks"].filter(
 		func(record: Dictionary) -> bool: return record["id"] == deck_a_id)
 	_ok(AppState.profile["user_decks"].size() == 3 and a_records.size() == 1
@@ -261,7 +261,7 @@ func _test_sizes() -> void:
 					and viewport.encloses(panel.get_global_rect()) and deck_scroll.size.y > 0,
 					"%s: КОЛОДА tab shows a scrollable deck panel inside the viewport (%s)" % [dimensions,
 						panel.get_global_rect()])
-				_ok(editor.grid.columns >= 2 and viewport.encloses((scene.find_child("SaveDeckButton", true, false) as Control).get_global_rect()),
+				_ok(editor.grid.columns >= 2 and viewport.encloses((scene.find_child("SelectDeckButton", true, false) as Control).get_global_rect()),
 					"%s: deck actions visible" % dimensions)
 				editor.draft.card_ids.assign(BattleLaunchConfig.technical_opponent_deck(HeroCatalog.KEZHARYN, CardDatabase))
 				editor._refresh_deck()

@@ -30,6 +30,9 @@ var guidance_label: Label
 var status_label: Label
 var empty_deck_hint: Label
 var deck_hint: Label
+var save_error_dialog: ConfirmModal
+var _saved_draft: Dictionary = {}
+var _pending_after_save: Callable
 
 var _cells: Dictionary = {}
 var _tab_group := ButtonGroup.new()
@@ -65,11 +68,18 @@ func _build_content() -> void:
 	detail = CardDetailOverlay.new()
 	add_child(detail)
 	clear_dialog = ConfirmModal.create("ОЧИСТИТЬ КОЛОДУ?",
-		"Все карты будут убраны из текущей колоды. Сохранённые колоды не изменятся, пока вы не нажмёте «Сохранить».",
+		"Все карты будут убраны из текущей колоды. Пустой черновик сохранится автоматически. Остальные колоды не изменятся.",
 		"ОЧИСТИТЬ")
 	clear_dialog.name = "ClearConfirmation"
 	clear_dialog.confirmed.connect(_clear)
 	add_child(clear_dialog)
+	save_error_dialog = ConfirmModal.create("НЕ УДАЛОСЬ СОХРАНИТЬ",
+		"Правки остаются в редакторе. Повторите сохранение, чтобы продолжить без потери изменений.",
+		"ПОВТОРИТЬ", "ОСТАТЬСЯ")
+	save_error_dialog.name = "SaveErrorConfirmation"
+	save_error_dialog.confirmed.connect(_retry_pending_save)
+	save_error_dialog.canceled.connect(func() -> void: _pending_after_save = Callable())
+	add_child(save_error_dialog)
 
 	get_viewport().size_changed.connect(_update_columns)
 	var decks := PlayerSetupData.decks_for(AppState.profile, hero)
@@ -81,7 +91,7 @@ func _build_content() -> void:
 			break
 	_refresh_all()
 	_set_tab(Tab.CARDS)
-	status_label.text = "Нажмите на карту, чтобы прочитать её полностью"
+	_autosave()
 
 
 func _build_no_hero_state() -> void:
@@ -151,7 +161,7 @@ func _build_identity_bar() -> void:
 	name_edit = LineEdit.new()
 	name_edit.name = "DeckName"
 	name_edit.placeholder_text = "Название колоды"
-	name_edit.max_length = UserDeck.MAX_NAME_LENGTH + 10
+	name_edit.max_length = UserDeck.MAX_NAME_LENGTH
 	UiKit.prepare_text_field(name_edit)
 	name_edit.text_changed.connect(_on_name_changed)
 	name_stack.add_child(name_edit)
@@ -187,7 +197,7 @@ func _build_identity_bar() -> void:
 	change.name = "ChangeHeroButton"
 	change.add_theme_font_size_override("font_size", 26)
 	change.custom_minimum_size = Vector2(240, 72)
-	change.pressed.connect(SceneRouter.go_to.bind(Routes.HERO_SELECT))
+	change.pressed.connect(_request_change_hero)
 	header.add_child(change)
 
 
@@ -350,7 +360,6 @@ func _build_footer() -> void:
 	footer.add_child(status_label)
 	for action: Array in [
 		["ClearDeckButton", "ОЧИСТИТЬ", _ask_clear, UiKit.ButtonRole.SECONDARY],
-		["SaveDeckButton", "СОХРАНИТЬ", _save, UiKit.ButtonRole.SECONDARY],
 		["SelectDeckButton", "ВЫБРАТЬ", _select_deck, UiKit.ButtonRole.PRIMARY],
 	]:
 		var button := UiKit.make_button(action[1], action[3])
@@ -367,6 +376,9 @@ func show_message(text_value: String) -> void:
 
 
 func handle_back_request() -> bool:
+	if save_error_dialog != null and save_error_dialog.visible:
+		save_error_dialog.cancel()
+		return true
 	if clear_dialog != null and clear_dialog.visible:
 		clear_dialog.cancel()
 		return true
@@ -376,6 +388,9 @@ func handle_back_request() -> bool:
 	if name_edit != null and name_edit.has_focus():
 		name_edit.release_focus()
 		DisplayServer.virtual_keyboard_hide()
+		return true
+	if has_unsaved_changes() and not _autosave():
+		_block_for_save(_navigate_back)
 		return true
 	return super.handle_back_request()
 
@@ -413,11 +428,11 @@ func _refresh_all() -> void:
 func _refresh_selector() -> void:
 	deck_select.clear()
 	var decks := PlayerSetupData.decks_for(AppState.profile, draft.hero_id)
-	deck_select.add_item("НОВАЯ (НЕ СОХРАНЕНА)", 0)
+	deck_select.add_item("СОЗДАТЬ КОЛОДУ…", 0)
 	deck_select.set_item_metadata(0, "")
 	deck_select.select(0)
 	for i in decks.size():
-		deck_select.add_item(decks[i].name, i + 1)
+		deck_select.add_item(decks[i].name if not decks[i].name.strip_edges().is_empty() else "Без названия · черновик", i + 1)
 		deck_select.set_item_metadata(i + 1, decks[i].id)
 		if decks[i].id == draft.id:
 			deck_select.select(i + 1)
@@ -426,28 +441,44 @@ func _refresh_selector() -> void:
 
 func _open_selected(index: int) -> void:
 	var id: String = deck_select.get_item_metadata(index)
+	if not _autosave():
+		_refresh_selector()
+		_block_for_save(_open_deck_id.bind(id))
+		return
+	_open_deck_id(id)
+
+
+func _open_deck_id(id: String) -> void:
 	if id.is_empty():
-		draft = UserDeck.create(draft.hero_id)
-		_refresh_all()
-		show_message("Новая колода создана")
+		_create_deck()
 		return
 	for saved: UserDeck in PlayerSetupData.decks_for(AppState.profile, draft.hero_id):
 		if saved.id == id:
 			draft = saved
+			_saved_draft = draft.to_data()
 			_refresh_all()
 			show_message("Открыта колода «%s»" % saved.name)
 			return
 
 
 func _new_deck() -> void:
+	if not _autosave():
+		_block_for_save(_create_deck)
+		return
+	_create_deck()
+
+
+func _create_deck() -> void:
 	draft = UserDeck.create(draft.hero_id)
+	_saved_draft = {}
 	_refresh_all()
-	show_message("Новая колода создана")
+	_autosave()
 
 
 func _on_name_changed(value: String) -> void:
 	draft.name = value
 	_refresh_status()
+	_autosave()
 
 
 func _refresh_grid() -> void:
@@ -522,6 +553,7 @@ func _remove_card(card_id: String) -> void:
 func _after_deck_change() -> void:
 	_sync_cells()
 	_refresh_deck()
+	_autosave()
 
 
 func _refresh_deck() -> void:
@@ -676,17 +708,60 @@ func _marker_box(deck_ready: bool) -> StyleBoxFlat:
 
 
 func _save() -> void:
-	if not draft.name_problem().is_empty():
-		show_message(draft.name_problem())
-		return
-	draft.name = draft.name.strip_edges()
+	_autosave()
+
+
+func has_unsaved_changes() -> bool:
+	return draft != null and draft.to_data() != _saved_draft
+
+
+func _autosave() -> bool:
+	if draft == null:
+		return true
+	if not has_unsaved_changes():
+		return true
 	var next := PlayerSetupData.upsert(AppState.profile, draft, CardDatabase)
 	if AppState.persist_profile(next) != OK:
-		show_message("Сохранение не удалось. Текущий черновик сохранён на экране.")
-		return
-	show_message("Колода сохранена" if draft.is_ready(CardDatabase) else "Черновик сохранён; для боя нужна готовая колода")
+		show_message("Не удалось сохранить. Правки остаются на экране; при выходе можно повторить запись.")
+		return false
+	_saved_draft = draft.to_data()
+	show_message("Изменения сохранены" if draft.is_ready(CardDatabase) else "Черновик сохранён автоматически")
 	_refresh_selector()
 	_refresh_status()
+	return true
+
+
+func _block_for_save(action: Callable) -> void:
+	_pending_after_save = action
+	save_error_dialog.popup()
+
+
+func _retry_pending_save() -> void:
+	if not _autosave():
+		save_error_dialog.popup()
+		return
+	var action := _pending_after_save
+	_pending_after_save = Callable()
+	if action.is_valid():
+		action.call()
+
+
+func _request_change_hero() -> void:
+	if not _autosave():
+		_block_for_save(_go_to_hero)
+		return
+	_go_to_hero()
+
+
+func _go_to_hero() -> void:
+	SceneRouter.go_to(Routes.HERO_SELECT)
+
+
+func _navigate_back() -> void:
+	if SceneRouter.can_go_back():
+		SceneRouter.go_back()
+	else:
+		SceneRouter.reset_to(Routes.MAIN_MENU)
 
 
 func _select_deck() -> void:
@@ -696,11 +771,13 @@ func _select_deck() -> void:
 	var next := PlayerSetupData.upsert(AppState.profile, draft, CardDatabase)
 	next["selected_deck_id"] = draft.id
 	if AppState.persist_profile(next) == OK:
+		_saved_draft = draft.to_data()
 		show_message("Колода «%s» выбрана для боя" % draft.name.strip_edges())
 		_refresh_selector()
 		_refresh_status()
 	else:
 		show_message("Не удалось сохранить выбор")
+		_block_for_save(_select_deck)
 
 
 func _ask_clear() -> void:
@@ -710,7 +787,8 @@ func _ask_clear() -> void:
 func _clear() -> void:
 	draft.card_ids.clear()
 	_after_deck_change()
-	show_message("Колода очищена")
+	if not has_unsaved_changes():
+		show_message("Колода очищена и сохранена")
 
 
 func _open_detail(card_id: StringName) -> void:

@@ -379,7 +379,7 @@ func _test_navigation() -> void:
 	_check(editor.draft.is_ready(CardDatabase) and editor.draft.card_ids.size() == 30,
 		"UI add actions produce validator-ready 30/30 deck")
 	var selected_id: String = editor.draft.id
-	_find_button("SaveDeckButton").pressed.emit()
+	_check(not editor.has_unsaved_changes(), "all deck edits auto saved before leaving")
 	_check(AppState.profile["selected_deck_id"] == selected_id, "first ready deck auto selected")
 	SceneRouter.reset_to(Routes.MAIN_MENU)
 	await _wait_for_route(Routes.MAIN_MENU)
