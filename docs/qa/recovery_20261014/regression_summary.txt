@@ -1,7 +1,7 @@
-Godot 4.7.2.stable.official.ed1daf0bf, logs in /tmp/tmp.hKjDiUvAXk
+Godot 4.7.2.stable.official.ed1daf0bf, logs in /tmp/tmp.bV8DOio1XC
 ==> import
 ==> smoke_test
-SMOKE TEST PASSED: 3426 checks in 1170 frames.
+SMOKE TEST PASSED: 3546 checks in 1410 frames.
 ==> main_scene
 Boot -> Main Menu confirmed.
 All checks passed.

@@ -643,6 +643,7 @@ func _layout_hand(fresh: Array[int] = []) -> void:
 			view.z_index = 9
 		view.custom_minimum_size = card
 		view.size = card
+		view.set_exposed_width(card.x if view.selected or i == n - 1 else minf(card.x, step - 4.0))
 		var running: Variant = view.get_meta("tween") if view.has_meta("tween") else null
 		if running is Tween and (running as Tween).is_valid():
 			(running as Tween).kill()

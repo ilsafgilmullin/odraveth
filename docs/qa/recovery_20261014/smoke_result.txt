@@ -16,4 +16,4 @@ WARNING: ResultScreen: missing or invalid 'outcome' param: <null>.
 -- engine log
    ok    negative checks were observed by the error log (74)
    ok    no unexpected engine errors or warnings
-SMOKE TEST PASSED: 3426 checks in 1170 frames.
+SMOKE TEST PASSED: 3546 checks in 1410 frames.

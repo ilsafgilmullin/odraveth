@@ -23,6 +23,8 @@ var art: CardArtSlot
 
 var _frame: CardFrameVisual
 var _front: Control
+var _name_label: Label
+var exposed_width := BASE_SIZE.x
 var _display_font: Font
 var _hold_time := -1.0
 var _hold_fired := false
@@ -52,6 +54,17 @@ func _init() -> void:
 	_front.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_front.draw.connect(_draw_front)
 	visual.add_child(_front)
+	_name_label = Label.new()
+	_name_label.name = "CardName"
+	_name_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_name_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_name_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_name_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	_name_label.add_theme_font_override("font", _display_font)
+	_name_label.add_theme_color_override("font_color", VisualTokens.COLOR_STEEL_900)
+	_name_label.add_theme_constant_override("line_spacing", -2)
+	_name_label.minimum_size_changed.connect(func() -> void: _name_label.size.y = 0.0)
+	visual.add_child(_name_label)
 	resized.connect(_layout)
 	pressed.connect(func() -> void:
 		if _hold_fired:
@@ -77,6 +90,7 @@ func configure(card: Dictionary, playable: bool, is_selected: bool) -> void:
 	elif presentation != null:
 		presentation.current_cost = current_cost
 	if presentation != null:
+		_name_label.text = presentation.name_ru
 		tooltip_text = "%s · стоимость %d\n%s" % [presentation.name_ru, current_cost, presentation.rules_text_ru]
 		if is_echo:
 			tooltip_text += "\nЭхо исчезнет в конце хода №%d." % int(card.get("echo_expires_turn", -1))
@@ -119,6 +133,11 @@ func suppress_release_tap() -> void:
 	set_process(false)
 
 
+func set_exposed_width(value: float) -> void:
+	exposed_width = clampf(value, 64.0, size.x)
+	_layout()
+
+
 func _layout() -> void:
 	visual.size = size
 	visual.pivot_offset = Vector2(size.x * 0.5, size.y)
@@ -128,6 +147,22 @@ func _layout() -> void:
 	var inset := size.x * 0.07
 	art.position = Vector2(inset, size.y * 0.06)
 	art.size = Vector2(size.x - inset * 2.0, size.y * 0.52)
+	# Keep the full name inside the uncovered strip of an overlapping hand.
+	# A selected card is on top and receives its entire width from BattleScene.
+	var narrow := exposed_width < size.x * 0.8
+	if narrow:
+		art.size.y = size.y * 0.44
+	_name_label.position = Vector2(6.0, size.y * (0.52 if narrow else 0.585))
+	_name_label.size = Vector2(minf(exposed_width, size.x) - 12.0, size.y * (0.33 if narrow else 0.29))
+	var name_size := int(size.x * 0.105)
+	if exposed_width < size.x * 0.8:
+		name_size = 16
+		for word: String in _name_label.text.split(" "):
+			while name_size > 14 and _display_font.get_string_size(word, HORIZONTAL_ALIGNMENT_LEFT, -1, name_size).x > _name_label.size.x:
+				name_size -= 1
+	while name_size > 14 and _display_font.get_multiline_string_size(_name_label.text, HORIZONTAL_ALIGNMENT_LEFT, _name_label.size.x, name_size).y > _name_label.size.y:
+		name_size -= 1
+	_name_label.add_theme_font_size_override("font_size", name_size)
 	_frame.queue_redraw()
 	_front.queue_redraw()
 
@@ -158,18 +193,6 @@ func _draw_front() -> void:
 		HORIZONTAL_ALIGNMENT_LEFT, -1, cost_size, cost_color)
 	if increased:
 		_front.draw_string(_display_font, plate.end + Vector2(2, -4), "▲", HORIZONTAL_ALIGNMENT_LEFT, -1, int(s.x * 0.08), Color("d07a55"))
-	# Name (up to two lines).
-	var name_top := s.y * 0.60
-	var name_size := int(s.x * 0.105)
-	var words := presentation.name_ru.split(" ")
-	var lines := PackedStringArray([presentation.name_ru])
-	if _display_font.get_string_size(presentation.name_ru, HORIZONTAL_ALIGNMENT_LEFT, -1, name_size).x > s.x * 0.88 and words.size() > 1:
-		var split := ceili(words.size() / 2.0)
-		lines = PackedStringArray([" ".join(words.slice(0, split)), " ".join(words.slice(split))])
-	for i in lines.size():
-		var fitted := BoardPieceView.fit_text(_display_font, lines[i], s.x * 0.90, name_size, int(s.x * 0.085))
-		_front.draw_string(_display_font, Vector2(s.x * 0.05, name_top + float(i + 1) * name_size * 1.18), fitted[0],
-			HORIZONTAL_ALIGNMENT_CENTER, s.x * 0.90, int(fitted[1]), VisualTokens.COLOR_STEEL_900)
 	# Stats line.
 	var stats_y := s.y - s.y * 0.075
 	var small := int(s.x * 0.085)

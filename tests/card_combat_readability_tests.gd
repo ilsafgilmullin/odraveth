@@ -105,7 +105,20 @@ func _test_view_reuse_and_detail() -> void:
 		"reused piece clears previous abilities and readiness")
 	var overlay := CardDetailOverlay.new()
 	_tree.root.add_child(overlay)
+	var hand_card := BattleCardView.new()
+	_tree.root.add_child(hand_card)
+	hand_card.custom_minimum_size = BattleCardView.BASE_SIZE * 0.92
+	hand_card.size = BattleCardView.BASE_SIZE * 0.92
 	for card: CardDefinition in CardDatabase.get_all_cards():
+		hand_card.configure({"instance_id": 1, "card_id": card.id}, true, false)
+		for width: float in [88.0, 100.0, 174.8]:
+			hand_card.set_exposed_width(width)
+			await _tree.process_frame
+			await _tree.process_frame
+			var title := hand_card.get_node("Visual/CardName") as Label
+			_ok(title.text == card.name_ru and title.position.y + title.size.y <= hand_card.size.y * 0.86
+				and title.position.x + title.size.x <= width,
+				"%s complete name fits uncovered %.0fpx hand strip above stats" % [card.id, width])
 		overlay.show_card(card)
 		_ok((card.rules_text_ru.is_empty() or overlay.body_text.text.contains(card.rules_text_ru)) and overlay.current_card_id == card.id,
 			"%s full approved rules preserved" % card.id)
@@ -114,4 +127,5 @@ func _test_view_reuse_and_detail() -> void:
 		_ok(not overlay.body_text.text.contains("ТЕКУЩЕЕ СОСТОЯНИЕ"), "%s new detail clears stale runtime context" % card.id)
 	piece.free()
 	overlay.free()
+	hand_card.free()
 	await _tree.process_frame
