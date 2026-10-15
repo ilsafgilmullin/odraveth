@@ -1,0 +1,19 @@
+     at: push_warning (core/variant/variant_utility.cpp:1033)
+     GDScript backtrace (most recent call first):
+         [0] _navigate (res://scripts/core/scene_router.gd:76)
+         [1] go_to (res://scripts/core/scene_router.gd:35)
+         [2] _test_navigation (res://tests/smoke_test.gd:492)
+         [3] _wait_for_route (res://tests/smoke_test.gd:518)
+   ok    navigation during a scene change is rejected
+   ok    pending navigation completes
+WARNING: ResultScreen: missing or invalid 'outcome' param: <null>.
+     at: push_warning (core/variant/variant_utility.cpp:1033)
+     GDScript backtrace (most recent call first):
+         [0] _build (res://scripts/ui/result_screen.gd:103)
+         [1] _ready (res://scripts/ui/result_screen.gd:56)
+   ok    result without outcome does not crash
+   [end of expected errors/warnings]
+-- engine log
+   ok    negative checks were observed by the error log (74)
+   ok    no unexpected engine errors or warnings
+SMOKE TEST PASSED: 3426 checks in 1170 frames.
