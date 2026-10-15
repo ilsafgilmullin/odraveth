@@ -93,8 +93,10 @@ func _test_component_preview() -> void:
 	var select := preview.find_child("Select", true, false) as OptionButton
 	_ok(preview.theme != null and display.get_theme_font("font") != null and display.get_theme_font_size("font_size") >= 52,
 		"display typography is applied at UI-root after import")
-	_ok(primary.custom_minimum_size.y >= 64 and primary.get_theme_stylebox("pressed").get_border_width(SIDE_LEFT) >
-		primary.get_theme_stylebox("normal").get_border_width(SIDE_LEFT),
+	var pressed_style := primary.get_theme_stylebox("pressed") as StyleBoxTexture
+	var normal_style := primary.get_theme_stylebox("normal") as StyleBoxTexture
+	_ok(primary.custom_minimum_size.y >= 64 and pressed_style != null and normal_style != null
+		and pressed_style.expand_margin_left < normal_style.expand_margin_left,
 		"primary pressed/selected silhouette changes beyond colour")
 	_ok(filter.toggle_mode and filter.button_pressed and filter.icon != null,
 		"filter selected state includes a check mark, not colour alone")

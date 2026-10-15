@@ -100,8 +100,13 @@ static func _card_view(state: MatchState, owner: int, card: CardInstance, includ
 
 
 static func _creature_view(creature: CreatureInstance) -> Dictionary:
+	var frenzy_used := false
+	for effect: CardEffectSpec in creature.definition().effects:
+		if effect.keyword == &"FRENZY" and int(creature.trigger_counts.get(effect.effect_id, 0)) > 0:
+			frenzy_used = true
 	return {
 		"instance_id": creature.instance_id,
+		"owner": creature.owner,
 		"card_id": String(creature.card.card_id()),
 		"definition": _definition_view(creature.definition()),
 		"attack": creature.get_attack(),
@@ -115,6 +120,9 @@ static func _creature_view(creature: CreatureInstance) -> Dictionary:
 		"max_attacks_this_turn": creature.max_attacks_this_turn,
 		"deferral_pending": creature.deferral_pending,
 		"attack_blocked_turn": creature.attack_blocked_turn,
+		"frenzy_used_this_turn": frenzy_used,
+		"temporary_attack": creature.temporary_attack.duplicate(true),
+		"temporary_keywords": creature.temporary_keywords.duplicate(true),
 	}
 
 

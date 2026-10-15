@@ -46,3 +46,8 @@ desktop.ini
 .idea/
 *.swp
 *~
+
+# Recovered original PNGs are unchanged in their persistent source files;
+# optimized runtime copies plus source hashes are tracked instead.
+/assets/recovered_warm/*.png
+/assets/recovered_warm/*.png.import

@@ -23,6 +23,8 @@ var can_attack := false
 var target_state: TargetState = TargetState.NONE
 var visual: Control
 var art: CardArtSlot
+var combat_states: Array[Dictionary] = []
+var turn_number := -1
 
 var _back: Control
 var _front: Control
@@ -92,12 +94,15 @@ func _layer(node_name: String, painter: Callable) -> Control:
 	return layer
 
 
-func configure(creature: Dictionary, ready_to_attack: bool, state: TargetState) -> void:
+func configure(creature: Dictionary, ready_to_attack: bool, state: TargetState, current_turn: int = -1) -> void:
 	var new_card := StringName(str(creature.get("card_id", "")))
 	instance_id = int(creature.get("instance_id", 0))
-	data = creature
+	data = creature.duplicate(true)
 	can_attack = ready_to_attack
 	target_state = state
+	turn_number = current_turn
+	combat_states = CardCombatReadability.states(data, turn_number, can_attack)
+	tooltip_text = CardCombatReadability.describe(data, turn_number, can_attack)
 	if new_card != card_id:
 		card_id = new_card
 		var definition := CardDatabase.get_card(card_id)
@@ -170,6 +175,13 @@ func _draw_back(layer: Control) -> void:
 	layer.draw_polyline(closed, border_color, 6.0 if provoke else 3.0, true)
 	if provoke:
 		layer.draw_polyline(closed, Color(VisualTokens.COLOR_STEEL_900, 0.55), 2.0, true)
+		# Independent defensive contour: shield shoulders and a lower point.
+		var shield := PackedVector2Array([Vector2(s.x * 0.04, s.y * 0.24), Vector2(s.x * 0.04, s.y * 0.70),
+			Vector2(s.x * 0.50, s.y * 0.94), Vector2(s.x * 0.96, s.y * 0.70), Vector2(s.x * 0.96, s.y * 0.24)])
+		layer.draw_polyline(shield, VisualTokens.COLOR_STONE_050, 3.0, true)
+	if target_state == TargetState.SELECTED:
+		for x: float in [s.x * 0.08, s.x * 0.92]:
+			layer.draw_line(Vector2(x, s.y * 0.25), Vector2(x, s.y * 0.63), VisualTokens.COLOR_GOLD_300, 5.0, true)
 
 
 func _draw_front(layer: Control) -> void:
@@ -187,20 +199,33 @@ func _draw_front(layer: Control) -> void:
 	layer.draw_string(_display_font, Vector2(s.x * 0.10, name_y + s.y * 0.082), fitted[0], HORIZONTAL_ALIGNMENT_CENTER,
 		s.x * 0.80, int(fitted[1]), VisualTokens.COLOR_STONE_050)
 
-	var tags := _keywords()
-	var tag_y := s.y * 0.09
-	for keyword: String in tags:
-		if not KEYWORD_TAGS.has(keyword):
+	var badge_radius := s.x * 0.095
+	var badge_index := 0
+	var shown: Dictionary = {}
+	for status: Dictionary in combat_states:
+		if status["id"] == "attack_ready" or shown.has(status["id"]):
 			continue
-		var text_value: String = KEYWORD_TAGS[keyword]
-		var font_size := int(s.y * 0.058)
-		var width := _display_font.get_string_size(text_value, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size).x + 12.0
-		var tag := Rect2(s.x * 0.5 - width * 0.5, tag_y, width, s.y * 0.085)
-		layer.draw_rect(tag, Color(VisualTokens.COLOR_STEEL_900, 0.82))
-		layer.draw_rect(tag, Color(VisualTokens.COLOR_GOLD_300, 0.85), false, 1.0)
-		layer.draw_string(_display_font, tag.position + Vector2(6, tag.size.y * 0.78), text_value, HORIZONTAL_ALIGNMENT_LEFT,
-			-1, font_size, VisualTokens.COLOR_STONE_050)
-		tag_y += s.y * 0.095
+		shown[status["id"]] = true
+		var center := Vector2(s.x * 0.17, s.y * 0.12 + badge_index * badge_radius * 2.3)
+		layer.draw_circle(center, badge_radius, Color(VisualTokens.COLOR_STEEL_900, 0.92))
+		var active: bool = status["active"]
+		var ink := VisualTokens.COLOR_GOLD_300 if active else VisualTokens.COLOR_STONE_050
+		layer.draw_arc(center, badge_radius, 0, TAU, 24, ink, 2.0, true)
+		CardCombatReadability.draw_glyph(layer, status["glyph"], center, badge_radius * 0.72, ink)
+		if status["id"] == "frenzy_used":
+			layer.draw_circle(center + Vector2(badge_radius * 0.72, badge_radius * 0.72), badge_radius * 0.36, ink)
+		badge_index += 1
+		if badge_index == 4:
+			break
+	if can_attack:
+		var arrow := PackedVector2Array([Vector2(s.x * 0.43, s.y * 0.63), Vector2(s.x * 0.50, s.y * 0.57), Vector2(s.x * 0.57, s.y * 0.63)])
+		layer.draw_polyline(arrow, VisualTokens.COLOR_MAGIC_300, 4.0, true)
+		if int(data.get("max_attacks_this_turn", 1)) > 1:
+			var center := Vector2(s.x * 0.75, s.y * 0.50)
+			layer.draw_circle(center, s.x * 0.13, Color(VisualTokens.COLOR_STEEL_900, 0.95))
+			CardCombatReadability.draw_glyph(layer, "sword", center - Vector2(s.x * 0.04, 0), s.x * 0.07, VisualTokens.COLOR_GOLD_300)
+			var left := maxi(0, int(data["max_attacks_this_turn"]) - int(data.get("attacks_this_turn", 0)))
+			_draw_value(layer, center + Vector2(s.x * 0.06, 0), str(left), VisualTokens.COLOR_STONE_050, s.x * 0.22)
 
 	var attack := int(data.get("attack", 0))
 	var health := int(data.get("health", 0))
@@ -235,6 +260,8 @@ func _draw_front(layer: Control) -> void:
 		_draw_value(layer, r_center + Vector2(0, -plate * 0.02), str(armor), VisualTokens.COLOR_STONE_050, plate * 0.85)
 	if target_state == TargetState.LEGAL:
 		_draw_target_marker(layer, s)
+	if card != null:
+		CardRarityTrim.draw_trim(layer, Rect2(Vector2.ZERO, s), card.rarity, true)
 
 
 ## Shrinks to min_size, then trims with an ellipsis so a single-line label stays in max_width.

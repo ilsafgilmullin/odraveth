@@ -102,6 +102,11 @@ var _pointer := Vector2(-1, -1)
 var _last_rects: Dictionary = {}
 var _hand_seen := false
 var _display_font: Font
+var _pressed_hand_id := 0
+var _drag_origin := Vector2.ZERO
+var _drag_active := false
+var _touch_pointer := -1
+const DRAG_THRESHOLD := 24.0
 
 
 func apply_route_params(params: Dictionary) -> void:
@@ -124,9 +129,149 @@ func _process(delta: float) -> void:
 
 
 func _input(event: InputEvent) -> void:
+	if event is InputEventScreenTouch:
+		var touch := event as InputEventScreenTouch
+		if touch.pressed and _touch_pointer < 0:
+			_touch_pointer = touch.index
+			_arm_hand_drag(touch.position)
+		elif not touch.pressed and touch.index == _touch_pointer:
+			_finish_hand_drag(touch.position)
+			_touch_pointer = -1
+	elif event is InputEventScreenDrag:
+		var drag := event as InputEventScreenDrag
+		if drag.index == _touch_pointer:
+			_move_hand_drag(drag.position)
+	elif event is InputEventMouseButton and _touch_pointer < 0:
+		var button := event as InputEventMouseButton
+		if button.button_index == MOUSE_BUTTON_LEFT:
+			if button.pressed:
+				_arm_hand_drag(button.position)
+			else:
+				_finish_hand_drag(button.position)
+	elif event is InputEventMouseMotion and _touch_pointer < 0:
+		_move_hand_drag((event as InputEventMouseMotion).position)
 	if _effects != null and event is InputEventMouseMotion and _is_targeting():
-		_pointer = _effects.get_local_mouse_position()
+		_pointer = _effects.get_global_transform().affine_inverse() * (event as InputEventMouseMotion).position
 		_effects.queue_redraw()
+
+
+func _notification(what: int) -> void:
+	if what == NOTIFICATION_WM_WINDOW_FOCUS_OUT and _drag_active:
+		_cancel_hand_drag()
+
+
+func _has_battle_overlay() -> bool:
+	for overlay: Control in [_detail_overlay, _rules_overlay, _battle_menu_overlay, _exit_dialog, _history_panel]:
+		if overlay != null and overlay.visible:
+			return true
+	return false
+
+
+func _arm_hand_drag(at: Vector2) -> void:
+	_pressed_hand_id = 0
+	if not _can_act() or _has_battle_overlay() or _hand_box == null:
+		return
+	var views: Array[BattleCardView] = []
+	for child: Node in _hand_box.get_children():
+		if child is BattleCardView:
+			views.append(child)
+	views.sort_custom(func(a: BattleCardView, b: BattleCardView) -> bool:
+		return a.get_index() > b.get_index() if a.z_index == b.z_index else a.z_index > b.z_index)
+	for view: BattleCardView in views:
+		if view.visible and not view.disabled and _inside_control(view, at):
+			_pressed_hand_id = view.instance_id
+			_drag_origin = at
+			return
+
+
+func _move_hand_drag(at: Vector2) -> void:
+	if _pressed_hand_id == 0:
+		return
+	if not _can_act() or _has_battle_overlay():
+		_cancel_hand_drag()
+		return
+	if not _drag_active and at.distance_to(_drag_origin) < DRAG_THRESHOLD:
+		return
+	if not _drag_active:
+		_set_state(UIState.PLAYER_IDLE)
+		_on_hand_card_tapped(_pressed_hand_id)
+		if _ui_state != UIState.CARD_SELECTED or _selected_card_id != _pressed_hand_id:
+			_pressed_hand_id = 0
+			return
+		_drag_active = true
+	var view := _hand_box.get_node_or_null("HandCard_%d" % _pressed_hand_id) as BattleCardView
+	if view != null:
+		view.suppress_release_tap()
+		view.visual.position = view.get_global_transform().affine_inverse() * at - view.size * 0.5
+	_pointer = _effects.get_global_transform().affine_inverse() * at
+	_effects.queue_redraw()
+	get_viewport().set_input_as_handled()
+
+
+func _finish_hand_drag(at: Vector2) -> void:
+	if not _drag_active:
+		_pressed_hand_id = 0
+		return
+	var iid := _pressed_hand_id
+	_restore_drag_visual()
+	_drag_active = false
+	_pressed_hand_id = 0
+	get_viewport().set_input_as_handled()
+	if not _can_act() or _has_battle_overlay() or _selected_card_id != iid:
+		_cancel_selection()
+		return
+	# Query again at release. The UI never turns a visual drop into permission.
+	var legal := _session.get_valid_play_targets(iid)
+	if legal == [0]:
+		var local := _hud.get_global_transform().affine_inverse() * at
+		var definition := CardDatabase.get_card(_hand_card_id(iid))
+		var drop_area := _field_rect
+		if definition != null and definition.card_type == CardEnums.Type.CREATURE:
+			drop_area = Rect2(_field_rect.position.x, _center_y, _field_rect.size.x, _field_rect.end.y - _center_y)
+		if drop_area.has_point(local):
+			_try_play_card(iid, 0)
+			return
+	else:
+		for target: int in legal:
+			if _inside_target(target, at):
+				_try_play_card(iid, target)
+				return
+	_cancel_selection()
+
+
+func _hand_card_id(iid: int) -> StringName:
+	var view := _hand_box.get_node_or_null("HandCard_%d" % iid) as BattleCardView
+	return view.card_id if view != null else &""
+
+
+func _inside_target(iid: int, at: Vector2) -> bool:
+	var piece := _find_piece(iid)
+	if piece != null:
+		return _inside_control(piece, at)
+	if iid == _plr_hero.hero_instance_id():
+		return _inside_control(_plr_hero.portrait_button, at)
+	if iid == _opp_hero.hero_instance_id():
+		return _inside_control(_opp_hero.portrait_button, at)
+	return false
+
+
+static func _inside_control(control: Control, at: Vector2) -> bool:
+	return Rect2(Vector2.ZERO, control.size).has_point(control.get_global_transform().affine_inverse() * at)
+
+
+func _restore_drag_visual() -> void:
+	if _hand_box != null:
+		var view := _hand_box.get_node_or_null("HandCard_%d" % _pressed_hand_id) as BattleCardView
+		if view != null:
+			view.visual.position = Vector2.ZERO
+
+
+func _cancel_hand_drag() -> void:
+	_restore_drag_visual()
+	_drag_active = false
+	_pressed_hand_id = 0
+	_touch_pointer = -1
+	_cancel_selection()
 
 
 # ==============================================================================
@@ -471,7 +616,7 @@ func _layout_hand(fresh: Array[int] = []) -> void:
 	var n := cards.size()
 	if n == 0:
 		return
-	var hand_scale := 1.08 if n <= 5 else 1.0
+	var hand_scale := 1.08 if n <= 5 else 0.92
 	var card := BattleCardView.BASE_SIZE * hand_scale
 	var avail := _field_rect.size.x - 72.0
 	var step := card.x + HAND_GAP
@@ -482,7 +627,7 @@ func _layout_hand(fresh: Array[int] = []) -> void:
 	var mid := float(n - 1) * 0.5
 	var curve := 1.6
 	var base_y := _hud.size.y - card.y - 4.0 - mid * mid * curve
-	var angle_step := minf(3.0, 20.0 / float(n))
+	var angle_step := minf(3.0, 20.0 / float(n)) if n <= 5 else 0.65
 	var board_bottom := _plr_board.position.y + _plr_board.size.y
 	for i in n:
 		var view := cards[i]
@@ -875,6 +1020,9 @@ func _build_exit_dialog() -> void:
 ## read-only layer first, then a pending selection, and only then asks for an
 ## explicit confirmation before abandoning the match.
 func handle_back_request() -> bool:
+	if _drag_active:
+		_cancel_hand_drag()
+		return true
 	if _ui_state == UIState.TEST_MODE:
 		return false
 	if _detail_overlay != null and _detail_overlay.visible:
@@ -914,6 +1062,9 @@ func _show_card_detail(card_data: Dictionary) -> void:
 	if definition == null:
 		return
 	(_detail_overlay as CardDetailOverlay).show_card(definition, int(card_data.get("current_cost", definition.cost)))
+	if bool(card_data.get("is_echo", false)):
+		(_detail_overlay as CardDetailOverlay).append_context("Эхо · исчезнет из руки в конце хода №%d. Текущая стоимость: %d." % [
+			int(card_data.get("echo_expires_turn", -1)), int(card_data.get("current_cost", definition.cost))])
 
 
 func _show_definition_detail(card_id: StringName) -> void:
@@ -931,6 +1082,8 @@ func _show_creature_detail(instance_id: int) -> void:
 	var piece := _find_piece(instance_id)
 	if piece != null:
 		_show_definition_detail(piece.card_id)
+		(_detail_overlay as CardDetailOverlay).append_context(CardCombatReadability.describe(piece.data,
+			int(_current_observation().get("turn_number", -1)), piece.can_attack))
 
 
 # ==============================================================================
@@ -1151,7 +1304,7 @@ func _sync_board(row: HBoxContainer, board: Array, is_player: bool, legal: Dicti
 			row.add_child(piece)
 		row.move_child(piece, i)
 		piece.custom_minimum_size = piece_size
-		piece.configure(creature, is_player and iid in attackers, _piece_state(iid))
+		piece.configure(creature, is_player and iid in attackers, _piece_state(iid), int(_current_observation().get("turn_number", -1)))
 		if fresh and _animations and _ui_state != UIState.MULLIGAN:
 			piece.visual.scale = Vector2(0.8, 0.8)
 			piece.visual.modulate = Color(1, 1, 1, 0)

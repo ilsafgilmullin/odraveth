@@ -22,6 +22,10 @@ func _draw() -> void:
 	var s := size
 	if s.x < 50.0 or s.y < 50.0:
 		return
+	var recovered_pair := load("res://assets/recovered_warm/gates_pair.webp") as Texture2D
+	if recovered_pair != null:
+		_draw_recovered(s, recovered_pair)
+		return
 	var arch_w := minf(s.x * 0.44, s.y * 0.74)
 	var arch_h := s.y * 0.63
 	var arch := Rect2(Vector2((s.x - arch_w) * 0.5, s.y * 0.06), Vector2(arch_w, arch_h))
@@ -122,3 +126,20 @@ func _draw_art(s: Vector2, arch: Rect2, art: Texture2D) -> void:
 func _arch_top(center: Vector2, radius: float, x: float) -> float:
 	var dx := clampf(x - center.x, -radius, radius)
 	return center.y - sqrt(maxf(0.0, radius * radius - dx * dx))
+
+
+func _draw_recovered(s: Vector2, pair: Texture2D) -> void:
+	var background := ArtAssets.texture(&"gates")
+	if background != null:
+		ArtAssets.draw_cover(self, background, Rect2(Vector2.ZERO, s))
+	# Opaque leaf bounds measured on the original alpha PNG; outer padding is
+	# excluded in the source region only. The source file is never altered.
+	var source := Rect2(472, 11, 729, 898)
+	var height := s.y * 0.83
+	var width := height * source.size.x / source.size.y
+	var left := (s.x - width) * 0.5
+	for side in [0, 1]:
+		var shift := (1.0 if side == 1 else -1.0) * width * 0.55 * opening
+		var src := Rect2(source.position + Vector2(source.size.x * 0.5 * side, 0), Vector2(source.size.x * 0.5, source.size.y))
+		var dest := Rect2(left + width * 0.5 * side + shift, s.y * 0.01, width * 0.5, height)
+		draw_texture_rect_region(pair, dest, src, Color("9b9285") if failed else Color.WHITE)

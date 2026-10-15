@@ -38,7 +38,9 @@ func _ready() -> void:
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	title.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	title.add_theme_font_size_override("font_size", VisualTokens.FONT_TITLE)
-	title.add_theme_color_override("font_color", VisualTokens.COLOR_STEEL_900)
+	title.add_theme_color_override("font_color", VisualTokens.COLOR_STONE_050)
+	title.add_theme_color_override("font_outline_color", Color("271b13"))
+	title.add_theme_constant_override("outline_size", 4)
 	var display_font := load(UiKit.DISPLAY_FONT_PATH) as Font
 	if display_font != null:
 		title.add_theme_font_override("font", display_font)

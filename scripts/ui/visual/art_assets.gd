@@ -7,6 +7,17 @@ extends RefCounted
 
 const ROOT := "res://assets"
 const EXTENSIONS := ["webp", "png", "svg", "jpg"]
+const RECOVERED_WARM := {
+	&"guardian_terrace": "res://assets/recovered_warm/guardian_terrace.webp",
+	&"gates": "res://assets/recovered_warm/archive.webp",
+	&"hero_hall": "res://assets/recovered_warm/archive.webp",
+	&"archive": "res://assets/recovered_warm/archive.webp",
+	&"deck_hall": "res://assets/recovered_warm/archive.webp",
+	&"staging_hall": "res://assets/recovered_warm/archive.webp",
+	&"arena": "res://assets/recovered_warm/archive.webp",
+	&"library": "res://assets/recovered_warm/archive.webp",
+	&"hall": "res://assets/recovered_warm/archive.webp",
+}
 ## Slot id → path below ROOT without extension, and what the slot is for.
 const SLOTS := {
 	&"guardian_terrace": ["environments/citadel_guardian_terrace", "Main Menu background (no people, no UI)"],
@@ -37,6 +48,8 @@ static var _cache: Dictionary = {}
 
 
 static func path_of(slot: StringName) -> String:
+	if RECOVERED_WARM.has(slot) and ResourceLoader.exists(RECOVERED_WARM[slot]):
+		return RECOVERED_WARM[slot]
 	if not SLOTS.has(slot):
 		return ""
 	var base: String = SLOTS[slot][0]

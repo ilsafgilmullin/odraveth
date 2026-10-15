@@ -180,6 +180,9 @@ func _populate(card: CardDefinition, current_cost: int) -> void:
 	if not presentation.rules_text_ru.is_empty():
 		visible_lines.append("")
 		visible_lines.append(presentation.rules_text_ru)
+	for explanation: String in CardCombatReadability.keyword_help(card):
+		visible_lines.append("")
+		visible_lines.append(explanation)
 	body_text.text = "\n".join(visible_lines)
 
 	var legacy_lines := PackedStringArray([
@@ -232,3 +235,8 @@ func _apply_responsive_layout() -> void:
 	_modal.custom_minimum_size = Vector2(modal_width, modal_height)
 	if full_card != null:
 		full_card.custom_minimum_size = Vector2(card_width, card_width * 1.4)
+
+
+func append_context(text_value: String) -> void:
+	body_text.text += "\n\nТЕКУЩЕЕ СОСТОЯНИЕ\n" + text_value
+	detail_text.text += "\n\n" + text_value

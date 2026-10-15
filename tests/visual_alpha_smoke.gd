@@ -4,6 +4,9 @@ extends Node
 
 const MODULES := [
 	["recovery_autosave", preload("res://tests/recovery_autosave_tests.gd")],
+	["combat_readability", preload("res://tests/card_combat_readability_tests.gd")],
+	["recovery_drag", preload("res://tests/recovery_drag_tests.gd")],
+	["recovery_menu", preload("res://tests/recovery_menu_tests.gd")],
 	["deck_builder", preload("res://tests/deck_builder_v1_tests.gd")],
 	["prebattle", preload("res://tests/prebattle_v3_tests.gd")],
 	["battle", preload("res://tests/battle_v2_tests.gd")],
@@ -19,9 +22,23 @@ const WATCHDOG_SECONDS := 180.0
 var failures: PackedStringArray = []
 var checks := 0
 var current_check := "startup"
+var _engine_log := EngineErrorLog.new()
+
+class EngineErrorLog extends Logger:
+	var expecting := false
+	var unexpected: PackedStringArray = []
+	var mutex := Mutex.new()
+
+	func _log_error(_function: String, file: String, line: int, code: String, rationale: String,
+			_editor_notify: bool, _error_type: int, _script_backtraces: Array[ScriptBacktrace]) -> void:
+		mutex.lock()
+		if not expecting:
+			unexpected.append("%s (%s:%d)" % [rationale if not rationale.is_empty() else code, file, line])
+		mutex.unlock()
 
 
 func _ready() -> void:
+	OS.add_logger(_engine_log)
 	get_tree().current_scene = null
 	get_tree().create_timer(WATCHDOG_SECONDS).timeout.connect(_on_watchdog_timeout)
 	_run.call_deferred()
@@ -36,7 +53,12 @@ func _run() -> void:
 		if not only.is_empty() and not only.has(module[0]):
 			continue
 		print("-- %s" % module[0])
-		await module[1].new(_check, get_tree()).run()
+		var instance: RefCounted = module[1].new(_check, get_tree())
+		if instance.has_method("set_expect_errors"):
+			instance.set_expect_errors(func(expecting: bool) -> void: _engine_log.expecting = expecting)
+		await instance.run()
+	_check(checks > 0, "selected modules executed checks")
+	_check(_engine_log.unexpected.is_empty(), "no unexpected runtime errors or warnings: %s" % _engine_log.unexpected)
 	if failures.is_empty():
 		print("STAGE 7 VISUAL ALPHA TARGETED PASSED: %d checks." % checks)
 		get_tree().quit(0)

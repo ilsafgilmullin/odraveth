@@ -1,0 +1,104 @@
+[
+  {
+    "file": "guardian_terrace.png",
+    "source": "Солнечная веранда архива у горной цитадели.png",
+    "sha256": "265412769a3f38872f46011ad57a054b11ad2aa4f4dd440dcbe7e5fe74a90e82",
+    "size": [
+      1672,
+      941
+    ],
+    "alpha_bbox": [
+      0,
+      0,
+      1672,
+      941
+    ],
+    "runtime_file": "guardian_terrace.webp",
+    "runtime_sha256": "71671fe74260774597c4391f3732a6ad26a751cd3103a8cb42e65701ee456716"
+  },
+  {
+    "file": "archive.png",
+    "source": "Солнечный архив с ореховым столом.png",
+    "sha256": "64c141144c2b788f9a7f90c38b7fa925128421a3383b74f2f414009b485dc84a",
+    "size": [
+      1672,
+      941
+    ],
+    "alpha_bbox": [
+      0,
+      0,
+      1672,
+      941
+    ],
+    "runtime_file": "archive.webp",
+    "runtime_sha256": "a338f1ceab76c9723a1904d6e3523296bea84791bb5bd4be022d170155b07d8c"
+  },
+  {
+    "file": "near_layer.png",
+    "source": "Уголки цитадели: книги, кубок и плющ.png",
+    "sha256": "ea6303cf6b6e719bd0095958bd310036c8eff1ad5270a800439fbf35f53ca520",
+    "size": [
+      1672,
+      941
+    ],
+    "alpha_bbox": [
+      0,
+      0,
+      1672,
+      941
+    ],
+    "runtime_file": "near_layer.webp",
+    "runtime_sha256": "71e66efff70d65fc26e59096ee028369e74d8bcccbc6cf2969924a2c9e60e319"
+  },
+  {
+    "file": "gates_pair.png",
+    "source": "Парные ореховые двери цитадели.png",
+    "sha256": "fb419f92f0b89e22622fb0b49558a60720aab011c27609b76f75cc2250597ada",
+    "size": [
+      1672,
+      941
+    ],
+    "alpha_bbox": [
+      19,
+      0,
+      1630,
+      941
+    ],
+    "runtime_file": "gates_pair.webp",
+    "runtime_sha256": "152387f587fdc679351e5fb254b1b52a29754003dcf3c113afee54162fdc2949"
+  },
+  {
+    "file": "wood_ui.png",
+    "source": "Ореховая кнопка с бронзовой рамкой.png",
+    "sha256": "23a7b50b454048891cfcef8d0df89bccface2a264f36d0abf1393a75c6e73a56",
+    "size": [
+      2172,
+      724
+    ],
+    "alpha_bbox": [
+      0,
+      29,
+      2172,
+      724
+    ],
+    "runtime_file": "wood_ui.webp",
+    "runtime_sha256": "b866fc1f06bbf08c651be5972eab387ed313bda6b920d28882f76a46f9d8c602"
+  },
+  {
+    "file": "parchment_ui.png",
+    "source": "Светлая пергаментная панель с бронзовыми уголками.png",
+    "sha256": "5e073aeee2d447307f2b48c8efcb4b64d13143e3ccea9d97431446bc79d172ad",
+    "size": [
+      1774,
+      887
+    ],
+    "alpha_bbox": [
+      0,
+      7,
+      1764,
+      869
+    ],
+    "runtime_file": "parchment_ui.webp",
+    "runtime_sha256": "142a737917c7c5e0cb5186337e38621aad775ce7cb7558a01a1da7c75aa2e486"
+  }
+]

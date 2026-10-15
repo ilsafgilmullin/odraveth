@@ -8,11 +8,13 @@ var selected := false
 var interaction_pressed := false
 var interaction_focused := false
 var unavailable := false
+var rarity: CardEnums.Rarity = CardEnums.Rarity.COMMON
 
 
-func configure(type_value: CardEnums.Type, accent_value: Color) -> void:
+func configure(type_value: CardEnums.Type, accent_value: Color, rarity_value: CardEnums.Rarity = CardEnums.Rarity.COMMON) -> void:
 	card_type = type_value
 	accent = accent_value
+	rarity = rarity_value
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
 	queue_redraw()
 
@@ -59,6 +61,11 @@ func _draw() -> void:
 		base = base.darkened(0.18)
 
 	draw_colored_polygon(points, base)
+	var paper := WarmMaterials.paper_texture()
+	if paper != null:
+		var inset := maxf(8.0, cut * 0.8)
+		draw_texture_rect_region(paper, Rect2(Vector2.ONE * inset, s - Vector2.ONE * inset * 2.0),
+			Rect2(64, 64, 384, 128), Color("bfb5a5") if unavailable else Color.WHITE)
 	var border := VisualTokens.COLOR_GOLD_500 if selected else accent
 	if interaction_focused:
 		border = VisualTokens.COLOR_MAGIC_500
@@ -66,6 +73,7 @@ func _draw() -> void:
 	if interaction_pressed:
 		width += 1.0
 	_outline(points, border, width)
+	CardRarityTrim.draw_trim(self, Rect2(Vector2.ZERO, s), rarity)
 
 	# Secondary steel line keeps faction colour subordinate.
 	var inner := Rect2(Vector2(8, 8), s - Vector2(16, 16))

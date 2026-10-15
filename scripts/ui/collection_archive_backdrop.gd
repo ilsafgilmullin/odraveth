@@ -18,7 +18,7 @@ func _draw() -> void:
 	if art != null:
 		ArtAssets.draw_cover(self, art, Rect2(Vector2.ZERO, s))
 		# Calm veil so the card grid stays the primary content.
-		draw_rect(Rect2(Vector2.ZERO, s), Color(0.93, 0.91, 0.87, 0.55))
+		draw_rect(Rect2(Vector2.ZERO, s), Color(0.10, 0.065, 0.035, 0.32))
 		return
 	draw_rect(Rect2(Vector2.ZERO, s), Color("e8e2d7"))
 	# Quiet peripheral archive bands/shelves; central browsing field stays calm.

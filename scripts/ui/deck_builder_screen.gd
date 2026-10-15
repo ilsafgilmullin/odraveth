@@ -121,7 +121,7 @@ func _build_no_hero_state() -> void:
 func _build_identity_bar() -> void:
 	var bar := UiKit.make_panel(false)
 	bar.name = "DeckIdentityBar"
-	var bar_box := (bar.get_theme_stylebox("panel") as StyleBoxFlat).duplicate() as StyleBoxFlat
+	var bar_box := bar.get_theme_stylebox("panel").duplicate() as StyleBox
 	bar_box.content_margin_top = 10
 	bar_box.content_margin_bottom = 10
 	bar_box.content_margin_left = 18

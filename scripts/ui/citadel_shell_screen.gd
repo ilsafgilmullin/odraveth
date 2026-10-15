@@ -40,6 +40,9 @@ func _ready() -> void:
 	header.add_child(back)
 	var title := UiKit.make_display_label(Routes.title(route_id).to_upper())
 	title.name = "TitleLabel"
+	title.add_theme_color_override("font_color", VisualTokens.COLOR_STONE_050)
+	title.add_theme_color_override("font_outline_color", Color("271b13"))
+	title.add_theme_constant_override("outline_size", 4)
 	title.add_theme_font_size_override("font_size", VisualTokens.FONT_TITLE)
 	title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER

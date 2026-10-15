@@ -106,7 +106,12 @@ func _use_profile(profile: Dictionary) -> void:
 func main_menu() -> bool:
 	_clear_overlay()
 	_use_profile(qa_profile())
-	return await runner.open_route(Routes.MAIN_MENU)
+	var opened: bool = await runner.open_route(Routes.MAIN_MENU)
+	if opened:
+		var menu := runner.get_tree().current_scene as MainMenuV2
+		if menu != null and menu.speech != null:
+			menu.speech.finish_typing()
+	return opened
 
 
 func hero_select() -> bool:

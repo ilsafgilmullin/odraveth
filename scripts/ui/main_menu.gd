@@ -17,13 +17,30 @@ extends Control
 @onready var history_button: Button = %HistoryButton
 @onready var progress_button: Button = %ProgressButton
 @onready var settings_button: Button = %SettingsButton
+var speech: CharacterSpeech
+var atmosphere: MenuAtmosphere
 
 
 func _ready() -> void:
 	UiKit.apply_root_theme(self)
+	var animations := bool(AppState.profile.get("prebattle", {}).get(PlayerSetupData.ANIMATIONS, true))
+	atmosphere = MenuAtmosphere.new()
+	atmosphere.name = "MenuAtmosphere"
+	atmosphere.set_anchors_and_offsets_preset(PRESET_FULL_RECT)
+	add_child(atmosphere)
+	move_child(atmosphere, 1)
+	atmosphere.set_enabled(animations)
+	speech = CharacterSpeech.new()
+	speech.custom_minimum_size.x = 340
+	guardian_region.add_child(speech)
+	speech.speak("Хранитель Нулмериса", "С возвращением. Врата Нулмериса открыты.", animations)
+	guardian_region.resized.connect(_layout_character)
+	right_region.resized.connect(_layout_character)
 	# Q-15 is still open: do not advertise an undefined progression system.
 	progress_button.visible = false
 	_style_brand()
+	(wordmark as BrandWordmark).stone = VisualTokens.COLOR_STONE_050
+	subtitle.add_theme_color_override("font_color", VisualTokens.COLOR_GOLD_300)
 	_style_navigation()
 	_connect_navigation()
 	get_viewport().size_changed.connect(_on_viewport_size_changed)
@@ -42,7 +59,8 @@ func _style_brand() -> void:
 	if caption != null:
 		caption.text = "ХРАНИТЕЛЬ НУЛМЕРИСА"
 		caption.add_theme_font_size_override("font_size", 24)
-		caption.add_theme_color_override("font_color", VisualTokens.COLOR_STEEL_700)
+		caption.add_theme_color_override("font_color", VisualTokens.COLOR_STONE_050)
+		caption.add_theme_stylebox_override("normal", WarmMaterials.box(true, Color.WHITE, 24, 12))
 		if display_font != null:
 			caption.add_theme_font_override("font", display_font)
 
@@ -69,7 +87,7 @@ func _style_navigation() -> void:
 	menu.owner = self
 	for child: Node in menu.get_children():
 		child.owner = self
-	var box := panel.get_theme_stylebox("panel").duplicate() as StyleBoxFlat
+	var box := panel.get_theme_stylebox("panel").duplicate() as StyleBox
 	if box != null:
 		box.content_margin_left = 22.0
 		box.content_margin_right = 22.0
@@ -159,8 +177,18 @@ func _apply_layout_for_size(viewport_size: Vector2) -> void:
 
 	_set_horizontal_region(guardian_region, guardian_left, guardian_right)
 	_set_horizontal_region(right_region, menu_left, menu_right)
+	_layout_character()
 	right_region.add_theme_constant_override("separation", ResponsiveLayout.section_gap(viewport_size.x))
 	wordmark.add_theme_font_size_override("font_size", wordmark_size)
+
+
+func _layout_character() -> void:
+	if speech != null:
+		speech.position = Vector2(guardian_region.size.x * 0.72, guardian_region.size.y * 0.13)
+		var available := right_region.get_global_rect().position.x - guardian_region.get_global_rect().position.x - speech.position.x - 16.0
+		speech.custom_minimum_size.x = minf(clampf(get_viewport_rect().size.x * 0.18, 280.0, 380.0), maxf(200.0, available))
+		speech.size.x = speech.custom_minimum_size.x
+		speech.reset_size()
 
 
 func _set_horizontal_region(control: Control, left: float, right: float) -> void:

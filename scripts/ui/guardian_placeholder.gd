@@ -55,6 +55,10 @@ func _draw() -> void:
 	# Production Guardian (alpha PNG) replaces the procedural figure entirely.
 	var art := ArtAssets.texture(&"guardian")
 	if art != null:
+		var ground := Vector2(size.x * 0.5, size.y * 0.88)
+		draw_set_transform(ground, 0.0, Vector2(1.0, 0.12))
+		draw_circle(Vector2.ZERO, size.x * 0.28, Color(0.13, 0.075, 0.035, 0.25))
+		draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
 		ArtAssets.draw_fit(self, art, Rect2(Vector2(0, size.y * 0.02), Vector2(size.x, size.y * 0.86)), Vector2(0.5, 1.0))
 		return
 	var box := _box()

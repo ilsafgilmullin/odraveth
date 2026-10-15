@@ -17,6 +17,7 @@ var card_id: StringName = &""
 var presentation: CardPresentation
 var current_cost := 0
 var selected := false
+var is_echo := false
 var visual: Control
 var art: CardArtSlot
 
@@ -65,15 +66,20 @@ func configure(card: Dictionary, playable: bool, is_selected: bool) -> void:
 	name = "HandCard_%d" % instance_id
 	var new_id := StringName(str(card.get("card_id", "")))
 	current_cost = int(card.get("current_cost", card.get("definition", {}).get("cost", 0)))
+	is_echo = bool(card.get("is_echo", false))
 	if new_id != card_id or presentation == null:
 		card_id = new_id
 		var definition := CardDatabase.get_card(card_id)
 		presentation = CardPresentation.from_definition(definition, current_cost)
 		if presentation != null:
 			art.configure(presentation)
-			_frame.configure(presentation.card_type, presentation.faction_accent)
+			_frame.configure(presentation.card_type, presentation.faction_accent, presentation.rarity)
 	elif presentation != null:
 		presentation.current_cost = current_cost
+	if presentation != null:
+		tooltip_text = "%s · стоимость %d\n%s" % [presentation.name_ru, current_cost, presentation.rules_text_ru]
+		if is_echo:
+			tooltip_text += "\nЭхо исчезнет в конце хода №%d." % int(card.get("echo_expires_turn", -1))
 	disabled = not playable
 	selected = is_selected
 	_frame.set_visual_state(selected, false, false, disabled)
@@ -105,6 +111,12 @@ func _process(delta: float) -> void:
 		_hold_fired = true
 		set_process(false)
 		detail_requested.emit(instance_id)
+
+
+func suppress_release_tap() -> void:
+	_hold_fired = true
+	_hold_time = -1.0
+	set_process(false)
 
 
 func _layout() -> void:
@@ -161,6 +173,11 @@ func _draw_front() -> void:
 	# Stats line.
 	var stats_y := s.y - s.y * 0.075
 	var small := int(s.x * 0.085)
+	if is_echo:
+		var echo_rect := Rect2(s.x * 0.25, s.y * 0.79, s.x * 0.5, s.y * 0.08)
+		_front.draw_rect(echo_rect, VisualTokens.COLOR_STEEL_900)
+		_front.draw_string(_display_font, echo_rect.position + Vector2(0, echo_rect.size.y * 0.80), "ЭХО",
+			HORIZONTAL_ALIGNMENT_CENTER, echo_rect.size.x, small, VisualTokens.COLOR_MAGIC_300)
 	if presentation.is_creature():
 		_stat(Vector2(s.x * 0.22, stats_y), str(presentation.attack), Color("7c3f35"), true)
 		_stat(Vector2(s.x * 0.78, stats_y), str(presentation.health), Color("4f6a3f"), false)

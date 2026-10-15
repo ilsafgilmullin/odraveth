@@ -97,6 +97,20 @@ static func style_button(button: Button, role: ButtonRole = ButtonRole.SECONDARY
 	button.add_theme_color_override("font_focus_color", palette["font"])
 	button.add_theme_color_override("font_disabled_color", VisualTokens.COLOR_DISABLED)
 	button.add_theme_font_size_override("font_size", 30 if compact else VisualTokens.FONT_UI)
+	var wood := role in [ButtonRole.PRIMARY, ButtonRole.COMPACT_BATTLE, ButtonRole.SUBTLE]
+	for state: String in ["normal", "hover", "pressed", "hover_pressed", "disabled"]:
+		var tint := Color("fff4dc") if state == "hover" else Color("c6b69f") if state in ["pressed", "hover_pressed"] else Color.WHITE
+		if state == "disabled":
+			tint = Color("9b9285")
+		var material := WarmMaterials.box(wood, tint, 22.0, 12.0)
+		if state in ["pressed", "hover_pressed"]:
+			material.expand_margin_left = -2.0
+			material.expand_margin_right = -2.0
+			material.expand_margin_top = -2.0
+			material.expand_margin_bottom = -2.0
+		button.add_theme_stylebox_override(state, material)
+	for key: String in ["font_color", "font_hover_color", "font_pressed_color", "font_focus_color"]:
+		button.add_theme_color_override(key, VisualTokens.COLOR_STONE_050 if wood else VisualTokens.COLOR_INK)
 	match role:
 		ButtonRole.PRIMARY:
 			ResponsiveLayout.enforce_touch_target(button, VisualTokens.TOUCH_PRIMARY)
@@ -187,6 +201,7 @@ static func make_panel(modal: bool = false) -> PanelContainer:
 	var border := VisualTokens.COLOR_GOLD_500 if modal else VisualTokens.COLOR_STONE_500
 	panel.add_theme_stylebox_override("panel", _box(background, border, 2 if modal else 1,
 		VisualTokens.RADIUS_LARGE, VisualTokens.SPACE_5, VisualTokens.SPACE_4))
+	panel.add_theme_stylebox_override("panel", WarmMaterials.box(false, Color.WHITE, VisualTokens.SPACE_5, VisualTokens.SPACE_4))
 	return panel
 
 

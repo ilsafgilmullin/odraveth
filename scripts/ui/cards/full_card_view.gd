@@ -83,7 +83,7 @@ func configure(card: CardDefinition, current_cost: int = -1) -> void:
 	rules_label.text = presentation.rules_text_ru if not presentation.rules_text_ru.is_empty() else " "
 	art_slot.configure(presentation)
 	_rebuild_stats()
-	frame_visual.configure(presentation.card_type, presentation.faction_accent)
+	frame_visual.configure(presentation.card_type, presentation.faction_accent, presentation.rarity)
 	_refresh_frame_state()
 	_fit_key = ""
 	_fit_content()
@@ -128,6 +128,8 @@ func _ensure_structure() -> void:
 	size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	focus_mode = Control.FOCUS_ALL
+	mouse_filter = Control.MOUSE_FILTER_PASS
+	mouse_force_pass_scroll_events = true
 	toggle_mode = false
 	clip_contents = false
 	add_theme_stylebox_override("normal", StyleBoxEmpty.new())
